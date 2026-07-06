@@ -1,15 +1,23 @@
 {
   "id": "task-index-all-records",
   "title": "Extend the SQLite index to all record types",
-  "status": "ready",
+  "status": "done",
   "priority": 3,
   "scope": "scope-core",
-  "path_hints": ["src/index/", "src/core/"],
-  "prompts": ["prompt-waystation-v1"],
-  "dependencies": ["task-skeleton-generate", "task-agent-messaging"],
+  "path_hints": [
+    "src/index/",
+    "src/core/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-skeleton-generate",
+    "task-agent-messaging"
+  ],
   "created_at": "2026-07-06T07:15:00+03:00",
-  "updated_at": "2026-07-06T07:15:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T07:26:41+03:00",
+  "closed_at": "2026-07-06T07:26:41+03:00",
   "description": "Today the index covers tasks only. Extend reindex and the index to issues, claims, and messages so inbox and thread queries move from in-memory scans to the disposable index (spec §9). Keep the index rebuildable and non-canonical.\n",
   "acceptance": [
     "`reindex` builds index tables for tasks, issues, claims, and messages.",

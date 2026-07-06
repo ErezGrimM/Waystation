@@ -176,8 +176,10 @@ program
   .command("reindex")
   .description("Rebuild the SQLite index from canonical records")
   .action(async () => {
-    const n = await reindex(findProjectRoot());
-    process.stdout.write(`reindexed ${n} task(s)\n`);
+    const c = await reindex(findProjectRoot());
+    process.stdout.write(
+      `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims} claims, ${c.messages} messages\n`,
+    );
   });
 
 program

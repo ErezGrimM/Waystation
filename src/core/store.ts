@@ -3,7 +3,12 @@ import { join } from "node:path";
 import lockfile from "proper-lockfile";
 import { ledgerPaths } from "./paths.ts";
 import { RecordError } from "./records.ts";
-import { type ClaimRecord, ClaimRecord as ClaimSchema } from "./schema.ts";
+import {
+  type ClaimRecord,
+  ClaimRecord as ClaimSchema,
+  type IssueRecord,
+  IssueRecord as IssueSchema,
+} from "./schema.ts";
 
 /** Atomically write a JSON record: write to a temp file, then rename over. */
 export function writeJsonAtomic(file: string, value: unknown): void {
@@ -73,4 +78,30 @@ export function loadClaims(root?: string): ClaimRecord[] {
 
 export function activeClaimForTask(root: string, taskId: string): ClaimRecord | undefined {
   return loadClaims(root).find((c) => c.task === taskId && c.status === "active");
+}
+
+/** Load and validate all issue records (permissive schema; spec §6.3). */
+export function loadIssues(root?: string): IssueRecord[] {
+  const dir = join(ledgerPaths(root).ledger, "issues");
+  let entries: string[];
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const issues: IssueRecord[] = [];
+  for (const name of entries) {
+    if (!name.endsWith(".json")) continue;
+    const file = join(dir, name);
+    const parsed = IssueSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
+    if (!parsed.success) {
+      throw new RecordError(
+        file,
+        `schema: ${parsed.error.issues[0]?.message ?? "invalid issue"}`,
+        "schema_invalid",
+      );
+    }
+    issues.push(parsed.data);
+  }
+  return issues;
 }

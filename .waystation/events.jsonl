@@ -77,3 +77,7 @@
 {"type":"task.status_changed","task":"task-readme","from":"ready","to":"in_progress","actor":"claude-code","ts":"2026-07-06T07:20:25+03:00"}
 {"type":"task.status_changed","task":"task-readme","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T07:20:55+03:00"}
 {"type":"claim.completed","task":"task-readme","claim":"claim-task-readme-claude-code-20260706-0720","actor":"claude-code","ts":"2026-07-06T07:20:55+03:00"}
+{"type":"task.claimed","task":"task-index-all-records","claim":"claim-task-index-all-records-claude-code-20260706-0723","actor":"claude-code","ts":"2026-07-06T07:23:25+03:00"}
+{"type":"task.status_changed","task":"task-index-all-records","from":"ready","to":"in_progress","actor":"claude-code","ts":"2026-07-06T07:23:25+03:00"}
+{"type":"task.status_changed","task":"task-index-all-records","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T07:26:41+03:00"}
+{"type":"claim.completed","task":"task-index-all-records","claim":"claim-task-index-all-records-claude-code-20260706-0723","actor":"claude-code","ts":"2026-07-06T07:26:41+03:00"}

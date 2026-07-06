@@ -5,8 +5,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
 import { generateBlocked, generateStatus, reindex } from "../src/core/generate.ts";
-import { inbox, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
+import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
+import { loadClaims, loadIssues } from "../src/core/store.ts";
+import { buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
@@ -282,10 +284,10 @@ describe("generate", () => {
     expect(md).toContain("task-c");
   });
 
-  test("reindex returns the task count and creates the index file", async () => {
+  test("reindex returns per-type counts and creates the index file", async () => {
     const root = fixtureRoot([A, D]);
-    const n = await reindex(root);
-    expect(n).toBe(2);
+    const c = await reindex(root);
+    expect(c.tasks).toBe(2);
     expect(existsSync(join(root, ".waystation", "index.sqlite"))).toBe(true);
   });
 });
@@ -342,5 +344,51 @@ describe("messages / inbox", () => {
       "gggg",
     );
     expect(inbox(root, "auditor", old.created_at).map((m) => m.body)).toEqual(["new"]);
+  });
+});
+
+describe("ledger index (all record types)", () => {
+  const now = new Date("2026-07-06T10:00:00Z");
+
+  test("reindex counts all record types and rebuild is stable", async () => {
+    const root = fixtureRoot([A, D]);
+    mkdirSync(join(root, ".waystation", "issues"), { recursive: true });
+    writeFileSync(
+      join(root, ".waystation", "issues", "issue-x.json"),
+      JSON.stringify({ id: "issue-x", title: "X", status: "open", severity: "low" }),
+    );
+    await claimTask(root, "task-d", "coder", now);
+    await postMessage(root, { thread: "task-d", from: "coder", body: "hi" }, now, "zzz1");
+
+    const c1 = await reindex(root);
+    expect(c1).toEqual({ tasks: 2, issues: 1, claims: 1, messages: 1 });
+    const c2 = await reindex(root); // rebuild over the same file
+    expect(c2).toEqual(c1);
+  });
+
+  test("inboxFromIndex matches the in-memory inbox", async () => {
+    const root = fixtureRoot([D]);
+    await claimTask(root, "task-d", "auditor", now);
+    await postMessage(root, { thread: "task-d", from: "coder", body: "fyi" }, now, "zzz2");
+    await postMessage(
+      root,
+      { thread: PROJECT_THREAD, from: "coder", to: "auditor", kind: "question", body: "hey" },
+      now,
+      "zzz3",
+    );
+    const db = await buildLedgerIndex(join(root, ".waystation", "index.sqlite"), {
+      tasks: loadTasks(root),
+      issues: loadIssues(root),
+      claims: loadClaims(root),
+      messages: loadMessages(root),
+    });
+    const fromIdx = inboxFromIndex(db, "auditor")
+      .map((m) => m.body)
+      .sort();
+    db.close();
+    const inMem = inbox(root, "auditor")
+      .map((m) => m.body)
+      .sort();
+    expect(fromIdx).toEqual(inMem);
   });
 });

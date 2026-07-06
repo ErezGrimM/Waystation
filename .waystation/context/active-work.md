@@ -6,6 +6,5 @@
 - `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
 
 ## Ready
-- `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-validate-messages` [p3] — Extend validate to cover message records
 

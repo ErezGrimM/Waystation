@@ -38,6 +38,21 @@ export const TaskRecord = z.object({
 });
 export type TaskRecord = z.infer<typeof TaskRecord>;
 
+/**
+ * Issue record schema (spec §6.3), permissive: only the fields the index and
+ * reports need are modeled; extra fields are tolerated (stripped on read).
+ */
+export const IssueRecord = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  status: z.string().min(1),
+  severity: z.string().optional(),
+  type: z.string().optional(),
+  task: z.string().nullable().optional(),
+  scope: z.string().nullable().optional(),
+});
+export type IssueRecord = z.infer<typeof IssueRecord>;
+
 /** Message kind values (spec §6.10). */
 export const MessageKind = z.enum(["update", "question", "verdict", "note"]);
 export type MessageKind = z.infer<typeof MessageKind>;
