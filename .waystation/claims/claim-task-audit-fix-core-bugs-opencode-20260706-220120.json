@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-fix-core-bugs-opencode-20260706-220120",
+  "task": "task-audit-fix-core-bugs",
+  "agent": "opencode",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-06T22:01:20+03:00",
+  "released_at": null,
+  "completed_at": null
+}
