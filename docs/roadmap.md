@@ -28,7 +28,7 @@ Cross-cutting principles that hold across every phase:
 ## Current State (2026-07-06)
 
 **Runtime:** Bun 1.3.14 (local at `C:\bun`, not on PATH). Node 24 works as a
-fallback. 58 tests green; `validate` clean.
+fallback. 102 tests green; `validate` clean. **Version:** 0.0.2.
 
 **V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
 rebuildable SQLite index (all record types); `validate`; `task
@@ -41,10 +41,10 @@ dogfooded through the CLI and version-controlled (git).
 commands with a stable code catalog and coverage test.
 
 **Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
-features. **Issues:** all filed issues (timestamp format + 4 audit findings)
-are fixed.
+features.
 
-**Next:** Phase 4 (MCP server).
+**Next:** Complete Phase 6 (git claim resolution done; active-claim overlap
+warnings + worktree visibility in progress).
 
 ---
 
@@ -82,36 +82,51 @@ corrupt. Small, high-leverage items:
 Exit criteria (met): a fresh clone + `bun install` + README reaches a green
 `bun test` and a working `waystation` without tribal knowledge.
 
-## Phase 4 — MCP Server (deferred phase)
+## Phase 4 — MCP Server ✅ DONE (2026-07-06)
 
 Goal: expose the same core over stdio for coding agents.
 Scope: `get_status`, `get_next_task`, `get_task`, `claim_task`, `release_task`,
 `get_brief`, `render_prompt`, `create_handoff`, `list_issues`, `create_issue`,
-`record_test_run`, `post_message`, `get_inbox`, `validate_ledger` (spec §14).
-Thin wrappers over core logic — no new behavior. First real task: smoke-test
-`@modelcontextprotocol/sdk` on Bun (the one unverified dependency).
-Out of scope: anything that isn't a thin call into existing core functions.
+`post_message`, `get_inbox`, `validate_ledger` (spec §14).
+Thin wrappers over core logic — no new behavior. SDK smoke-tested on Bun.
 
-## Phase 5 — Local Dashboard (deferred phase)
+## Phase 5 — Local Dashboard ✅ DONE (2026-07-06)
 
-Goal: a local web UI over the same ledger (spec §15), and the home for the
-opt-in LLM features.
-Scope: Hono server embedding a Vite+React SPA; read views (tasks/issues/
-messages/briefs) with SSE live updates; write via the core path. **LLM
-features live here only** (prompt rewrite, agent suggestion) — advisory,
-human-triggered, streamed, with API keys in dashboard-only config (see
-`decision-dashboard-llm-features`).
-Out of scope: real-time presence/chat transport; auth beyond localhost binding.
+Goal: a local web UI over the same ledger (spec §15).
+Scope: Hono server embedding a Vite+React SPA; 7 views (Overview, Tasks,
+Issues, Claims, Messages, Brief, Git); SSE live updates; writes via the core
+path; reindex button; git status/diff/commit. Dark theme matching design mockup.
+**LLM features deferred** (see `decision-dashboard-llm-features`).
 
-## Phase 6 — Git & Worktree Integration (in progress)
+## Phase 6 — Git & Worktree Integration (in progress, 2026-07-06)
 
 Goal: read git state and support worktree-per-agent parallelism (spec §17).
 Scope: detect branch/worktree, map to active claims, warn on overlapping file
-hints. Messaging remains scoped to the current checkout/worktree for V1:
-agents in separate worktrees see each other's ledger messages when records are
-merged, not through a live shared inbox. See
+hints. `waystation brief` auto-resolves task from current git claim context.
+Messaging remains scoped to the current checkout/worktree for V1: agents in
+separate worktrees see each other's ledger messages when records are merged, not
+through a live shared inbox. See
 [ADR-0003](../adr/ADR-0003-worktree-message-scope.md).
-Out of scope: creating branches/worktrees/PRs automatically (V1 non-goal).
+
+**Completed:**
+- `src/core/git.ts` — `getGitState()` returns branch, worktree, status summary.
+- `src/core/overlap.ts` — `activeClaimOverlaps()` detects same-scope and
+  path-hint collisions between active claims.
+- `src/core/gitContext.ts` — `buildGitContext()` composes git state + claim
+  overlap warnings in one call.
+- `brief` auto-detects task from git claim context when `--task` is omitted
+  (`resolveTaskFromGitClaim`); returns coded diagnostics for no/ambiguous match.
+- Claims record branch and worktree context via `claimGitContext` (derived from
+  git state, overridable by the CLI).
+- `validate` emits `active_claim_overlap` warnings; brief output includes
+  advisory coordination notes.
+
+**Exit criteria:**
+- `waystation brief` without `--task` resolves from git claim context.
+- `waystation validate` flags overlapping active claims.
+- `waystation task claim` records branch/worktree context.
+- Dashboard git page shows status, diff, and supports commit.
+- `bun test`, `tsc --noEmit`, `biome check`, `waystation validate` all green.
 
 ## Phase 7 — External Integrations (later)
 
