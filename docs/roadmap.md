@@ -28,19 +28,23 @@ Cross-cutting principles that hold across every phase:
 ## Current State (2026-07-06)
 
 **Runtime:** Bun 1.3.14 (local at `C:\bun`, not on PATH). Node 24 works as a
-fallback. 36 tests green.
+fallback. 58 tests green; `validate` clean.
 
-**Done:** ledger bootstrap; Bun/TS scaffold; the full CLI walking skeleton
-(`task next|ready|list|show|claim|release|finish`, `brief`, `validate`,
-`reindex`, `report`); YAML→JSON ledger migration; agent messaging (`message
-post|list`, `inbox`, `project` channel).
+**V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
+rebuildable SQLite index (all record types); `validate`; `task
+next|ready|list|show|claim|release|finish`; `brief`; `prompt list|show|render`;
+`handoff create|show`; agent messaging (`message post|list`, `inbox`, `project`
+channel); `report` (STATUS + context + one-way Markdown views). Everything is
+dogfooded through the CLI and version-controlled (git).
 
-**In progress:** `task-error-envelope` — the `CommandResult`/`Diagnostic`
-envelope. Core landed (catalog, `validate` migrated, coded errors); two items
-remain (below).
+**Error handling:** the `CommandResult`/`Diagnostic` envelope is adopted across
+commands with a stable code catalog and coverage test.
 
 **Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
-features. **Issues:** timestamp format (fixed).
+features. **Issues:** all filed issues (timestamp format + 4 audit findings)
+are fixed.
+
+**Next:** Phase 4 (MCP server).
 
 ---
 
