@@ -1,7 +1,7 @@
 {
   "id": "task-audit-fix-dedup-and-tests",
   "title": "Deduplicate readJson, fix test/lint config, clean up generate",
-  "status": "in_progress",
+  "status": "done",
   "priority": 3,
   "scope": "scope-core",
   "path_hints": [
@@ -14,6 +14,7 @@
   "prompts": [],
   "dependencies": [],
   "created_at": "2026-07-06T22:30:00+03:00",
+  "updated_at": "2026-07-06T22:11:27+03:00",
   "description": "Four code quality items from the audit:\n\n1. **Deduplicate readJson** — records.ts has a private readJson that is identical to store.ts's exported readJsonFile. records.ts should import from store.ts.\n\n2. **Test/lint config gaps** — tsconfig.json and biome.json only include src/**/*.ts. Test files are not typechecked or linted. Add test/**/*.ts to both.\n\n3. **Duplicate import** — skeleton.test.ts imports loadClaims twice (lines 16 and 22). Remove the duplicate.\n\n4. **loadIssuesLite** — generate.ts has an untyped JSON parse that silently skips errors. Use the typed loadIssues from store.ts instead.\n",
   "acceptance": [
     "records.ts imports readJsonFile from store.ts instead of defining its own readJson.",
@@ -23,5 +24,5 @@
     "generate.ts uses loadIssues from store.ts instead of loadIssuesLite.",
     "All tests pass, typecheck clean, biome clean."
   ],
-  "updated_at": "2026-07-06T22:05:07+03:00"
+  "closed_at": "2026-07-06T22:11:27+03:00"
 }

@@ -1,7 +1,7 @@
 {
   "id": "task-audit-fix-validate-and-store",
   "title": "Add duplicate id checks and fix temp file randomness",
-  "status": "ready",
+  "status": "done",
   "priority": 3,
   "scope": "scope-core",
   "path_hints": [
@@ -11,6 +11,7 @@
   "prompts": [],
   "dependencies": [],
   "created_at": "2026-07-06T22:30:00+03:00",
+  "updated_at": "2026-07-06T22:16:09+03:00",
   "description": "Two store/validate items from the audit:\n\n1. **Duplicate id checks** — validate.ts checks for duplicate task and issue ids, but does NOT check for duplicate handoff, claim, prompt, or message ids. Add duplicate id detection for all record types.\n\n2. **Temp file randomness** — store.ts:45 uses Math.random() for temp file names. Not CSPRNG. Use crypto.randomUUID() for strictly better uniqueness.\n",
   "acceptance": [
     "validate.ts detects duplicate handoff ids.",
@@ -19,5 +20,6 @@
     "validate.ts detects duplicate message ids.",
     "writeJsonAtomic uses crypto.randomUUID() for temp file suffix.",
     "All tests pass."
-  ]
+  ],
+  "closed_at": "2026-07-06T22:16:09+03:00"
 }

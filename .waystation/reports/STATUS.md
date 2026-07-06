@@ -8,20 +8,40 @@ _none_
 ## In progress
 _none_
 
+## Review
+_none_
+
+## Marked blocked
+_none_
+
 ## Waiting (blocked by dependencies)
 _none_
 
 ## Done
+- `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints
 - `task-agent-messaging` [p2] — Agent messaging: shared async inbox via message records
+- `task-audit-fix-cli-message-post` [p2] — Fix CLI message post to use structured error handling
+- `task-audit-fix-core-bugs` [p1] — Fix core correctness bugs found in code audit
+- `task-audit-fix-dashboard-cleanup` [p3] — Clean up dashboard: dead pages, dep placement, SSE heartbeat
+- `task-audit-fix-dedup-and-tests` [p3] — Deduplicate readJson, fix test/lint config, clean up generate
+- `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file randomness
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
+- `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
+- `task-claim-git-context` [p2] — Record branch and worktree context on claims
+- `task-dashboard-frontend` [p2] — Implement the dashboard SPA (Vite + React + TanStack Query)
+- `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
+- `task-dashboard-server` [p2] — Implement the dashboard API server (Hono + SSE + CLI command)
 - `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
 - `task-git-init` [p1] — Initialize git version control
+- `task-git-state-core` [p1] — Detect current git branch, root, worktree, and status in core
 - `task-handoff` [p2] — Implement handoff create/show
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement `waystation init`
 - `task-mcp-server` [p2] — Implement the MCP server (thin wrappers over core)
 - `task-mcp-smoke` [p1] — Smoke-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON
+- `task-phase6-docs-and-exit` [p3] — Document Phase 6 behavior and mark exit criteria
+- `task-phase6-worktree-message-scope-decision` [p1] — Phase 6 decision: worktree messaging scope
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README (run instructions, layout, dogfood loop)
 - `task-scaffold-cli` [p1] — Scaffold CLI project
@@ -37,5 +57,8 @@ _none_
 _none_
 
 ## Open issues
+_none_
+
+## Coordination warnings
 _none_
 

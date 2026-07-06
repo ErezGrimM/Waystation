@@ -3,7 +3,7 @@
   "title": "Clean up dashboard: dead pages, dep placement, SSE heartbeat",
   "status": "done",
   "priority": 3,
-  "scope": "scope-dashboard",
+  "scope": "scope-core",
   "path_hints": [
     "src/dashboard/client/src/pages/",
     "src/dashboard/server.ts",

@@ -187,6 +187,7 @@ export function validateLedger(root?: string): CommandResult<null> {
 
   // --- claims: schema, task existence, single active claim per task ---
   const activeByTask = new Map<string, number>();
+  const seenClaimIds = new Set<string>();
   for (const name of listJson(paths.claims)) {
     const file = join(paths.claims, name);
     let data: unknown;
@@ -211,6 +212,15 @@ export function validateLedger(root?: string): CommandResult<null> {
       );
       continue;
     }
+    if (seenClaimIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `duplicate claim id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    }
+    seenClaimIds.add(parsed.data.id);
     if (!taskExists(parsed.data.task)) {
       diags.push(
         diag("claim_orphan", {
@@ -236,6 +246,7 @@ export function validateLedger(root?: string): CommandResult<null> {
 
   // --- handoffs: schema + task existence ---
   const handoffsDir = join(paths.ledger, "handoffs");
+  const seenHandoffIds = new Set<string>();
   for (const name of listJson(handoffsDir)) {
     const file = join(handoffsDir, name);
     let data: unknown;
@@ -260,6 +271,15 @@ export function validateLedger(root?: string): CommandResult<null> {
       );
       continue;
     }
+    if (seenHandoffIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `duplicate handoff id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    }
+    seenHandoffIds.add(parsed.data.id);
     if (!taskExists(parsed.data.task)) {
       diags.push(
         diag("handoff_orphan", {
@@ -272,6 +292,7 @@ export function validateLedger(root?: string): CommandResult<null> {
 
   // --- prompts: schema ---
   const promptsDir = join(paths.ledger, "prompts");
+  const seenPromptIds = new Set<string>();
   for (const name of listJson(promptsDir)) {
     const file = join(promptsDir, name);
     let data: unknown;
@@ -294,7 +315,17 @@ export function validateLedger(root?: string): CommandResult<null> {
           details: { file: name },
         }),
       );
+      continue;
     }
+    if (seenPromptIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `duplicate prompt id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    }
+    seenPromptIds.add(parsed.data.id);
   }
 
   // --- events: valid JSONL ---
@@ -317,6 +348,7 @@ export function validateLedger(root?: string): CommandResult<null> {
 
   // --- messages: schema, dangling in_reply_to, orphan thread ---
   const messageIds = new Set<string>();
+  const seenMessageIds = new Set<string>();
   const messages: Array<{ id: string; thread: string; in_reply_to?: string | null }> = [];
   for (const name of listJson(paths.messages)) {
     const file = join(paths.messages, name);
@@ -343,6 +375,15 @@ export function validateLedger(root?: string): CommandResult<null> {
       continue;
     }
     messageIds.add(parsed.data.id);
+    if (seenMessageIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `duplicate message id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    }
+    seenMessageIds.add(parsed.data.id);
     messages.push({
       id: parsed.data.id,
       thread: parsed.data.thread,

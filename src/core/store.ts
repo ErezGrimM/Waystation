@@ -19,6 +19,8 @@ import {
   IssueRecord as IssueSchema,
 } from "./schema.ts";
 
+let tempFileCounter = 0;
+
 /** Parse a JSON file, raising a coded RecordError on malformed JSON. */
 export function readJsonFile(file: string): unknown {
   let raw: string;
@@ -42,7 +44,7 @@ export function readJsonFile(file: string): unknown {
  */
 export function writeJsonAtomic(file: string, value: unknown): void {
   mkdirSync(join(file, ".."), { recursive: true });
-  const tmp = `${file}.${process.pid}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+  const tmp = `${file}.${process.pid}.${++tempFileCounter}.tmp`;
   const data = `${JSON.stringify(value, null, 2)}\n`;
   const fd = openSync(tmp, "w");
   try {

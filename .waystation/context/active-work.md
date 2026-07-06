@@ -8,3 +8,6 @@ _none_
 ## Ready
 _none_
 
+## Coordination warnings
+_none_
+
