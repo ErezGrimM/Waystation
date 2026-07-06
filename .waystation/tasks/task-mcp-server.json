@@ -4,19 +4,23 @@
   "status": "todo",
   "priority": 2,
   "scope": "scope-core",
-  "path_hints": ["src/mcp/", "src/cli/"],
+  "path_hints": ["src/mcp/", "src/cli/index.ts", "test/mcp.test.ts"],
   "prompts": ["prompt-waystation-v1"],
   "dependencies": ["task-mcp-smoke"],
   "created_at": "2026-07-06T17:15:00+03:00",
-  "updated_at": "2026-07-06T17:15:00+03:00",
+  "updated_at": "2026-07-06T17:25:00+03:00",
   "closed_at": null,
-  "description": "Expose the core ledger over MCP stdio (spec §14) so coding agents can drive Waystation directly. Tools are thin wrappers over existing core functions — no new behavior. A `waystation mcp` command starts the stdio server.\n",
+  "description": "Expose the core ledger over MCP stdio (spec §14) so coding agents can drive Waystation directly. Tools are THIN wrappers over existing core functions — no new behavior, no reimplemented writes. The SDK (@modelcontextprotocol/sdk@1.29.0) is already proven on Bun by test/mcp.test.ts (McpServer + Client round trip over InMemoryTransport). Build src/mcp/ (a buildServer() factory that registers the tools on an McpServer) plus a `waystation mcp` command that connects it over StdioServerTransport.\n",
   "acceptance": [
-    "Tools: get_status, get_next_task, get_task, claim_task, release_task, get_brief, render_prompt, create_handoff, list_issues, create_issue, post_message, get_inbox, validate_ledger.",
-    "Each tool calls the same core logic as the CLI and returns structured results (reusing the CommandResult/Diagnostic shape where sensible).",
-    "Writes go through the single core write path (lock + atomic write + events).",
-    "`waystation mcp` starts the stdio server.",
-    "bun:test covers a client calling get_next_task and claim_task over an in-memory transport."
+    "src/mcp/server.ts exports buildServer(root): McpServer with all tools registered; keep transport wiring out of it so tests can use InMemoryTransport.",
+    "`waystation mcp` starts the server on a StdioServerTransport (no --json; stdio only).",
+    "Read tools: get_status, get_next_task, get_task{id}, get_brief{task,budget?}, render_prompt{task,agent,role?}, list_issues, get_inbox{agent,since?}, validate_ledger.",
+    "Write tools (through the single write path only): claim_task{id,agent}, release_task{id,agent}, finish_task{id,agent}, create_handoff{task,from,to?,summary?}, post_message{thread,from,to?,kind?,body}, create_issue{...}.",
+    "create_issue needs a NEW core function core/issue.ts createIssue() (write path via withLedgerLock + writeJsonAtomic + appendEventUnlocked 'issue.created'); there is no issue-create in core yet. Add an id-slug rule + zod on input. Keep IssueRecord permissive schema for reads.",
+    "Every tool returns the CommandResult/Diagnostic shape (src/core/result.ts) as structured content, so MCP callers get the same {ok,data,errors,warnings} contract as the CLI. Map thrown MutationError/RecordError to their codes; never leak a raw stack.",
+    "Tool input schemas use zod raw shapes (as in test/mcp.test.ts registerTool).",
+    "bun:test: a Client over InMemoryTransport lists the tools, calls get_next_task, and calls claim_task (verifying the task moved to in_progress + a claim exists). Extend test/mcp.test.ts.",
+    "typecheck (tsc --noEmit), biome check, and `waystation validate` all clean; full `bun test` green."
   ],
-  "notes": "Phase 4 (roadmap). Depends on task-mcp-smoke confirming the SDK on Bun. Do not reimplement writes — reuse src/core.\n"
+  "notes": "REUSE MAP (tool -> core fn): get_next_task->core/tasks.nextTask(loadTasks(root)); get_task->loadTasks find; get_status->readyTasks + counts (or reuse generate counts); get_brief->core/brief.buildBrief; render_prompt->core/prompt.selectPrompts+renderPrompt (fold task scope like the CLI); claim/release/finish->core/mutate.*; create_handoff->core/handoff.createHandoff; post_message/get_inbox->core/messages.postMessage/inbox; list_issues->core/store.loadIssues; validate_ledger->core/validate.validateLedger. Root = findProjectRoot() (core/paths). ALL writes MUST go through the existing locked write path in core/store.ts — do NOT write records directly. RUN: Bun at C:\\bun\\bin\\bun.exe (NOT on PATH); `& C:\\bun\\bin\\bun.exe run src/cli/index.ts mcp`. VERIFY: bun test, bun run typecheck, bunx biome check . DOGFOOD when done: claim/finish task-mcp-server via the CLI, then reindex && report && validate, then git commit. Full context also in handoff-task-mcp-server-claude-code-20260706-172229 (waystation handoff show). Phase 4 of docs/roadmap.md. When finished, claude-code will audit.\n"
 }
