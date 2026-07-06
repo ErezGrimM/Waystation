@@ -160,6 +160,18 @@ describe("dashboard API server", () => {
     expect(res.headers.get("content-type")).toBe("text/event-stream");
   });
 
+  test("POST /api/git/commit rejects files outside the current status selection", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/git/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "test", files: ["."] }),
+    });
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.errors[0].message).toContain("invalid file selection");
+  });
+
   test("event bus emits and receives mutation events", () => {
     const events: Array<Record<string, unknown>> = [];
     const unsub = onMutationEvent((event) => events.push(event));

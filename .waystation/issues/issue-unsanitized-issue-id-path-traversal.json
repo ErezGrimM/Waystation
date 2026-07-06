@@ -1,13 +1,14 @@
 {
   "id": "issue-unsanitized-issue-id-path-traversal",
   "title": "Unsanitized issue ids can write outside .waystation/issues",
-  "status": "open",
+  "status": "fixed",
   "created_at": "2026-07-06T21:15:00+03:00",
-  "updated_at": "2026-07-06T21:15:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:35:00+03:00",
+  "closed_at": "2026-07-06T21:35:00+03:00",
   "severity": "critical",
   "type": "bug",
   "priority": 1,
   "scope": "scope-core",
-  "description": "createIssue builds the issue filename directly from input.id. Because create_issue is exposed through MCP and the dashboard, a caller can pass path-like ids such as ../tasks/task-a and write outside .waystation/issues, corrupting other record types. Affected: src/core/issue.ts. Fix by validating ids and/or resolving the destination path and ensuring it stays inside the issues directory before writing."
+  "description": "createIssue builds the issue filename directly from input.id. Because create_issue is exposed through MCP and the dashboard, a caller can pass path-like ids such as ../tasks/task-a and write outside .waystation/issues, corrupting other record types. Affected: src/core/issue.ts. Fix by validating ids and/or resolving the destination path and ensuring it stays inside the issues directory before writing.",
+  "resolution": "Fixed by rejecting unsafe user-supplied issue ids before path construction, resolving the destination path, and asserting it remains inside .waystation/issues. Added regression coverage for path-like issue ids."
 }

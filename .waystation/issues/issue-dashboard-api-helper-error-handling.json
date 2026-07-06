@@ -1,13 +1,14 @@
 {
   "id": "issue-dashboard-api-helper-error-handling",
   "title": "Frontend API helper treats every response as a valid JSON CommandResult",
-  "status": "open",
+  "status": "fixed",
   "created_at": "2026-07-06T21:15:00+03:00",
-  "updated_at": "2026-07-06T21:15:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:35:00+03:00",
+  "closed_at": "2026-07-06T21:35:00+03:00",
   "severity": "low",
   "type": "quality",
   "priority": 3,
   "scope": "scope-dashboard",
-  "description": "The dashboard api helper ignores HTTP status and unconditionally parses JSON. Static 404s, server errors, interrupted requests, or non-envelope responses will throw into React effects instead of rendering an error state. Affected: src/dashboard/client/src/api.ts. Fix by catching fetch/parse failures and returning a consistent CommandResult error."
+  "description": "The dashboard api helper ignores HTTP status and unconditionally parses JSON. Static 404s, server errors, interrupted requests, or non-envelope responses will throw into React effects instead of rendering an error state. Affected: src/dashboard/client/src/api.ts. Fix by catching fetch/parse failures and returning a consistent CommandResult error.",
+  "resolution": "Fixed by wrapping fetch and JSON parsing failures in a normal CommandResult error envelope, and by converting non-ok HTTP responses without errors into an unexpected_error result."
 }

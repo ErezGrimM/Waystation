@@ -1,13 +1,14 @@
 {
   "id": "issue-generated-reports-status-buckets",
   "title": "Generated status and blocked reports misclassify review and blocked tasks",
-  "status": "open",
+  "status": "fixed",
   "created_at": "2026-07-06T21:15:00+03:00",
-  "updated_at": "2026-07-06T21:15:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:35:00+03:00",
+  "closed_at": "2026-07-06T21:35:00+03:00",
   "severity": "medium",
   "type": "quality",
   "priority": 2,
   "scope": "scope-core",
-  "description": "generateStatus puts non-ready tasks, including review and explicitly blocked tasks, under Waiting (blocked by dependencies). generateBlocked also includes review tasks because isActionable returns false. Affected: src/core/generate.ts. Fix by splitting dependency-blocked, marked blocked, review, and non-ready/todo buckets explicitly."
+  "description": "generateStatus puts non-ready tasks, including review and explicitly blocked tasks, under Waiting (blocked by dependencies). generateBlocked also includes review tasks because isActionable returns false. Affected: src/core/generate.ts. Fix by splitting dependency-blocked, marked blocked, review, and non-ready/todo buckets explicitly.",
+  "resolution": "Fixed by adding separate Review and Marked blocked report sections and limiting dependency-waiting output to tasks with unmet dependencies. blocked.md no longer includes review or in-progress tasks. Added report bucket regression tests."
 }
