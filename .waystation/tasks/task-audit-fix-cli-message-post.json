@@ -1,7 +1,7 @@
 {
   "id": "task-audit-fix-cli-message-post",
   "title": "Fix CLI message post to use structured error handling",
-  "status": "ready",
+  "status": "done",
   "priority": 2,
   "scope": "scope-core",
   "path_hints": [
@@ -12,10 +12,12 @@
     "task-audit-fix-core-bugs"
   ],
   "created_at": "2026-07-06T22:30:00+03:00",
+  "updated_at": "2026-07-06T22:03:50+03:00",
   "description": "The `message post` CLI command has its own try/catch + process.exit(1) instead of using `runMutation`. Errors bypass the structured CommandResult envelope and it has no --json flag, unlike every other write command. Refactor to use runMutation for consistency.\n",
   "acceptance": [
     "message post uses runMutation like other write commands.",
     "message post supports --json flag.",
     "Errors are surfaced as coded diagnostics, not raw stack traces."
-  ]
+  ],
+  "closed_at": "2026-07-06T22:03:50+03:00"
 }

@@ -1,7 +1,7 @@
 {
   "id": "task-audit-fix-dashboard-cleanup",
   "title": "Clean up dashboard: dead pages, dep placement, SSE heartbeat",
-  "status": "ready",
+  "status": "in_progress",
   "priority": 3,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -18,5 +18,6 @@
     "react-router-dom is in devDependencies in package.json.",
     "/api/events sends periodic SSE comments as heartbeat.",
     "Dashboard tests still pass."
-  ]
+  ],
+  "updated_at": "2026-07-06T22:04:00+03:00"
 }

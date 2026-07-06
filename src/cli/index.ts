@@ -400,6 +400,7 @@ message
   .option("--kind <kind>", "update|question|verdict|note", "update")
   .requiredOption("--body <text>", "message body")
   .option("--in-reply-to <id>", "message id this replies to")
+  .option("--json", "output JSON")
   .action(
     async (opts: {
       thread: string;
@@ -408,8 +409,9 @@ message
       kind: string;
       body: string;
       inReplyTo?: string;
+      json?: boolean;
     }) => {
-      try {
+      await runMutation(opts.json, async () => {
         const m = await postMessage(findProjectRoot(), {
           thread: opts.thread,
           from: opts.from,
@@ -418,11 +420,8 @@ message
           body: opts.body,
           inReplyTo: opts.inReplyTo ?? null,
         });
-        process.stdout.write(`posted ${m.id}\n`);
-      } catch (e) {
-        process.stderr.write(`error: ${(e as Error).message}\n`);
-        process.exit(1);
-      }
+        return `posted ${m.id}`;
+      });
     },
   );
 

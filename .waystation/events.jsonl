@@ -171,3 +171,11 @@
 {"type":"task.status_changed","task":"task-phase6-docs-and-exit","from":"ready","to":"in_progress","actor":"opencode","ts":"2026-07-06T22:01:30+03:00"}
 {"type":"task.status_changed","task":"task-phase6-docs-and-exit","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T22:01:31+03:00"}
 {"type":"claim.completed","task":"task-phase6-docs-and-exit","claim":"claim-task-phase6-docs-and-exit-opencode-20260706-220130","actor":"opencode","ts":"2026-07-06T22:01:31+03:00"}
+{"type":"task.status_changed","task":"task-audit-fix-core-bugs","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T22:02:57+03:00"}
+{"type":"claim.completed","task":"task-audit-fix-core-bugs","claim":"claim-task-audit-fix-core-bugs-opencode-20260706-220120","actor":"opencode","ts":"2026-07-06T22:02:57+03:00"}
+{"type":"task.claimed","task":"task-audit-fix-cli-message-post","claim":"claim-task-audit-fix-cli-message-post-opencode-20260706-220306","actor":"opencode","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-06T22:03:06+03:00"}
+{"type":"task.status_changed","task":"task-audit-fix-cli-message-post","from":"ready","to":"in_progress","actor":"opencode","ts":"2026-07-06T22:03:06+03:00"}
+{"type":"task.status_changed","task":"task-audit-fix-cli-message-post","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T22:03:50+03:00"}
+{"type":"claim.completed","task":"task-audit-fix-cli-message-post","claim":"claim-task-audit-fix-cli-message-post-opencode-20260706-220306","actor":"opencode","ts":"2026-07-06T22:03:50+03:00"}
+{"type":"task.claimed","task":"task-audit-fix-dashboard-cleanup","claim":"claim-task-audit-fix-dashboard-cleanup-opencode-20260706-220400","actor":"opencode","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-06T22:04:00+03:00"}
+{"type":"task.status_changed","task":"task-audit-fix-dashboard-cleanup","from":"ready","to":"in_progress","actor":"opencode","ts":"2026-07-06T22:04:00+03:00"}

@@ -34,7 +34,7 @@ function taskFile(root: string, id: string): string {
 /** Find a JSON task record by id, or throw. (Mutations target JSON records.) */
 function requireTask(root: string, id: string): TaskRecord {
   const task = loadTasks(root).find((t) => t.id === id);
-  if (!task) throw new MutationError(`no such task (as JSON): ${id}`, "no_such_task");
+  if (!task) throw new MutationError(`no such task: ${id}`, "no_such_task");
   return task;
 }
 

@@ -4,7 +4,6 @@ import { ledgerPaths } from "./paths.ts";
 import { RecordError } from "./records.ts";
 import { type MessageKind, type MessageRecord, MessageRecord as MessageSchema } from "./schema.ts";
 import {
-  activeClaimForTask,
   appendEventUnlocked,
   loadClaims,
   readJsonFile,
@@ -50,6 +49,7 @@ export function loadMessages(root?: string): MessageRecord[] {
       throw new RecordError(
         file,
         `schema: ${parsed.error.issues[0]?.message ?? "invalid message"}`,
+        "schema_invalid",
       );
     }
     messages.push(parsed.data);
@@ -130,7 +130,7 @@ export function inbox(root: string, agent: string, since?: string): MessageRecor
     .filter((m) => {
       // Strictly-before so same-second messages are never skipped (may re-show
       // the boundary second; re-showing is safe, losing is not).
-      if (since && m.created_at < since) return false;
+      if (since && Date.parse(m.created_at) < Date.parse(since)) return false;
       if (m.from_agent === agent) return false;
       if (m.to_agent === agent) return true;
       if (m.to_agent == null && (m.thread === PROJECT_THREAD || claimedThreads.has(m.thread))) {
@@ -140,6 +140,3 @@ export function inbox(root: string, agent: string, since?: string): MessageRecor
     })
     .sort(byCreatedAt);
 }
-
-// activeClaimForTask reserved for future per-thread claim checks
-void activeClaimForTask;
