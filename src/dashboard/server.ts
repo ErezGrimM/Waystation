@@ -441,6 +441,12 @@ export function createApp(root: string, distDir?: string): Hono {
 
   // ── static SPA (production) ──
 
+  app.get("/graphify-out/*", async (c) => {
+    const file = Bun.file(join(root, c.req.path));
+    if (await file.exists()) return new Response(file);
+    return c.notFound();
+  });
+
   if (distDir) {
     app.get("/assets/*", async (c) => {
       const file = Bun.file(join(distDir, c.req.path));

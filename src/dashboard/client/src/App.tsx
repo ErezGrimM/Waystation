@@ -2,6 +2,7 @@ import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api.ts";
 import { Dashboard } from "./pages/Dashboard.tsx";
+import { GraphView } from "./pages/GraphView.tsx";
 import { Tasks } from "./pages/Tasks.tsx";
 import { TaskDetail } from "./pages/TaskDetail.tsx";
 import { Issues } from "./pages/Issues.tsx";
@@ -18,6 +19,7 @@ const VIEWS: Record<string, [string, string]> = {
   "/claims": ["Claims", "Who is working on what, right now"],
   "/messages": ["Messages", "Shared async inbox — project and task threads"],
   "/git": ["Git", "Status, diff, and commit"],
+  "/graph": ["Graph", "Codebase knowledge graph"],
   "/brief": ["Brief", "Task-scoped context package for an agent"],
 };
 
@@ -64,6 +66,7 @@ export function App() {
             ["/claims", "Claims"],
             ["/messages", "Messages"],
             ["/git", "Git"],
+            ["/graph", "Graph"],
             ["/brief", "Brief"],
           ].map(([to, label]) => (
             <NavLink
@@ -112,6 +115,7 @@ export function App() {
             <Route path="/claims" element={<Claims />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/git" element={<Git />} />
+            <Route path="/graph" element={<GraphView />} />
             <Route path="/brief" element={<Brief />} />
           </Routes>
         </div>

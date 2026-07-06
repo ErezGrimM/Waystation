@@ -105,9 +105,9 @@
     "semantic_hash": "72123f8732e29a629bc2f98003618f30"
   },
   ".waystation/claims/claim-task-graph-core-OpenCode-Qwen3.7Plus-20260706-224742.json": {
-    "mtime": 1783367262.6270747,
-    "ast_hash": "125d05a804be843844408120952d3aaa",
-    "semantic_hash": "125d05a804be843844408120952d3aaa"
+    "mtime": 1783367749.9643095,
+    "ast_hash": "7f292bc32f4cb05ea12f0aa9a2fe22ce",
+    "semantic_hash": "7f292bc32f4cb05ea12f0aa9a2fe22ce"
   },
   ".waystation/claims/claim-task-handoff-claude-code-20260706-170321.json": {
     "mtime": 1783346856.8221319,
@@ -475,14 +475,14 @@
     "semantic_hash": "99d05351bad1f5d6fa676490f1573f19"
   },
   ".waystation/tasks/task-graph-brief.json": {
-    "mtime": 1783367020.7712746,
-    "ast_hash": "cc47a8ba6825ab9321f8b2b3bfd8686f",
-    "semantic_hash": "cc47a8ba6825ab9321f8b2b3bfd8686f"
+    "mtime": 1783368147.0691104,
+    "ast_hash": "177d73751420323f71ec32db34c5ef01",
+    "semantic_hash": "177d73751420323f71ec32db34c5ef01"
   },
   ".waystation/tasks/task-graph-core.json": {
-    "mtime": 1783367262.6306152,
-    "ast_hash": "bdca0fcbce35dfd6bbc9a9a70e897591",
-    "semantic_hash": "bdca0fcbce35dfd6bbc9a9a70e897591"
+    "mtime": 1783367749.966813,
+    "ast_hash": "6fb6934a1043a49424599281d9816ca8",
+    "semantic_hash": "6fb6934a1043a49424599281d9816ca8"
   },
   ".waystation/tasks/task-handoff.json": {
     "mtime": 1783346856.82479,
@@ -655,9 +655,9 @@
     "semantic_hash": "3128d36887809cbf05b22a8c5a2aad17"
   },
   "src/core/graph.ts": {
-    "mtime": 1783367657.2999241,
-    "ast_hash": "bb2d14aeb119e5f1cd228f7f2ab8abb5",
-    "semantic_hash": "bb2d14aeb119e5f1cd228f7f2ab8abb5"
+    "mtime": 1783368485.8223455,
+    "ast_hash": "ba49b3f2cd4a5e080488cca086aae4b2",
+    "semantic_hash": "ba49b3f2cd4a5e080488cca086aae4b2"
   },
   "src/core/handoff.ts": {
     "mtime": 1783346658.4775567,
@@ -735,9 +735,9 @@
     "semantic_hash": "77846724779cf37d7348c5fcfe53f24f"
   },
   "src/dashboard/client/src/App.tsx": {
-    "mtime": 1783361018.0436933,
-    "ast_hash": "fb170b890660eb8a1a26c143050951db",
-    "semantic_hash": "fb170b890660eb8a1a26c143050951db"
+    "mtime": 1783369114.90813,
+    "ast_hash": "bce0b7e35dd19ac753c5b4631b897c6c",
+    "semantic_hash": "bce0b7e35dd19ac753c5b4631b897c6c"
   },
   "src/dashboard/client/src/api.ts": {
     "mtime": 1783361129.5922277,
@@ -755,9 +755,9 @@
     "semantic_hash": "d3247533f89018cf4079c4378658d081"
   },
   "src/dashboard/client/src/pages/Brief.tsx": {
-    "mtime": 1783359882.799075,
-    "ast_hash": "6de1af17e89bfb99c668fb12fad42dcd",
-    "semantic_hash": "6de1af17e89bfb99c668fb12fad42dcd"
+    "mtime": 1783367872.296117,
+    "ast_hash": "3929986fcb26073874b931fd440ac90c",
+    "semantic_hash": "3929986fcb26073874b931fd440ac90c"
   },
   "src/dashboard/client/src/pages/Claims.tsx": {
     "mtime": 1783363621.0884147,
@@ -800,9 +800,9 @@
     "semantic_hash": "de4d4814926a99b9ae917075db5d0185"
   },
   "src/dashboard/server.ts": {
-    "mtime": 1783367089.2642121,
-    "ast_hash": "5cc6f2c858e0b9514dc2cffad6775f67",
-    "semantic_hash": "5cc6f2c858e0b9514dc2cffad6775f67"
+    "mtime": 1783369071.1702945,
+    "ast_hash": "6643147e95014945de4590463b9ab547",
+    "semantic_hash": "6643147e95014945de4590463b9ab547"
   },
   "src/index/db.ts": {
     "mtime": 1783312333.717507,
@@ -825,23 +825,68 @@
     "semantic_hash": "17bbad65e0c8c46318dd3348ec8b8ec8"
   },
   "test/dashboard.test.ts": {
-    "mtime": 1783367146.7322738,
-    "ast_hash": "ddbd5524746c5cea578973167a5e05e2",
-    "semantic_hash": "ddbd5524746c5cea578973167a5e05e2"
+    "mtime": 1783368111.7858324,
+    "ast_hash": "d8aa6cf9c86169cf1c4563a7cbb79c7b",
+    "semantic_hash": "d8aa6cf9c86169cf1c4563a7cbb79c7b"
   },
   "test/mcp.test.ts": {
-    "mtime": 1783364998.4187472,
-    "ast_hash": "910143135a2ecb14f416fb1d524d9654",
-    "semantic_hash": "910143135a2ecb14f416fb1d524d9654"
+    "mtime": 1783368111.7858324,
+    "ast_hash": "581e5cecf6bcc727e368e26d1990cd43",
+    "semantic_hash": "581e5cecf6bcc727e368e26d1990cd43"
   },
   "test/skeleton.test.ts": {
-    "mtime": 1783367686.2031257,
-    "ast_hash": "2a62ae42fb433dd66cdded3d634a1cbd",
-    "semantic_hash": "2a62ae42fb433dd66cdded3d634a1cbd"
+    "mtime": 1783368436.6407206,
+    "ast_hash": "40dc6c70c6dff2221226d19c295883a8",
+    "semantic_hash": "40dc6c70c6dff2221226d19c295883a8"
   },
   "tsconfig.json": {
     "mtime": 1783364747.111812,
     "ast_hash": "8f98970b07eb307db1992e0147e4f828",
     "semantic_hash": "8f98970b07eb307db1992e0147e4f828"
+  },
+  ".waystation/claims/claim-task-graph-brief-OpenCode-Qwen3.7Plus-20260706-225637.json": {
+    "mtime": 1783368147.0671113,
+    "ast_hash": "ed0efd0de1dedb9015bc2afb45adcd70",
+    "semantic_hash": "ed0efd0de1dedb9015bc2afb45adcd70"
+  },
+  ".waystation/messages/message-project-OpenCode-Qwen3.7Plus-20260706-230437-liie.json": {
+    "mtime": 1783368277.5453393,
+    "ast_hash": "c0e9d33d01feac2825b0f1e7846c9fc2",
+    "semantic_hash": "c0e9d33d01feac2825b0f1e7846c9fc2"
+  },
+  ".waystation/messages/message-project-OpenCode-Qwen3.7Plus-20260706-230453-q8ye.json": {
+    "mtime": 1783368293.5234118,
+    "ast_hash": "c5ac290f21a7e74e107ffcf5e909bc28",
+    "semantic_hash": "c5ac290f21a7e74e107ffcf5e909bc28"
+  },
+  ".waystation/messages/message-project-OpenCode-Qwen3.7Plus-20260706-230506-hmeo.json": {
+    "mtime": 1783368306.6815746,
+    "ast_hash": "6887bca46cbacf27c1083f06e21ff166",
+    "semantic_hash": "6887bca46cbacf27c1083f06e21ff166"
+  },
+  ".waystation/messages/message-task-graph-brief-OpenCode-Qwen3.7Plus-20260706-225649-fnov.json": {
+    "mtime": 1783367809.2348728,
+    "ast_hash": "ab8cf82d32924f7a4d91d3485224d626",
+    "semantic_hash": "ab8cf82d32924f7a4d91d3485224d626"
+  },
+  ".waystation/messages/message-task-graph-brief-OpenCode-Qwen3.7Plus-20260706-230244-pq8c.json": {
+    "mtime": 1783368164.1480737,
+    "ast_hash": "faa841c346c27f70f526265cd20a5b8b",
+    "semantic_hash": "faa841c346c27f70f526265cd20a5b8b"
+  },
+  ".waystation/messages/message-task-graph-core-OpenCode-DeepSeekV4Pro-20260706-225845-k0ft.json": {
+    "mtime": 1783367925.6457188,
+    "ast_hash": "caea254ee0b0c389d3db453a623fc8e6",
+    "semantic_hash": "caea254ee0b0c389d3db453a623fc8e6"
+  },
+  ".waystation/messages/message-task-graph-core-OpenCode-Qwen3.7Plus-20260706-225604-ye7c.json": {
+    "mtime": 1783367764.326097,
+    "ast_hash": "fe25c026ea3fdb3a197b32b38d7a05c8",
+    "semantic_hash": "fe25c026ea3fdb3a197b32b38d7a05c8"
+  },
+  "src/dashboard/client/src/pages/GraphView.tsx": {
+    "mtime": 1783369057.210115,
+    "ast_hash": "bc4cdebeeed7d1bce33688143a2bc293",
+    "semantic_hash": "bc4cdebeeed7d1bce33688143a2bc293"
   }
 }
