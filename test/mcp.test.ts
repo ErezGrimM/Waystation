@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { buildServer } from "../src/mcp/server.ts";
 
 const testRoot = join(process.cwd(), ".waystation-test-mcp");
@@ -116,8 +116,8 @@ describe("mcp server integration", () => {
     await client.connect(clientTransport);
 
     const res = await client.callTool({ name: "get_git_context", arguments: {} });
-    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
-    const result = JSON.parse(text);
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
     expect(result.data.git.worktree).toBeTruthy();
     expect(Array.isArray(result.data.activeClaims)).toBe(true);
@@ -136,8 +136,8 @@ describe("mcp server integration", () => {
     await client.connect(clientTransport);
 
     const res = await client.callTool({ name: "get_next_task", arguments: {} });
-    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
-    const result = JSON.parse(text);
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
     expect(result.data).not.toBeNull();
     expect(result.data.id).toBe("test-task");
@@ -155,8 +155,8 @@ describe("mcp server integration", () => {
     await client.connect(clientTransport);
 
     const res = await client.callTool({ name: "get_status", arguments: {} });
-    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
-    const result = JSON.parse(text);
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
     expect(result.data.total).toBe(1);
     expect(result.data.counts.ready).toBe(1);
@@ -177,7 +177,7 @@ describe("mcp server integration", () => {
       name: "claim_task",
       arguments: { id: "test-task", agent: "test-agent" },
     });
-    const claimText = (claimRes.content as Array<{ type: string; text: string }>)[0].text;
+    const claimText = (claimRes.content as Array<{ type: string; text: string }>)[0]!.text;
     const claimResult = JSON.parse(claimText);
     expect(claimResult.ok).toBe(true);
     expect(claimResult.data.task).toBe("test-task");
@@ -187,7 +187,7 @@ describe("mcp server integration", () => {
       name: "get_task",
       arguments: { id: "test-task" },
     });
-    const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0].text;
+    const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0]!.text;
     const taskResult = JSON.parse(taskText);
     expect(taskResult.ok).toBe(true);
     expect(taskResult.data.status).toBe("in_progress");
@@ -208,8 +208,8 @@ describe("mcp server integration", () => {
       name: "get_brief",
       arguments: { task: "test-task" },
     });
-    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
-    const result = JSON.parse(text);
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
     expect(result.data.task.id).toBe("test-task");
     expect(result.data.task.status).toBe("in_progress");
@@ -228,8 +228,8 @@ describe("mcp server integration", () => {
     await client.connect(clientTransport);
 
     const res = await client.callTool({ name: "validate_ledger", arguments: {} });
-    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
-    const result = JSON.parse(text);
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
 
     await client.close();
@@ -248,7 +248,7 @@ describe("mcp server integration", () => {
       name: "release_task",
       arguments: { id: "test-task", agent: "test-agent" },
     });
-    const relText = (relRes.content as Array<{ type: string; text: string }>)[0].text;
+    const relText = (relRes.content as Array<{ type: string; text: string }>)[0]!.text;
     const relResult = JSON.parse(relText);
     expect(relResult.ok).toBe(true);
 
@@ -256,7 +256,7 @@ describe("mcp server integration", () => {
       name: "get_task",
       arguments: { id: "test-task" },
     });
-    const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0].text;
+    const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0]!.text;
     const taskResult = JSON.parse(taskText);
     expect(taskResult.data.status).toBe("ready");
 

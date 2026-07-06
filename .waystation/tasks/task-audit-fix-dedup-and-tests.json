@@ -1,7 +1,7 @@
 {
   "id": "task-audit-fix-dedup-and-tests",
   "title": "Deduplicate readJson, fix test/lint config, clean up generate",
-  "status": "ready",
+  "status": "in_progress",
   "priority": 3,
   "scope": "scope-core",
   "path_hints": [
@@ -22,5 +22,6 @@
     "skeleton.test.ts has no duplicate loadClaims import.",
     "generate.ts uses loadIssues from store.ts instead of loadIssuesLite.",
     "All tests pass, typecheck clean, biome clean."
-  ]
+  ],
+  "updated_at": "2026-07-06T22:05:07+03:00"
 }

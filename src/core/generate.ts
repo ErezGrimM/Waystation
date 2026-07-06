@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   backendWarnings,
@@ -40,34 +40,6 @@ export async function reindex(root?: string): Promise<CommandResult<IndexCounts>
   return okResult(counts(data), warnings);
 }
 
-interface IssueLite {
-  id: string;
-  title: string;
-  status: string;
-  severity: string;
-}
-
-function loadIssuesLite(root?: string): IssueLite[] {
-  const dir = join(ledgerPaths(root).ledger, "issues");
-  let entries: string[];
-  try {
-    entries = readdirSync(dir);
-  } catch {
-    return [];
-  }
-  const out: IssueLite[] = [];
-  for (const name of entries) {
-    if (!name.endsWith(".json")) continue;
-    try {
-      const d = JSON.parse(readFileSync(join(dir, name), "utf8")) as IssueLite;
-      out.push({ id: d.id, title: d.title, status: d.status, severity: d.severity });
-    } catch {
-      // skip unreadable issue in generated output
-    }
-  }
-  return out;
-}
-
 function line(t: TaskRecord): string {
   return `- \`${t.id}\` [p${t.priority}] — ${t.title}`;
 }
@@ -97,7 +69,7 @@ export function generateStatus(root?: string): string {
   );
   const done = tasks.filter((t) => t.status === "done");
   const wontDo = tasks.filter((t) => t.status === "wont_do");
-  const openIssues = loadIssuesLite(root).filter(
+  const openIssues = loadIssues(root).filter(
     (i) => !["closed", "fixed", "verified", "wont_fix", "duplicate"].includes(i.status),
   );
 

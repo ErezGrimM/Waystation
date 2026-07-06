@@ -190,8 +190,8 @@ describe("dashboard API server", () => {
 
     emitMutationEvent({ type: "test", payload: "hello" });
     expect(events.length).toBe(1);
-    expect(events[0].type).toBe("test");
-    expect(events[0].payload).toBe("hello");
+    expect(events[0]!.type).toBe("test");
+    expect(events[0]!.payload).toBe("hello");
 
     unsub();
     emitMutationEvent({ type: "test2", payload: "world" });

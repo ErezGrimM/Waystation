@@ -2,10 +2,10 @@
   "id": "claim-task-audit-fix-dashboard-cleanup-opencode-20260706-220400",
   "task": "task-audit-fix-dashboard-cleanup",
   "agent": "opencode",
-  "status": "active",
+  "status": "completed",
   "branch": "main",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-07-06T22:04:00+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-07-06T22:05:00+03:00"
 }

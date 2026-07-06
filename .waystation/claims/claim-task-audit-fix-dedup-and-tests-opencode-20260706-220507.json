@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-fix-dedup-and-tests-opencode-20260706-220507",
+  "task": "task-audit-fix-dedup-and-tests",
+  "agent": "opencode",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-06T22:05:07+03:00",
+  "released_at": null,
+  "completed_at": null
+}

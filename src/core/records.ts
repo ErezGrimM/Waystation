@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type TaskRecord, TaskRecord as TaskRecordSchema } from "./schema.ts";
+import { readJsonFile } from "./store.ts";
 
 export class RecordError extends Error {
   readonly file: string;
@@ -12,21 +13,6 @@ export class RecordError extends Error {
     this.name = "RecordError";
     this.file = file;
     this.code = code;
-  }
-}
-
-/** Read and JSON-parse a file, raising a RecordError on malformed JSON. */
-function readJson(file: string): unknown {
-  let raw: string;
-  try {
-    raw = readFileSync(file, "utf8");
-  } catch (err) {
-    throw new RecordError(file, `cannot read file: ${(err as Error).message}`);
-  }
-  try {
-    return JSON.parse(raw);
-  } catch (err) {
-    throw new RecordError(file, `invalid JSON: ${(err as Error).message}`);
   }
 }
 
@@ -47,7 +33,7 @@ export function loadTasks(root?: string): TaskRecord[] {
   for (const name of entries) {
     if (!name.endsWith(".json")) continue; // canonical records are JSON
     const file = join(paths.tasks, name);
-    const data = readJson(file);
+    const data = readJsonFile(file);
     const parsed = TaskRecordSchema.safeParse(data);
     if (!parsed.success) {
       const issue = parsed.error.issues[0];

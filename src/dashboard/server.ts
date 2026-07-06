@@ -370,6 +370,18 @@ export function createApp(root: string, distDir?: string): Hono {
     let closed = false;
     const stream = new ReadableStream({
       start(controller) {
+        controller.enqueue(": heartbeat\n\n");
+        const heartbeat = setInterval(() => {
+          if (!closed) {
+            try {
+              controller.enqueue(": heartbeat\n\n");
+            } catch {
+              clearInterval(heartbeat);
+            }
+          } else {
+            clearInterval(heartbeat);
+          }
+        }, 15_000);
         const unsub = onMutationEvent((event) => {
           if (!closed) {
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
@@ -377,6 +389,7 @@ export function createApp(root: string, distDir?: string): Hono {
         });
         c.req.raw.signal.addEventListener("abort", () => {
           closed = true;
+          clearInterval(heartbeat);
           unsub();
           try {
             controller.close();

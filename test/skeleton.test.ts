@@ -4,24 +4,35 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief, renderBrief, resolveTaskFromGitClaim } from "../src/core/brief.ts";
-import { createHandoff, getHandoff } from "../src/core/handoff.ts";
+import {
+  generateActiveWork,
+  generateBlocked,
+  generateStatus,
+  generateTaskViews,
+  reindex,
+} from "../src/core/generate.ts";
 import { getGitState } from "../src/core/git.ts";
+import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
-import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
-import { generateActiveWork, generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
-import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { createIssue } from "../src/core/issue.ts";
-import { activeClaimOverlaps } from "../src/core/overlap.ts";
-import { CODES, diag, toResult } from "../src/core/result.ts";
-import { loadClaims, loadIssues } from "../src/core/store.ts";
-import { safeIdPart } from "../src/core/time.ts";
-import { backendWarnings, buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
+import {
+  inbox,
+  loadMessages,
+  PROJECT_THREAD,
+  postMessage,
+  threadMessages,
+} from "../src/core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
+import { activeClaimOverlaps } from "../src/core/overlap.ts";
+import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
+import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
-import { activeClaimForTask, loadClaims } from "../src/core/store.ts";
+import { activeClaimForTask, loadClaims, loadIssues } from "../src/core/store.ts";
 import { nextTask, readyTasks } from "../src/core/tasks.ts";
+import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
+import { backendWarnings, buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
 import { buildTaskIndex, readyFromIndex } from "../src/index/taskIndex.ts";
 
 const tmpRoots: string[] = [];
@@ -83,9 +94,9 @@ describe("audit fixes", () => {
 
   test("a path-y issue id is rejected before writing outside issues", async () => {
     const root = fixtureRoot([D]);
-    await expect(
-      createIssue(root, { id: "../tasks/task-d", title: "bad" }),
-    ).rejects.toThrow("invalid issue id");
+    await expect(createIssue(root, { id: "../tasks/task-d", title: "bad" })).rejects.toThrow(
+      "invalid issue id",
+    );
   });
 });
 
@@ -132,7 +143,10 @@ describe("git state", () => {
     tmpRoots.push(root);
     Bun.spawnSync(["git", "init", "-q"], { cwd: root });
     const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
-    const p = Bun.spawnSync({ cmd: [process.execPath, "run", cli, "git", "status", "--json"], cwd: root });
+    const p = Bun.spawnSync({
+      cmd: [process.execPath, "run", cli, "git", "status", "--json"],
+      cwd: root,
+    });
     const res = JSON.parse(p.stdout.toString()) as { ok: boolean; data: { worktree: string } };
     expect(p.exitCode).toBe(0);
     expect(res.ok).toBe(true);
@@ -189,7 +203,10 @@ describe("prompt", () => {
     });
     const p = selectPrompts(root, {})[0];
     expect(p).toBeDefined();
-    if (p) expect(renderPrompt(p, { task_id: "task-z", agent: "bob" })).toContain("work on task-z as bob");
+    if (p)
+      expect(renderPrompt(p, { task_id: "task-z", agent: "bob" })).toContain(
+        "work on task-z as bob",
+      );
   });
 });
 
@@ -198,7 +215,11 @@ describe("handoff", () => {
 
   test("create writes a handoff and appends handoff.created", async () => {
     const root = fixtureRoot([D]);
-    const h = await createHandoff(root, { task: "task-d", from: "coder", summary: "did part 1" }, now);
+    const h = await createHandoff(
+      root,
+      { task: "task-d", from: "coder", summary: "did part 1" },
+      now,
+    );
     expect(h.task).toBe("task-d");
     expect(getHandoff(root, h.id)?.summary).toBe("did part 1");
     expect(readFileSync(join(root, ".waystation", "events.jsonl"), "utf8")).toContain(
@@ -287,7 +308,13 @@ describe("next / ready resolution", () => {
   });
 
   test("an in_progress task is not ready (already being worked)", () => {
-    const inProg = { id: "task-ip", title: "IP", status: "in_progress", priority: 1, dependencies: [] };
+    const inProg = {
+      id: "task-ip",
+      title: "IP",
+      status: "in_progress",
+      priority: 1,
+      dependencies: [],
+    };
     expect(readyTasks(loadTasks(fixtureRoot([inProg]))).map((t) => t.id)).toEqual([]);
   });
 });
@@ -434,8 +461,24 @@ describe("active claim overlap warnings", () => {
 
   async function overlapRoot(): Promise<string> {
     const root = fixtureRoot([
-      { id: "task-left", title: "Left", status: "ready", priority: 1, scope: "scope-a", path_hints: ["src/core"], dependencies: [] },
-      { id: "task-right", title: "Right", status: "ready", priority: 1, scope: "scope-a", path_hints: ["src/core/brief.ts"], dependencies: [] },
+      {
+        id: "task-left",
+        title: "Left",
+        status: "ready",
+        priority: 1,
+        scope: "scope-a",
+        path_hints: ["src/core"],
+        dependencies: [],
+      },
+      {
+        id: "task-right",
+        title: "Right",
+        status: "ready",
+        priority: 1,
+        scope: "scope-a",
+        path_hints: ["src/core/brief.ts"],
+        dependencies: [],
+      },
     ]);
     await claimTask(root, "task-left", "left-agent", now);
     await claimTask(root, "task-right", "right-agent", now);
@@ -484,7 +527,13 @@ describe("validate", () => {
   });
 
   test("detects a missing dependency target", () => {
-    const orphan = { id: "task-x", title: "X", status: "todo", priority: 1, dependencies: ["task-missing"] };
+    const orphan = {
+      id: "task-x",
+      title: "X",
+      status: "todo",
+      priority: 1,
+      dependencies: ["task-missing"],
+    };
     expect(codes(fixtureRoot([orphan]))).toContain("missing_dependency");
   });
 
@@ -510,14 +559,22 @@ describe("validate", () => {
 
   test("flags a dangling in_reply_to", async () => {
     const root = fixtureRoot([D]);
-    await postMessage(root, { thread: "task-d", from: "a", body: "x", inReplyTo: "message-nope" }, t0, "d1");
+    await postMessage(
+      root,
+      { thread: "task-d", from: "a", body: "x", inReplyTo: "message-nope" },
+      t0,
+      "d1",
+    );
     expect(codes(root)).toContain("dangling_reply");
   });
 
   test("flags a malformed issue record", () => {
     const root = fixtureRoot([A]);
     mkdirSync(join(root, ".waystation", "issues"), { recursive: true });
-    writeFileSync(join(root, ".waystation", "issues", "issue-bad.json"), JSON.stringify({ id: "issue-bad" }));
+    writeFileSync(
+      join(root, ".waystation", "issues", "issue-bad.json"),
+      JSON.stringify({ id: "issue-bad" }),
+    );
     expect(codes(root)).toContain("schema_invalid");
   });
 
@@ -658,7 +715,13 @@ describe("generate", () => {
   });
 
   test("reports keep review tasks out of dependency-blocked buckets", () => {
-    const review = { id: "task-review", title: "Review", status: "review", priority: 1, dependencies: [] };
+    const review = {
+      id: "task-review",
+      title: "Review",
+      status: "review",
+      priority: 1,
+      dependencies: [],
+    };
     const root = fixtureRoot([review]);
     const status = generateStatus(root);
     expect(status).toContain("## Review");
@@ -667,7 +730,13 @@ describe("generate", () => {
   });
 
   test("status reports marked blocked tasks separately", () => {
-    const blocked = { id: "task-blocked", title: "Blocked", status: "blocked", priority: 1, dependencies: [] };
+    const blocked = {
+      id: "task-blocked",
+      title: "Blocked",
+      status: "blocked",
+      priority: 1,
+      dependencies: [],
+    };
     const status = generateStatus(fixtureRoot([blocked]));
     expect(status).toContain("## Marked blocked");
     expect(status).toContain("task-blocked");
@@ -719,7 +788,12 @@ describe("messages / inbox", () => {
 
   test("project channel broadcasts reach everyone", async () => {
     const root = fixtureRoot([D]);
-    await postMessage(root, { thread: PROJECT_THREAD, from: "coder", body: "announce" }, now, "dddd");
+    await postMessage(
+      root,
+      { thread: PROJECT_THREAD, from: "coder", body: "announce" },
+      now,
+      "dddd",
+    );
     expect(inbox(root, "auditor").map((m) => m.body)).toContain("announce");
   });
 
