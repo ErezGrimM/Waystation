@@ -96,6 +96,12 @@ export async function releaseTask(
     const task = requireTask(root, id);
     const claim = activeClaimForTask(root, id);
     if (!claim) throw new MutationError(`task ${id} has no active claim`, "no_active_claim");
+    if (claim.agent !== agent) {
+      throw new MutationError(
+        `task ${id} is claimed by ${claim.agent}, not ${agent}`,
+        "claim_owner_mismatch",
+      );
+    }
     const ts = nowIso(now);
     writeClaim(root, { ...claim, status: "released", released_at: ts });
     const from = task.status;
@@ -131,6 +137,12 @@ export async function finishTask(
     const ts = nowIso(now);
     const claim = activeClaimForTask(root, id);
     if (claim) {
+      if (claim.agent !== agent) {
+        throw new MutationError(
+          `task ${id} is claimed by ${claim.agent}, not ${agent}`,
+          "claim_owner_mismatch",
+        );
+      }
       writeClaim(root, { ...claim, status: "completed", completed_at: ts });
     }
     const from = task.status;

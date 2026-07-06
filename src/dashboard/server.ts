@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { BriefBudget } from "../core/brief.ts";
 import { buildBrief } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
+import { reindex } from "../core/generate.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
@@ -31,6 +32,16 @@ function catchDiag(e: unknown, fallbackCode: string = "unexpected_error") {
 
 function emit(type: string, data: Record<string, unknown>) {
   emitMutationEvent({ type, ...data, ts: nowIso() });
+}
+
+function gitStatusFiles(root: string): string[] {
+  const proc = Bun.spawnSync(["git", "status", "--porcelain"], { cwd: root });
+  return proc.stdout
+    .toString()
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.slice(3));
 }
 
 export function createApp(root: string, distDir?: string): Hono {
@@ -302,9 +313,38 @@ export function createApp(root: string, distDir?: string): Hono {
         );
       }
       if (body.files && body.files.length > 0) {
-        Bun.spawnSync(["git", "add", ...body.files], { cwd: root });
+        const allowed = new Set(gitStatusFiles(root));
+        const invalid = body.files.filter((file) => !allowed.has(file));
+        if (invalid.length > 0) {
+          return json(
+            toResult(null, [
+              diag("unexpected_error" as never, {
+                message: `invalid file selection: ${invalid.join(", ")}`,
+              }),
+            ]),
+          );
+        }
+        const add = Bun.spawnSync(["git", "add", "--", ...body.files], { cwd: root });
+        if (add.exitCode !== 0) {
+          return json(
+            toResult(null, [
+              diag("unexpected_error" as never, {
+                message: add.stderr.toString().trim() || "git add failed",
+              }),
+            ]),
+          );
+        }
       } else {
-        Bun.spawnSync(["git", "add", "-A"], { cwd: root });
+        const add = Bun.spawnSync(["git", "add", "-A"], { cwd: root });
+        if (add.exitCode !== 0) {
+          return json(
+            toResult(null, [
+              diag("unexpected_error" as never, {
+                message: add.stderr.toString().trim() || "git add failed",
+              }),
+            ]),
+          );
+        }
       }
       const proc = Bun.spawnSync(["git", "commit", "-m", body.message], { cwd: root });
       const out = proc.stdout.toString().trim();
@@ -315,6 +355,17 @@ export function createApp(root: string, distDir?: string): Hono {
         );
       }
       return json(okResult({ output: out || "committed" }));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  // ── reindex ──
+
+  app.post("/api/reindex", async (_c) => {
+    try {
+      const result = await reindex(root);
+      return json(result);
     } catch (e) {
       return json(catchDiag(e));
     }

@@ -76,10 +76,16 @@ export function generateStatus(root?: string): string {
   const tasks = loadTasks(root);
   const ready = readyTasks(tasks);
   const readyIds = new Set(ready.map((t) => t.id));
+  const byId = indexById(tasks);
 
   const inProgress = tasks.filter((t) => t.status === "in_progress");
+  const review = tasks.filter((t) => t.status === "review");
+  const markedBlocked = tasks.filter((t) => t.status === "blocked");
   const waiting = tasks.filter(
-    (t) => !readyIds.has(t.id) && !["done", "wont_do", "in_progress"].includes(t.status),
+    (t) =>
+      !readyIds.has(t.id) &&
+      !["done", "wont_do", "in_progress", "review", "blocked"].includes(t.status) &&
+      t.dependencies.some((d) => byId.get(d)?.status !== "done"),
   );
   const done = tasks.filter((t) => t.status === "done");
   const wontDo = tasks.filter((t) => t.status === "wont_do");
@@ -95,6 +101,8 @@ export function generateStatus(root?: string): string {
   };
   section("Ready to claim", ready.map(line));
   section("In progress", inProgress.map(line));
+  section("Review", review.map(line));
+  section("Marked blocked", markedBlocked.map(line));
   section("Waiting (blocked by dependencies)", waiting.map(line));
   section("Done", done.map(line));
   section("Won't do", wontDo.map(line));
@@ -125,7 +133,7 @@ export function generateBlocked(root?: string): string {
   const tasks = loadTasks(root);
   const byId = indexById(tasks);
   const blocked = tasks
-    .filter((t) => !["done", "wont_do"].includes(t.status))
+    .filter((t) => !["done", "wont_do", "in_progress", "review"].includes(t.status))
     .filter((t) => !isActionable(t, byId))
     .map((t) => {
       const unmet = t.dependencies.filter((d) => byId.get(d)?.status !== "done");

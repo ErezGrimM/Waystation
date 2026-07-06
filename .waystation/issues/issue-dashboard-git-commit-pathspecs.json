@@ -1,0 +1,13 @@
+{
+  "id": "issue-dashboard-git-commit-pathspecs",
+  "title": "Dashboard git commit endpoint trusts arbitrary pathspecs and ignores git add failure",
+  "status": "open",
+  "created_at": "2026-07-06T21:15:00+03:00",
+  "updated_at": "2026-07-06T21:15:00+03:00",
+  "closed_at": null,
+  "severity": "medium",
+  "type": "bug",
+  "priority": 2,
+  "scope": "scope-dashboard",
+  "description": "POST /api/git/commit passes API-provided files directly to git add and proceeds to git commit without checking the git add exit code. A direct caller can submit broad or option-like pathspecs, and failures are hidden until commit. Affected: src/dashboard/server.ts. Fix by allowing only files from git status, passing -- before pathspecs, and failing if git add exits non-zero."
+}

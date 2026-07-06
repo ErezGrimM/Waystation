@@ -9,6 +9,7 @@ import { initLedger } from "../src/core/init.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
+import { createIssue } from "../src/core/issue.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
 import { safeIdPart } from "../src/core/time.ts";
@@ -76,6 +77,13 @@ describe("audit fixes", () => {
     );
     expect(m.id.includes("/")).toBe(false);
     expect(m.id.includes("..")).toBe(false);
+  });
+
+  test("a path-y issue id is rejected before writing outside issues", async () => {
+    const root = fixtureRoot([D]);
+    await expect(
+      createIssue(root, { id: "../tasks/task-d", title: "bad" }),
+    ).rejects.toThrow("invalid issue id");
   });
 });
 
@@ -324,12 +332,24 @@ describe("mutations: claim / release / finish", () => {
     expect(activeClaimForTask(root, "task-d")).toBeUndefined();
   });
 
+  test("release rejects an agent that does not own the active claim", async () => {
+    const root = fixtureRoot([D]);
+    await claimTask(root, "task-d", "a", fixedNow);
+    await expect(releaseTask(root, "task-d", "b", fixedNow)).rejects.toThrow(MutationError);
+  });
+
   test("finish marks the task done and completes the claim", async () => {
     const root = fixtureRoot([D]);
     const claim = await claimTask(root, "task-d", "a", fixedNow);
     await finishTask(root, "task-d", "a", fixedNow);
     expect(loadTasks(root).find((t) => t.id === "task-d")?.status).toBe("done");
     expect(loadClaims(root).find((c) => c.id === claim.id)?.status).toBe("completed");
+  });
+
+  test("finish rejects an agent that does not own the active claim", async () => {
+    const root = fixtureRoot([D]);
+    await claimTask(root, "task-d", "a", fixedNow);
+    await expect(finishTask(root, "task-d", "b", fixedNow)).rejects.toThrow(MutationError);
   });
 });
 
@@ -475,6 +495,22 @@ describe("generate", () => {
     const root = fixtureRoot([B, C, D]); // B waits on missing task-a; C waits on task-b
     const md = generateBlocked(root);
     expect(md).toContain("task-c");
+  });
+
+  test("reports keep review tasks out of dependency-blocked buckets", () => {
+    const review = { id: "task-review", title: "Review", status: "review", priority: 1, dependencies: [] };
+    const root = fixtureRoot([review]);
+    const status = generateStatus(root);
+    expect(status).toContain("## Review");
+    expect(status).toContain("task-review");
+    expect(generateBlocked(root)).not.toContain("task-review");
+  });
+
+  test("status reports marked blocked tasks separately", () => {
+    const blocked = { id: "task-blocked", title: "Blocked", status: "blocked", priority: 1, dependencies: [] };
+    const status = generateStatus(fixtureRoot([blocked]));
+    expect(status).toContain("## Marked blocked");
+    expect(status).toContain("task-blocked");
   });
 
   test("generateTaskViews prunes stale view files", () => {

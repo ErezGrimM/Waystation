@@ -9,7 +9,7 @@ import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, type Diagnostic, diag, okResult, toResult } from "../core/result.ts";
 import { loadIssues } from "../core/store.ts";
-import { nextTask } from "../core/tasks.ts";
+import { nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
 
 function toContent(result: CommandResult): { content: Array<{ type: "text"; text: string }> } {
@@ -37,9 +37,7 @@ export function buildServer(root: string): McpServer {
       for (const t of tasks) {
         counts[t.status] = (counts[t.status] ?? 0) + 1;
       }
-      const ready = tasks.filter(
-        (t) => t.status !== "done" && t.status !== "wont_do" && t.status !== "blocked",
-      );
+      const ready = readyTasks(tasks);
       const readyIds = ready.map((t) => ({
         id: t.id,
         title: t.title,

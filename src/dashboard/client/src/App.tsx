@@ -1,4 +1,6 @@
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { api } from "./api.ts";
 import { Dashboard } from "./pages/Dashboard.tsx";
 import { Tasks } from "./pages/Tasks.tsx";
 import { TaskDetail } from "./pages/TaskDetail.tsx";
@@ -25,6 +27,23 @@ export function App() {
     ? "/tasks/detail"
     : location.pathname;
   const [title, subtitle] = VIEWS[path] ?? ["", ""];
+  const [reindexMsg, setReindexMsg] = useState("");
+
+  const doReindex = useCallback(async () => {
+    setReindexMsg("Reindexing...");
+    const r = await api<{ tasks: number; issues: number; claims: number; messages: number }>(
+      "/api/reindex",
+      { method: "POST" },
+    );
+    if (r.ok && r.data) {
+      setReindexMsg(
+        `Done: ${r.data.tasks} tasks, ${r.data.issues} issues, ${r.data.claims} claims, ${r.data.messages} msgs`,
+      );
+    } else {
+      setReindexMsg(r.errors?.[0]?.message ?? "Failed");
+    }
+    setTimeout(() => setReindexMsg(""), 4000);
+  }, []);
 
   return (
     <div className="layout">
@@ -71,6 +90,16 @@ export function App() {
           <div>
             <div className="topbar-title">{title}</div>
             {subtitle && <div className="topbar-subtitle">{subtitle}</div>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {reindexMsg && (
+              <span style={{ fontSize: 12, color: "var(--text-dim)", fontFamily: "var(--mono)" }}>
+                {reindexMsg}
+              </span>
+            )}
+            <button className="btn-secondary" onClick={doReindex}>
+              Reindex
+            </button>
           </div>
         </div>
 

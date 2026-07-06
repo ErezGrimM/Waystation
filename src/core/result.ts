@@ -141,6 +141,12 @@ export const CODES = {
     hint: "Claim the task before releasing it.",
     retryable: false,
   },
+  claim_owner_mismatch: {
+    severity: "error",
+    message: "Active claim belongs to a different agent.",
+    hint: "Use the claiming agent name, or release the claim through an explicit override flow.",
+    retryable: false,
+  },
   task_done: {
     severity: "error",
     message: "Task is already done.",

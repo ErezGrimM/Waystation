@@ -1,0 +1,13 @@
+{
+  "id": "issue-generated-reports-status-buckets",
+  "title": "Generated status and blocked reports misclassify review and blocked tasks",
+  "status": "open",
+  "created_at": "2026-07-06T21:15:00+03:00",
+  "updated_at": "2026-07-06T21:15:00+03:00",
+  "closed_at": null,
+  "severity": "medium",
+  "type": "quality",
+  "priority": 2,
+  "scope": "scope-core",
+  "description": "generateStatus puts non-ready tasks, including review and explicitly blocked tasks, under Waiting (blocked by dependencies). generateBlocked also includes review tasks because isActionable returns false. Affected: src/core/generate.ts. Fix by splitting dependency-blocked, marked blocked, review, and non-ready/todo buckets explicitly."
+}
