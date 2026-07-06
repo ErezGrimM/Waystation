@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-prompt-render` [p2] — Implement prompt list/show/render
+_none_
 
 ## In progress
 _none_
@@ -20,6 +20,7 @@ _none_
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement `waystation init`
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON
+- `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README (run instructions, layout, dogfood loop)
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-skeleton-brief` [p1] — Widen skeleton: `waystation brief --task <id>`

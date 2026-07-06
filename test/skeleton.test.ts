@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
+import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
@@ -75,6 +76,59 @@ describe("audit fixes", () => {
     );
     expect(m.id.includes("/")).toBe(false);
     expect(m.id.includes("..")).toBe(false);
+  });
+});
+
+describe("prompt", () => {
+  function writePrompt(root: string, rec: Record<string, unknown>): void {
+    mkdirSync(join(root, ".waystation", "prompts"), { recursive: true });
+    writeFileSync(join(root, ".waystation", "prompts", `${rec.id}.json`), JSON.stringify(rec));
+  }
+
+  test("substitute replaces known vars and leaves unknown intact", () => {
+    expect(substitute("hi {{agent}} on {{task_id}} / {{nope}}", { agent: "a", task_id: "t" })).toBe(
+      "hi a on t / {{nope}}",
+    );
+  });
+
+  test("selectPrompts matches by agent (and folds in the task's scope)", () => {
+    const root = fixtureRoot([
+      { id: "task-p", title: "P", status: "todo", priority: 1, dependencies: [], prompts: [] },
+    ]);
+    writePrompt(root, {
+      id: "prompt-x",
+      title: "X",
+      status: "active",
+      applies_to: { agents: ["coder"], roles: [], scopes: [], tasks: [] },
+    });
+    expect(selectPrompts(root, { agent: "coder", task: "task-p" }).map((p) => p.id)).toContain(
+      "prompt-x",
+    );
+  });
+
+  test("an inactive prompt is not selected", () => {
+    const root = fixtureRoot([]);
+    writePrompt(root, {
+      id: "prompt-old",
+      title: "Old",
+      status: "archived",
+      applies_to: { agents: [], roles: [], scopes: [], tasks: [] },
+    });
+    expect(selectPrompts(root, { agent: "x" }).map((p) => p.id)).not.toContain("prompt-old");
+  });
+
+  test("renderPrompt substitutes variables in instructions", () => {
+    const root = fixtureRoot([]);
+    writePrompt(root, {
+      id: "prompt-r",
+      title: "R",
+      status: "active",
+      instructions: "work on {{task_id}} as {{agent}}",
+      applies_to: { agents: [], roles: [], scopes: [], tasks: [] },
+    });
+    const p = selectPrompts(root, {})[0];
+    expect(p).toBeDefined();
+    if (p) expect(renderPrompt(p, { task_id: "task-z", agent: "bob" })).toContain("work on task-z as bob");
   });
 });
 

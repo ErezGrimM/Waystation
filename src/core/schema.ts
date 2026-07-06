@@ -96,6 +96,33 @@ export const MessageRecord = z.object({
 });
 export type MessageRecord = z.infer<typeof MessageRecord>;
 
+/** Prompt status values (spec §6.4). */
+export const PromptStatus = z.enum(["draft", "active", "deprecated", "archived"]);
+export type PromptStatus = z.infer<typeof PromptStatus>;
+
+/** Prompt record schema (spec §6.4): reusable, scoped instruction records. */
+export const PromptRecord = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  version: z.number().int().default(1),
+  status: PromptStatus.default("active"),
+  applies_to: z
+    .object({
+      agents: z.array(z.string()).default([]),
+      roles: z.array(z.string()).default([]),
+      scopes: z.array(z.string()).default([]),
+      tasks: z.array(z.string()).default([]),
+    })
+    .default({ agents: [], roles: [], scopes: [], tasks: [] }),
+  priority: z.number().int().default(50),
+  purpose: z.string().optional(),
+  instructions: z.string().optional(),
+  must_do: z.array(z.string()).default([]),
+  must_not: z.array(z.string()).default([]),
+  commands: z.record(z.string(), z.array(z.string())).optional(),
+});
+export type PromptRecord = z.infer<typeof PromptRecord>;
+
 /** Claim status values (spec §6.6). */
 export const ClaimStatus = z.enum(["active", "released", "completed", "stale"]);
 export type ClaimStatus = z.infer<typeof ClaimStatus>;

@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-prompt-render-claude-code-20260706-170830",
+  "task": "task-prompt-render",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T17:08:30+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T17:11:58+03:00"
+}

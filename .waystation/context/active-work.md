@@ -6,5 +6,5 @@
 _none_
 
 ## Ready
-- `task-prompt-render` [p2] — Implement prompt list/show/render
+_none_
 

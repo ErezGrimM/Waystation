@@ -7,6 +7,7 @@ import { initLedger } from "../core/init.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
 import { findProjectRoot, ledgerPaths } from "../core/paths.ts";
+import { getPrompt, loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import { nextTask, readyTasks } from "../core/tasks.ts";
@@ -276,6 +277,76 @@ handoff
         process.stdout.write(`\nnext steps:\n${h.next_steps.map((s) => `  - ${s}`).join("\n")}\n`);
       }
     });
+  });
+
+const prompt = program.command("prompt").description("Prompt records");
+
+prompt
+  .command("list")
+  .description("List prompt records")
+  .option("--json", "output JSON")
+  .action((opts: { json?: boolean }) => {
+    const prompts = loadPrompts(findProjectRoot());
+    emitResult(okResult(prompts), opts.json, () => {
+      if (prompts.length === 0) {
+        process.stdout.write("No prompts.\n");
+        return;
+      }
+      for (const p of prompts) process.stdout.write(`${p.id}  [${p.status}]  ${p.title}\n`);
+    });
+  });
+
+prompt
+  .command("show")
+  .argument("<id>", "prompt id")
+  .option("--json", "output JSON")
+  .action((id: string, opts: { json?: boolean }) => {
+    const p = getPrompt(findProjectRoot(), id) ?? null;
+    const res = p
+      ? okResult(p)
+      : toResult(null, [diag("not_found", { message: `no such prompt: ${id}`, details: { id } })]);
+    emitResult(res, opts.json, () => {
+      if (p) process.stdout.write(renderPrompt(p, {}));
+    });
+  });
+
+prompt
+  .command("render")
+  .description("Render applicable prompts for a task/agent (spec §11)")
+  .requiredOption("--task <id>", "task id")
+  .requiredOption("--agent <agent>", "agent name")
+  .option("--role <role>", "agent role")
+  .option("--json", "output JSON")
+  .action((opts: { task: string; agent: string; role?: string; json?: boolean }) => {
+    const root = findProjectRoot();
+    const task = loadTasks(root).find((t) => t.id === opts.task);
+    if (!task) {
+      emitResult(
+        toResult(null, [
+          diag("no_such_task", {
+            message: `no such task: ${opts.task}`,
+            details: { id: opts.task },
+          }),
+        ]),
+        opts.json,
+        () => {},
+      );
+      return;
+    }
+    const ctx = {
+      agent: opts.agent,
+      role: opts.role,
+      task: task.id,
+      scope: task.scope ?? undefined,
+    };
+    const vars = { task_id: task.id, agent: opts.agent, scope: task.scope ?? undefined };
+    const selected = selectPrompts(root, ctx);
+    const rendered = selected.length
+      ? selected.map((p) => renderPrompt(p, vars)).join("\n---\n\n")
+      : "No applicable prompts.\n";
+    emitResult(okResult({ prompts: selected.map((p) => p.id), rendered }), opts.json, () =>
+      process.stdout.write(rendered.endsWith("\n") ? rendered : `${rendered}\n`),
+    );
   });
 
 const message = program.command("message").description("Agent messages (async inbox)");
