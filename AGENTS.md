@@ -58,7 +58,68 @@ const parsed = SomeSchema.safeParse(readJsonFile(file));
 if (!parsed.success) throw new RecordError(file, "schema: ...", "schema_invalid");
 ```
 
-## Testing
+## Creating task records (the scene for new JSONs)
+
+When starting a new feature or fix, create a task record in `.waystation/tasks/`. Each task is a JSON file following the `TaskRecord` schema:
+
+### Task JSON template
+
+```jsonc
+{
+  "id": "task-<kebab-case>",           // unique id, stable — becomes the filename
+  "title": "What needs to be done",
+  "status": "todo",                     // todo | ready | in_progress | blocked | review | done | wont_do
+  "priority": 2,                        // 1 (urgent) to 5 (nice-to-have), default 3
+  "scope": "scope-core",                // scope id matching .waystation/scopes/<id>.json
+  "path_hints": ["src/core/", "test/"], // files/dirs an agent will likely touch
+  "prompts": ["prompt-waystation-v1"],  // prompt ids to inject into agent context
+  "dependencies": ["task-other"],       // ids of tasks that must be done first
+  "created_at": "2026-07-06T22:00:00+03:00",
+  "updated_at": "2026-07-06T22:00:00+03:00",
+  "closed_at": null,
+  "description": "What and why. Write this so an agent picking it up cold can start.",
+  "acceptance": [
+    "Specific, testable criterion.",
+    "Another criterion."
+  ],
+  "notes": "Context, gotchas, links to relevant handoffs or decisions."
+}
+```
+
+### Task lifecycle
+
+```
+todo → ready → in_progress → review → done
+                ↘ blocked  ↗        ↘ wont_do
+```
+
+- **todo**: drafted but not yet actionable (has unmet deps, needs more detail)
+- **ready**: all deps done, ready to claim
+- **in_progress**: claimed by an agent, work happening
+- **blocked**: can't proceed until a blocker is resolved
+- **review**: implementation done, awaiting sign-off
+- **done**: finished and closed
+- **wont_do**: explicitly declined
+
+A task is "actionable" (appears in `task next`) when its status is `todo` or `ready` and ALL its dependencies are `done`.
+
+### Writing good tasks
+
+- **Description should stand alone.** An agent picking up the task next week shouldn't need tribal knowledge. Link to relevant specs, decisions, and handoffs.
+- **Acceptance criteria drive implementation.** Each criterion should be verifiable — something `bun test` or `waystation validate` can confirm.
+- **Use `notes` for context**, not for spec content. Notes are for gotchas, coordination hints, and links: "Agent A is working on `task-overlap-warnings` and may touch `brief.ts`."
+- **Dependencies express ordering.** If task B needs task A done first, B depends on A. A single missing dependency makes a task non-actionable.
+- **Match `scope` to an existing scope record** in `.waystation/scopes/` (e.g. `scope-core`, `scope-cli`, `scope-dashboard`). The scope's `rules` array feeds into task briefs.
+
+### After creating a task
+
+```ps1
+.\waystation.exe reindex        # pick up the new record
+.\waystation.exe validate       # ensure the ledger is clean
+.\waystation.exe task next      # confirm it appears (or not, if deps unmet)
+```
+
+Tasks can be created by hand (write the JSON file directly) or via the CLI `init` command which scaffolds example records. There is no `task create` command — tasks are plain JSON files in a directory.
 
 Tests use `bun:test`. Key patterns:
 
