@@ -1,7 +1,7 @@
 {
   "id": "task-dashboard-git-worktree-visibility",
   "title": "Show git and worktree context in dashboard and MCP",
-  "status": "todo",
+  "status": "done",
   "priority": 3,
   "scope": "scope-git",
   "path_hints": [
@@ -19,8 +19,8 @@
     "task-active-claim-overlap-warnings"
   ],
   "created_at": "2026-07-06T22:05:00+03:00",
-  "updated_at": "2026-07-06T22:05:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:47:46+03:00",
+  "closed_at": "2026-07-06T21:47:46+03:00",
   "description": "Expose Phase 6 git/worktree context through the local dashboard and MCP server. The dashboard should make it easy to see the current checkout, active claims, and overlap warnings; MCP should expose the same read-only context for agents.\n",
   "acceptance": [
     "Dashboard API exposes git state and active-claim git context through shared core helpers.",

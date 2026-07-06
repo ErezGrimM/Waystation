@@ -3,14 +3,15 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildBrief } from "../src/core/brief.ts";
+import { buildBrief, renderBrief, resolveTaskFromGitClaim } from "../src/core/brief.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { getGitState } from "../src/core/git.ts";
 import { initLedger } from "../src/core/init.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
-import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
+import { generateActiveWork, generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { createIssue } from "../src/core/issue.ts";
+import { activeClaimOverlaps } from "../src/core/overlap.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
 import { safeIdPart } from "../src/core/time.ts";
@@ -428,6 +429,48 @@ describe("mutations: claim / release / finish", () => {
   });
 });
 
+describe("active claim overlap warnings", () => {
+  const now = new Date("2026-07-06T10:00:00.000Z");
+
+  async function overlapRoot(): Promise<string> {
+    const root = fixtureRoot([
+      { id: "task-left", title: "Left", status: "ready", priority: 1, scope: "scope-a", path_hints: ["src/core"], dependencies: [] },
+      { id: "task-right", title: "Right", status: "ready", priority: 1, scope: "scope-a", path_hints: ["src/core/brief.ts"], dependencies: [] },
+    ]);
+    await claimTask(root, "task-left", "left-agent", now);
+    await claimTask(root, "task-right", "right-agent", now);
+    return root;
+  }
+
+  test("detects same-scope and path-hint overlap between active claims", async () => {
+    const root = await overlapRoot();
+    const overlaps = activeClaimOverlaps(root);
+    expect(overlaps.map((o) => o.kind)).toContain("same_scope");
+    expect(overlaps.map((o) => o.kind)).toContain("path");
+    expect(overlaps.some((o) => o.path === "src/core")).toBe(true);
+  });
+
+  test("brief includes advisory coordination warnings", async () => {
+    const root = await overlapRoot();
+    const brief = buildBrief(root, "task-left");
+    expect(brief.coordinationWarnings.length).toBeGreaterThan(0);
+    expect(renderBrief(brief)).toContain("Coordination warnings");
+  });
+
+  test("validate emits active_claim_overlap warnings", async () => {
+    const root = await overlapRoot();
+    const res = validateLedger(root);
+    expect(res.ok).toBe(true);
+    expect(res.warnings.map((w) => w.code)).toContain("active_claim_overlap");
+  });
+
+  test("generated active work reports coordination warnings", async () => {
+    const root = await overlapRoot();
+    expect(generateActiveWork(root)).toContain("Coordination warnings");
+    expect(generateStatus(root)).toContain("Coordination warnings");
+  });
+});
+
 describe("validate", () => {
   const codes = (root: string) => {
     const r = validateLedger(root);
@@ -553,6 +596,48 @@ describe("brief", () => {
       threw = true;
     }
     expect(threw).toBe(true);
+  });
+});
+
+describe("brief git claim resolution", () => {
+  function gitFixtureRoot(records: Array<Record<string, unknown>>): string {
+    const name = `waystation-test-git-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const root = join(import.meta.dirname, "..", name);
+    tmpRoots.push(root);
+    const tasksDir = join(root, ".waystation", "tasks");
+    mkdirSync(tasksDir, { recursive: true });
+    for (const rec of records) {
+      writeFileSync(join(tasksDir, `${rec.id as string}.json`), JSON.stringify(rec, null, 2));
+    }
+    return root;
+  }
+
+  test("resolveTaskFromGitClaim matches an active claim by branch", async () => {
+    const root = gitFixtureRoot([A, D]);
+    await claimTask(root, "task-d", "test-agent");
+    const result = resolveTaskFromGitClaim(root);
+    expect(result.ok).toBe(true);
+    expect(result.data).toBe("task-d");
+  });
+
+  test("resolveTaskFromGitClaim returns no_git_claim_match when no claim exists", () => {
+    const root = gitFixtureRoot([D]);
+    const result = resolveTaskFromGitClaim(root);
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((d) => d.code)).toContain("no_git_claim_match");
+  });
+
+  test("resolveTaskFromGitClaim returns ambiguous with multiple matching claims", async () => {
+    const root = gitFixtureRoot([D]);
+    writeFileSync(
+      join(root, ".waystation", "tasks", "task-e.json"),
+      JSON.stringify({ id: "task-e", title: "E", status: "ready", priority: 1, dependencies: [] }),
+    );
+    await claimTask(root, "task-d", "agent-a");
+    await claimTask(root, "task-e", "agent-b");
+    const result = resolveTaskFromGitClaim(root);
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((d) => d.code)).toContain("ambiguous_git_claim");
   });
 });
 

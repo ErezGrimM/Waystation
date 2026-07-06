@@ -7,6 +7,7 @@ import {
   type IndexCounts,
 } from "../index/ledgerIndex.ts";
 import { loadMessages } from "./messages.ts";
+import { activeClaimOverlaps } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { loadTasks } from "./records.ts";
 import { type CommandResult, okResult } from "./result.ts";
@@ -71,8 +72,15 @@ function line(t: TaskRecord): string {
   return `- \`${t.id}\` [p${t.priority}] — ${t.title}`;
 }
 
+function overlapLines(root: string): string[] {
+  return activeClaimOverlaps(root).map(
+    (overlap) => `- \`${overlap.task}\` / \`${overlap.otherTask}\` — ${overlap.reason} (advisory)`,
+  );
+}
+
 /** STATUS.md content, generated from the ledger. */
 export function generateStatus(root?: string): string {
+  const projectRoot = ledgerPaths(root).root;
   const tasks = loadTasks(root);
   const ready = readyTasks(tasks);
   const readyIds = new Set(ready.map((t) => t.id));
@@ -110,20 +118,26 @@ export function generateStatus(root?: string): string {
     "Open issues",
     openIssues.map((i) => `- \`${i.id}\` [${i.severity}] — ${i.title}`),
   );
+  section("Coordination warnings", overlapLines(projectRoot));
   return `${s.join("\n")}\n`;
 }
 
 /** active-work.md content, generated from the ledger. */
 export function generateActiveWork(root?: string): string {
+  const projectRoot = ledgerPaths(root).root;
   const tasks = loadTasks(root);
   const ready = readyTasks(tasks);
   const inProgress = tasks.filter((t) => t.status === "in_progress");
+  const warnings = overlapLines(projectRoot);
   const s: string[] = [GENERATED_HEADER, "", "# Active Work", ""];
   s.push("## In progress");
   s.push(inProgress.length ? inProgress.map(line).join("\n") : "_none_");
   s.push("");
   s.push("## Ready");
   s.push(ready.length ? ready.map(line).join("\n") : "_none_");
+  s.push("");
+  s.push("## Coordination warnings");
+  s.push(warnings.length ? warnings.join("\n") : "_none_");
   s.push("");
   return `${s.join("\n")}\n`;
 }

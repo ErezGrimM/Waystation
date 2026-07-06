@@ -149,3 +149,15 @@
 {"type":"task.status_changed","task":"task-claim-git-context","from":"todo","to":"in_progress","actor":"codex","ts":"2026-07-06T21:31:17+03:00"}
 {"type":"task.status_changed","task":"task-claim-git-context","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-06T21:32:28+03:00"}
 {"type":"claim.completed","task":"task-claim-git-context","claim":"claim-task-claim-git-context-codex-20260706-213117","actor":"codex","ts":"2026-07-06T21:32:28+03:00"}
+{"type":"task.claimed","task":"task-brief-git-claim-resolution","claim":"claim-task-brief-git-claim-resolution-agent-b-20260706-213918","actor":"agent-b","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-06T21:39:18+03:00"}
+{"type":"task.status_changed","task":"task-brief-git-claim-resolution","from":"todo","to":"in_progress","actor":"agent-b","ts":"2026-07-06T21:39:18+03:00"}
+{"type":"task.claimed","task":"task-active-claim-overlap-warnings","claim":"claim-task-active-claim-overlap-warnings-codex-a-20260706-214038","actor":"codex-a","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-06T21:40:38+03:00"}
+{"type":"task.status_changed","task":"task-active-claim-overlap-warnings","from":"todo","to":"in_progress","actor":"codex-a","ts":"2026-07-06T21:40:38+03:00"}
+{"type":"task.status_changed","task":"task-active-claim-overlap-warnings","from":"in_progress","to":"done","actor":"codex-a","ts":"2026-07-06T21:44:13+03:00"}
+{"type":"claim.completed","task":"task-active-claim-overlap-warnings","claim":"claim-task-active-claim-overlap-warnings-codex-a-20260706-214038","actor":"codex-a","ts":"2026-07-06T21:44:13+03:00"}
+{"type":"task.claimed","task":"task-dashboard-git-worktree-visibility","claim":"claim-task-dashboard-git-worktree-visibility-codex-a-20260706-214510","actor":"codex-a","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-06T21:45:10+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-git-worktree-visibility","from":"todo","to":"in_progress","actor":"codex-a","ts":"2026-07-06T21:45:10+03:00"}
+{"type":"task.status_changed","task":"task-brief-git-claim-resolution","from":"in_progress","to":"done","actor":"agent-b","ts":"2026-07-06T21:47:26+03:00"}
+{"type":"claim.completed","task":"task-brief-git-claim-resolution","claim":"claim-task-brief-git-claim-resolution-agent-b-20260706-213918","actor":"agent-b","ts":"2026-07-06T21:47:26+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-git-worktree-visibility","from":"in_progress","to":"done","actor":"codex-a","ts":"2026-07-06T21:47:46+03:00"}
+{"type":"claim.completed","task":"task-dashboard-git-worktree-visibility","claim":"claim-task-dashboard-git-worktree-visibility-codex-a-20260706-214510","actor":"codex-a","ts":"2026-07-06T21:47:46+03:00"}

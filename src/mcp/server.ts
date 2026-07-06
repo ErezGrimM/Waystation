@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { type BriefBudget, buildBrief } from "../core/brief.ts";
+import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage } from "../core/messages.ts";
@@ -24,7 +25,7 @@ function catchDiag(e: unknown, fallbackCode: string = "unexpected_error"): Diagn
 }
 
 export function buildServer(root: string): McpServer {
-  const server = new McpServer({ name: "waystation", version: "0.0.1" });
+  const server = new McpServer({ name: "waystation", version: "0.0.2" });
 
   // ── read tools ──
 
@@ -155,6 +156,14 @@ export function buildServer(root: string): McpServer {
     async () => {
       const result = validateLedger(root);
       return toContent(result);
+    },
+  );
+
+  server.registerTool(
+    "get_git_context",
+    { description: "Current git/worktree state, active claim mappings, and overlap warnings" },
+    async () => {
+      return toContent(buildGitContext(root));
     },
   );
 

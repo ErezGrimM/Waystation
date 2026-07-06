@@ -7,15 +7,27 @@ interface GitFile {
 }
 
 interface GitStatus {
+  root: string;
+  worktree: string;
+  branch: string | null;
+  detached: boolean;
+  head: string | null;
   changed: number;
+  staged: number;
+  unstaged: number;
   untracked: number;
   files: GitFile[];
+}
+
+interface GitContext {
+  overlaps: Array<{ task: string; otherTask: string; reason: string }>;
 }
 
 export function Git() {
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [diff, setDiff] = useState<string | null>(null);
   const [staged, setStaged] = useState<string | null>(null);
+  const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
   const [message, setMessage] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [result, setResult] = useState("");
@@ -29,6 +41,9 @@ export function Git() {
         setDiff(r.data.diff);
         setStaged(r.data.staged);
       }
+    });
+    api<GitContext>("/api/git/context").then((r) => {
+      if (r.ok && r.data) setOverlaps(r.data.overlaps);
     });
   };
 
@@ -112,6 +127,37 @@ export function Git() {
               <div className="stat-label">Total files</div>
             </div>
           </div>
+
+          <div className="panel" style={{ marginBottom: 20 }}>
+            <div className="panel-header">Checkout</div>
+            <div className="panel-body">
+              <div style={{ display: "grid", gap: 8, fontFamily: "var(--mono)", fontSize: 12 }}>
+                <div>branch: {status.branch ?? `(detached${status.head ? ` at ${status.head}` : ""})`}</div>
+                <div>worktree: {status.worktree}</div>
+                <div>root: {status.root}</div>
+                <div>
+                  staged: {status.staged} · unstaged: {status.unstaged} · untracked: {status.untracked}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {overlaps.length > 0 && (
+            <div className="panel" style={{ marginBottom: 20 }}>
+              <div className="panel-header">Coordination Warnings</div>
+              <div className="panel-body">
+                {overlaps.map((o) => (
+                  <div key={`${o.task}-${o.otherTask}-${o.reason}`} style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>
+                    <span style={{ fontFamily: "var(--mono)", color: "var(--orange)" }}>{o.task}</span>
+                    {" / "}
+                    <span style={{ fontFamily: "var(--mono)", color: "var(--orange)" }}>{o.otherTask}</span>
+                    {" — "}
+                    {o.reason}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {status.files.length > 0 && (
             <div style={{ marginBottom: 20 }}>

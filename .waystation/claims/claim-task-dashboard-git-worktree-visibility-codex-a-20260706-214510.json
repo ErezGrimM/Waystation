@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-dashboard-git-worktree-visibility-codex-a-20260706-214510",
+  "task": "task-dashboard-git-worktree-visibility",
+  "agent": "codex-a",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-06T21:45:10+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T21:47:46+03:00"
+}

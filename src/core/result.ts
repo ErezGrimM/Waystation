@@ -110,6 +110,12 @@ export const CODES = {
     hint: "The thread's task/issue may have been removed or archived.",
     retryable: false,
   },
+  active_claim_overlap: {
+    severity: "warning",
+    message: "Active claims may overlap in scope or file paths.",
+    hint: "This is advisory; coordinate with the other agent before editing shared areas.",
+    retryable: false,
+  },
   // mutation / lookup surface
   handoff_orphan: {
     severity: "error",
@@ -188,6 +194,21 @@ export const CODES = {
     severity: "error",
     message: "A git command failed.",
     hint: "Check that git is installed and the repository is healthy.",
+    retryable: false,
+  },
+  // claim / git resolution
+  no_git_claim_match: {
+    severity: "error",
+    message:
+      "No active claim matches the current git branch or worktree. Provide --task explicitly.",
+    hint: "Claim a task first: waystation task claim <id> --agent <you>.",
+    retryable: false,
+  },
+  ambiguous_git_claim: {
+    severity: "error",
+    message:
+      "Multiple active claims match the current git branch or worktree — cannot auto-resolve. Provide --task explicitly.",
+    hint: "Specify the task id: waystation brief --task <id>.",
     retryable: false,
   },
 } as const satisfies Record<string, CodeSpec>;

@@ -7,6 +7,7 @@ interface ClaimItem {
   agent: string;
   status: string;
   branch?: string | null;
+  worktree?: string | null;
   claimed_at: string;
 }
 
@@ -15,25 +16,29 @@ interface TaskItem {
   title: string;
 }
 
+interface GitContext {
+  activeClaims: ClaimItem[];
+  overlaps: Array<{ task: string; otherTask: string; reason: string }>;
+}
+
 export function Claims() {
   const [claims, setClaims] = useState<ClaimItem[]>([]);
   const [tasks, setTasks] = useState<Map<string, TaskItem>>(new Map());
+  const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
   const [msg, setMsg] = useState("");
 
   const load = () => {
-    api<TaskItem[]>("/api/tasks?status=in_progress").then((r) => {
+    api<TaskItem[]>("/api/tasks").then((r) => {
       if (r.ok && r.data) {
         const map = new Map<string, TaskItem>();
         for (const t of r.data) map.set(t.id, t);
         setTasks(map);
       }
     });
-    // Load claims from all tasks via polling all in-progress
-    api<TaskItem[]>("/api/tasks").then((r) => {
+    api<GitContext>("/api/git/context").then((r) => {
       if (r.ok && r.data) {
-        const map = new Map<string, TaskItem>();
-        for (const t of r.data) map.set(t.id, t);
-        setTasks(map);
+        setClaims(r.data.activeClaims);
+        setOverlaps(r.data.overlaps);
       }
     });
   };
@@ -42,43 +47,44 @@ export function Claims() {
     load();
   }, []);
 
-  const releaseTask = async (taskId: string) => {
+  const releaseTask = async (taskId: string, agent: string) => {
     const r = await api(`/api/tasks/${taskId}/release`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agent: "opencode" }),
+      body: JSON.stringify({ agent }),
     });
     setMsg(r.ok ? "released" : r.errors?.[0]?.message ?? "error");
     if (r.ok) load();
   };
 
-  // Show in-progress tasks as "claims"
-  const inProgressTasks = Array.from(tasks.values()).filter((t) => {
-    return true; // We don't have full claim data from the API easily, show all in_progress
-  });
-
-  // Get claim data from tasks API (brief includes activeClaim)
-  useEffect(() => {
-    const loadClaims = async () => {
-      const all = new Map<string, ClaimItem>();
-      for (const t of tasks.values()) {
-        const r = await api<{ activeClaim: ClaimItem | null }>(`/api/tasks/${t.id}/brief`);
-        if (r.ok && r.data?.activeClaim) {
-          all.set(t.id, {
-            ...r.data.activeClaim,
-            task: t.id,
-          });
-        }
-      }
-      setClaims(Array.from(all.values()));
-    };
-    if (tasks.size > 0) loadClaims();
-  }, [tasks.size]);
-
   return (
     <div>
       <h1>Claims</h1>
-      {msg && <div style={{ color: msg === "released" ? "var(--green)" : "var(--red)", marginBottom: 12 }}>{msg}</div>}
+      {msg && (
+        <div style={{ color: msg === "released" ? "var(--green)" : "var(--red)", marginBottom: 12 }}>
+          {msg}
+        </div>
+      )}
+
+      {overlaps.length > 0 && (
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-header">Coordination Warnings</div>
+          <div className="panel-body">
+            {overlaps.map((o) => (
+              <div
+                key={`${o.task}-${o.otherTask}-${o.reason}`}
+                style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}
+              >
+                <span style={{ fontFamily: "var(--mono)", color: "var(--orange)" }}>{o.task}</span>
+                {" / "}
+                <span style={{ fontFamily: "var(--mono)", color: "var(--orange)" }}>{o.otherTask}</span>
+                {" - "}
+                {o.reason}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {claims.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -105,11 +111,18 @@ export function Claims() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "13.5px", fontWeight: 600 }}>{t?.title ?? c.task}</div>
-                  <div style={{ fontSize: "11.5px", fontFamily: "var(--mono)", color: "var(--text-dim)", marginTop: 2 }}>
-                    {c.agent} · {c.branch ?? "—"} · {c.claimed_at}
+                  <div
+                    style={{
+                      fontSize: "11.5px",
+                      fontFamily: "var(--mono)",
+                      color: "var(--text-dim)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {c.agent} · {c.branch ?? "-"} · {c.worktree ?? "-"} · {c.claimed_at}
                   </div>
                 </div>
-                <button className="btn-secondary" onClick={() => releaseTask(c.task)}>
+                <button className="btn-secondary" onClick={() => releaseTask(c.task, c.agent)}>
                   Release
                 </button>
               </div>

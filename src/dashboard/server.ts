@@ -5,6 +5,7 @@ import { buildBrief } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
 import { reindex } from "../core/generate.ts";
 import { getGitState } from "../core/git.ts";
+import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
@@ -276,6 +277,10 @@ export function createApp(root: string, distDir?: string): Hono {
         ...state.data.status,
       }),
     );
+  });
+
+  app.get("/api/git/context", async (_c) => {
+    return json(buildGitContext(root));
   });
 
   app.get("/api/git/diff", async (_c) => {

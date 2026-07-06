@@ -1,6 +1,11 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
-import { type BriefBudget, buildBrief, renderBrief } from "../core/brief.ts";
+import {
+  type BriefBudget,
+  buildBrief,
+  renderBrief,
+  resolveTaskFromGitClaim,
+} from "../core/brief.ts";
 import { generateReports, generateTaskViews, reindex } from "../core/generate.ts";
 import { type GitState, getGitState } from "../core/git.ts";
 import { createHandoff, getHandoff } from "../core/handoff.ts";
@@ -21,7 +26,7 @@ const program = new Command();
 program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
-  .version("0.0.1");
+  .version("0.0.2");
 
 program
   .command("init")
@@ -173,20 +178,44 @@ task
 
 program
   .command("brief")
-  .description("Generate a task-scoped context brief")
-  .requiredOption("--task <id>", "task id")
+  .description(
+    "Generate a task-scoped context brief (auto-detects task from git claim if --task is omitted)",
+  )
+  .option("--task <id>", "task id (auto-detected from current git branch claim if omitted)")
   .option("--budget <budget>", "small|medium|large|full", "medium")
   .option("--json", "output JSON")
-  .action((opts: { task: string; budget: string; json?: boolean }) => {
+  .action((opts: { task?: string; budget: string; json?: boolean }) => {
+    const root = findProjectRoot();
+
+    if (opts.task) {
+      try {
+        const brief = buildBrief(root, opts.task, opts.budget as BriefBudget);
+        emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
+      } catch (e) {
+        const code =
+          e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
+        const res = toResult(null, [
+          diag(code as never, { message: (e as Error).message, details: { task: opts.task } }),
+        ]);
+        emitResult(res, opts.json, () => {});
+      }
+      return;
+    }
+
+    // auto-detect task from git claim
+    const resolved = resolveTaskFromGitClaim(root);
+    if (!resolved.ok || !resolved.data) {
+      emitResult(resolved as CommandResult<unknown>, opts.json, () => {});
+      return;
+    }
+
     try {
-      const brief = buildBrief(findProjectRoot(), opts.task, opts.budget as BriefBudget);
+      const brief = buildBrief(root, resolved.data, opts.budget as BriefBudget);
       emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
     } catch (e) {
-      // A plain "not found" maps to no_such_task; a RecordError surfaces its
-      // real code (e.g. a corrupt task file) instead of being mislabeled.
       const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
       const res = toResult(null, [
-        diag(code as never, { message: (e as Error).message, details: { task: opts.task } }),
+        diag(code as never, { message: (e as Error).message, details: { task: resolved.data } }),
       ]);
       emitResult(res, opts.json, () => {});
     }

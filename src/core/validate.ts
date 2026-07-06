@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { activeClaimOverlaps } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
 import {
@@ -362,6 +363,17 @@ export function validateLedger(root?: string): CommandResult<null> {
         diag("orphan_thread", {
           message: `message ${m.id} on unknown thread: ${m.thread}`,
           details: { message: m.id, thread: m.thread },
+        }),
+      );
+    }
+  }
+
+  if (!diags.some((d) => d.code === "schema_invalid" || d.code === "invalid_json")) {
+    for (const overlap of activeClaimOverlaps(paths.root)) {
+      diags.push(
+        diag("active_claim_overlap", {
+          message: `${overlap.task} and ${overlap.otherTask}: ${overlap.reason}`,
+          details: overlap as unknown as Record<string, unknown>,
         }),
       );
     }

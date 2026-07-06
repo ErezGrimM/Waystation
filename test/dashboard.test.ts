@@ -8,6 +8,8 @@ const testRoot = join(process.cwd(), ".waystation-test-dashboard");
 
 function setupLedger() {
   rmSync(testRoot, { recursive: true, force: true });
+  mkdirSync(testRoot, { recursive: true });
+  Bun.spawnSync(["git", "init", "-q"], { cwd: testRoot });
   const ledger = join(testRoot, ".waystation");
   mkdirSync(join(ledger, "tasks"), { recursive: true });
   mkdirSync(join(ledger, "claims"), { recursive: true });
@@ -151,6 +153,16 @@ describe("dashboard API server", () => {
     const res = await app.request("/api/validate");
     const body = await res.json();
     expect(body.ok).toBe(true);
+  });
+
+  test("GET /api/git/context returns git state and claim context", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/git/context");
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.data.git.worktree).toBeTruthy();
+    expect(Array.isArray(body.data.activeClaims)).toBe(true);
+    expect(Array.isArray(body.data.overlaps)).toBe(true);
   });
 
   test("GET /api/events returns SSE content-type header", async () => {

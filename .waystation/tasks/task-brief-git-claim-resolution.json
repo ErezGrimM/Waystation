@@ -1,7 +1,7 @@
 {
   "id": "task-brief-git-claim-resolution",
   "title": "Resolve task briefs from current branch or worktree claim",
-  "status": "todo",
+  "status": "done",
   "priority": 2,
   "scope": "scope-git",
   "path_hints": [
@@ -17,8 +17,8 @@
     "task-claim-git-context"
   ],
   "created_at": "2026-07-06T22:03:00+03:00",
-  "updated_at": "2026-07-06T22:03:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:47:26+03:00",
+  "closed_at": "2026-07-06T21:47:26+03:00",
   "description": "Implement the spec §10 brief resolution step that uses current branch/worktree context when --task is omitted. If the current branch or worktree maps to exactly one active claim, Waystation can build the matching task brief automatically; ambiguous or missing mappings should return a short disambiguation result.\n",
   "acceptance": [
     "brief can resolve the target task from current branch/worktree when --task is omitted and exactly one active claim matches.",

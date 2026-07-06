@@ -11,6 +11,8 @@ const testRoot = join(process.cwd(), ".waystation-test-mcp");
 
 function setupLedger() {
   rmSync(testRoot, { recursive: true, force: true });
+  mkdirSync(testRoot, { recursive: true });
+  Bun.spawnSync(["git", "init", "-q"], { cwd: testRoot });
   mkdirSync(join(testRoot, ".waystation", "tasks"), { recursive: true });
   mkdirSync(join(testRoot, ".waystation", "claims"), { recursive: true });
   mkdirSync(join(testRoot, ".waystation", "messages"), { recursive: true });
@@ -91,6 +93,7 @@ describe("mcp server integration", () => {
     expect(names).toContain("render_prompt");
     expect(names).toContain("list_issues");
     expect(names).toContain("get_inbox");
+    expect(names).toContain("get_git_context");
     expect(names).toContain("validate_ledger");
     expect(names).toContain("claim_task");
     expect(names).toContain("release_task");
@@ -99,6 +102,26 @@ describe("mcp server integration", () => {
     expect(names).toContain("post_message");
     expect(names).toContain("create_issue");
     expect(names).toContain("list_prompts");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("get_git_context returns git state and active claim mappings", async () => {
+    const server = buildServer(testRoot);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: "test-client", version: "0.0.1" });
+    await client.connect(clientTransport);
+
+    const res = await client.callTool({ name: "get_git_context", arguments: {} });
+    const text = (res.content as Array<{ type: string; text: string }>)[0].text;
+    const result = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.git.worktree).toBeTruthy();
+    expect(Array.isArray(result.data.activeClaims)).toBe(true);
+    expect(Array.isArray(result.data.overlaps)).toBe(true);
 
     await client.close();
     await server.close();

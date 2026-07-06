@@ -1,7 +1,7 @@
 {
   "id": "task-active-claim-overlap-warnings",
   "title": "Warn when active claims have overlapping file hints",
-  "status": "todo",
+  "status": "done",
   "priority": 2,
   "scope": "scope-git",
   "path_hints": [
@@ -18,8 +18,8 @@
     "task-claim-git-context"
   ],
   "created_at": "2026-07-06T22:04:00+03:00",
-  "updated_at": "2026-07-06T22:04:00+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T21:44:13+03:00",
+  "closed_at": "2026-07-06T21:44:13+03:00",
   "description": "Add conservative warnings for likely collisions between active claims. Compare task path_hints and any known changed files from handoffs/claims so agents get early notice when parallel work may touch the same files or directories.\n",
   "acceptance": [
     "A shared core helper finds likely overlaps between active claims using task path_hints and available changed_files metadata.",
