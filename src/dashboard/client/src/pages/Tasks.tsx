@@ -22,7 +22,7 @@ const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
   wont_do: { label: "Won't do", bg: "#1c2430", fg: "#5a6472" },
 };
 
-const FILTERS = ["all", "ready", "in_progress", "blocked", "review", "done"];
+const FILTERS = ["all", "todo", "ready", "in_progress", "blocked", "review", "done", "wont_do"];
 
 type SortKey = "created_at" | "priority" | "title" | "updated_at";
 

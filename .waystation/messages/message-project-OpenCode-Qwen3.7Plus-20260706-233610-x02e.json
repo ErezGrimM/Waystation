@@ -1,0 +1,10 @@
+{
+  "id": "message-project-OpenCode-Qwen3.7Plus-20260706-233610-x02e",
+  "thread": "project",
+  "from_agent": "OpenCode-Qwen3.7Plus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Completed task-graph-fix-crash-and-duplicates: Fixed two bugs in src/core/graph.ts. (1) loadGraphData now wraps JSON.parse in try/catch to handle malformed JSON gracefully instead of crashing. (2) findImpactHints now tracks processed nodes to avoid duplicate hints when multiple path_hints match the same node. Also removed dead code: graph_data_invalid error code from result.ts and unnecessary !graph.concepts check. Added 2 tests (malformed JSON handling, deduplication). All 117 tests pass, typecheck clean, biome clean, validate clean.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T23:36:10+03:00"
+}

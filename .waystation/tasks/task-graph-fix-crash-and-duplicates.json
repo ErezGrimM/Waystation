@@ -1,0 +1,27 @@
+{
+  "id": "task-graph-fix-crash-and-duplicates",
+  "title": "Fix loadGraphData crash on malformed JSON and deduplicate impact hints",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/graph.ts",
+    "src/core/result.ts",
+    "test/skeleton.test.ts"
+  ],
+  "prompts": [],
+  "dependencies": [],
+  "created_at": "2026-07-06T23:15:00+03:00",
+  "updated_at": "2026-07-06T23:35:55+03:00",
+  "description": "Two bugs found in src/core/graph.ts during audit:\n\n1. **loadGraphData crashes on malformed JSON** — Line 104: `JSON.parse(readFileSync(...))` is not wrapped in try/catch. If graph.json exists but contains invalid JSON, buildBrief crashes instead of degrading gracefully. This violates the spec requirement that briefs should always succeed even when graph data is missing or invalid.\n\n2. **findImpactHints produces duplicate hints** — When multiple path_hints match the same node (e.g. \"src/core/brief.ts\" and \"src/core/\"), the inbound/outbound processing runs twice for that node, adding identical hint strings. Need to track processed nodes to avoid duplicates.\n\nPlus two dead-code items:\n- graph_data_invalid in result.ts:215 is never referenced (can remove or use it)\n- !graph.concepts check in findRelevantConcepts is always false after remapGraph (concepts is always an array)\n",
+  "acceptance": [
+    "loadGraphData returns empty graph when graph.json contains invalid JSON (no crash).",
+    "findImpactHints does not produce duplicate hint strings when multiple path_hints match the same node.",
+    "Add test: loadGraphData handles malformed JSON gracefully.",
+    "Add test: findImpactHints deduplicates when path_hints overlap.",
+    "All existing tests still pass.",
+    "typecheck, biome check, and waystation validate all clean."
+  ],
+  "notes": "Found during audit of commit 95f0fcb. The crash bug is critical because it breaks the graceful degradation contract. The duplicate hints bug is a quality issue that makes brief output noisy.",
+  "closed_at": "2026-07-06T23:35:55+03:00"
+}

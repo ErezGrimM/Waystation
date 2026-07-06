@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-graph-fix-crash-and-duplicates-OpenCode-Qwen3.7Plus-20260706-233230",
+  "task": "task-graph-fix-crash-and-duplicates",
+  "agent": "OpenCode-Qwen3.7Plus",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-06T23:32:30+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T23:35:55+03:00"
+}

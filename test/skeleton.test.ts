@@ -1009,4 +1009,51 @@ describe("graph enrichment", () => {
     expect(brief.concepts).toEqual([]);
     expect(brief.impactHints).toEqual([]);
   });
+
+  test("loadGraphData handles malformed JSON gracefully", () => {
+    const root = fixtureRoot([D]);
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(join(graphDir, "graph.json"), "{ invalid json }");
+
+    const result = loadGraphData(root);
+    expect(result.ok).toBe(true);
+    expect(result.data?.nodes).toEqual([]);
+    expect(result.data?.edges).toEqual([]);
+    expect(result.data?.concepts).toEqual([]);
+  });
+
+  test("findImpactHints deduplicates when path_hints overlap", () => {
+    const root = fixtureRoot([
+      {
+        id: "task-overlap",
+        title: "Overlapping paths",
+        status: "todo",
+        priority: 2,
+        scope: null,
+        path_hints: ["src/core/brief.ts", "src/core/"],
+        prompts: [],
+        dependencies: [],
+        acceptance: [],
+      },
+    ]);
+
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+          { id: "n2", label: "readyTasks", file_type: "code", source_file: "src/core/tasks.ts" },
+        ],
+        edges: [{ source: "n1", target: "n2", relation: "calls" }],
+        concepts: [],
+      }),
+    );
+
+    const brief = buildBrief(root, "task-overlap");
+    const uniqueHints = new Set(brief.impactHints ?? []);
+    expect((brief.impactHints ?? []).length).toBe(uniqueHints.size);
+  });
 });

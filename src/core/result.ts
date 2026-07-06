@@ -224,13 +224,6 @@ export const CODES = {
     hint: "Check the repository name, token permissions, and network connectivity.",
     retryable: false,
   },
-  // graph
-  graph_data_invalid: {
-    severity: "warning",
-    message: "Graph data is missing or invalid.",
-    hint: "Run Graphify to generate graph data, or check the graph path configuration.",
-    retryable: false,
-  },
 } as const satisfies Record<string, CodeSpec>;
 
 export type Code = keyof typeof CODES;

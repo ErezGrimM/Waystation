@@ -101,7 +101,13 @@ export function loadGraphData(root: string, graphPath?: string): CommandResult<G
     return okResult({ nodes: [], edges: [], concepts: [] });
   }
 
-  const raw = JSON.parse(readFileSync(path, "utf8"));
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return okResult({ nodes: [], edges: [], concepts: [] });
+  }
+
   const parsed = RawGraphDataSchema.safeParse(raw);
 
   if (!parsed.success) {
@@ -169,7 +175,7 @@ function findRelatedFiles(graph: GraphData, pathHints: string[]): string[] {
 }
 
 function findRelevantConcepts(graph: GraphData, context: EnrichmentContext): string[] {
-  if (!graph.concepts || graph.concepts.length === 0) {
+  if (graph.concepts.length === 0) {
     return [];
   }
 
@@ -189,6 +195,7 @@ function findRelevantConcepts(graph: GraphData, context: EnrichmentContext): str
 
 function findImpactHints(graph: GraphData, pathHints: string[]): string[] {
   const hints: string[] = [];
+  const processedNodes = new Set<string>();
 
   for (const hint of pathHints) {
     const matchingNodes = graph.nodes.filter(
@@ -196,6 +203,9 @@ function findImpactHints(graph: GraphData, pathHints: string[]): string[] {
     );
 
     for (const node of matchingNodes) {
+      if (processedNodes.has(node.id)) continue;
+      processedNodes.add(node.id);
+
       const inbound = graph.edges.filter((edge) => edge.target === node.id);
       const outbound = graph.edges.filter((edge) => edge.source === node.id);
 
