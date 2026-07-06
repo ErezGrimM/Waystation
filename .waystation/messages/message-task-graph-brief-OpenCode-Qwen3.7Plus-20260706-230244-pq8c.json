@@ -1,0 +1,10 @@
+{
+  "id": "message-task-graph-brief-OpenCode-Qwen3.7Plus-20260706-230244-pq8c",
+  "thread": "task-graph-brief",
+  "from_agent": "OpenCode-Qwen3.7Plus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Wired Graphify enrichment into all surfacing layers:\\n\\n- CLI: renderBrief() already includes Related files, Concepts, and Impact hints sections (from task-graph-core)\\n- MCP: get_brief tool returns enriched Brief with relatedFiles, concepts, impactHints arrays\\n- Dashboard: Brief.tsx updated to display the three new sections with proper styling\\n- Graceful degradation: all layers omit sections when graph data is absent\\n- Added 3 integration tests: CLI brief rendering, dashboard API enriched brief, MCP tool enriched brief\\n\\nAll acceptance criteria met:\\n- CLI output includes new sections when graph data available\\n- MCP get_brief returns enriched Brief interface\\n- Dashboard Brief page shows related files, concepts, impact hints\\n- All layers degrade gracefully\\n- 115 tests pass, typecheck clean, biome clean, validate clean",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T23:02:44+03:00"
+}

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { enrichFromGraph, loadGraphData } from "./graph.ts";
 import { getGitState } from "./git.ts";
+import { enrichFromGraph, loadGraphData } from "./graph.ts";
 import { type ActiveClaimOverlap, overlapsForTask } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { loadTasks } from "./records.ts";
@@ -35,6 +35,9 @@ export interface Brief {
   activeClaim: ActiveClaimInfo | null;
   coordinationWarnings: ActiveClaimOverlap[];
   nextAction: string;
+  relatedFiles?: string[];
+  concepts?: string[];
+  impactHints?: string[];
 }
 
 /** Read the `rules` array from a scope record (JSON), if present. */
@@ -75,6 +78,17 @@ export function buildBrief(root: string, taskId: string, _budget: BriefBudget = 
   const claim = activeClaimForTask(root, taskId);
   const coordinationWarnings = overlapsForTask(root, taskId);
 
+  const graphResult = loadGraphData(root);
+  const enrichment =
+    graphResult.ok && graphResult.data
+      ? enrichFromGraph(graphResult.data, {
+          pathHints: task.path_hints ?? [],
+          taskTitle: task.title,
+          taskDescription: task.description,
+          taskScope: task.scope ?? undefined,
+        })
+      : { relatedFiles: [], concepts: [], impactHints: [] };
+
   return {
     task: {
       id: task.id,
@@ -99,6 +113,9 @@ export function buildBrief(root: string, taskId: string, _budget: BriefBudget = 
       : null,
     coordinationWarnings,
     nextAction: computeNextAction(task, blockedBy, Boolean(claim)),
+    relatedFiles: enrichment.relatedFiles,
+    concepts: enrichment.concepts,
+    impactHints: enrichment.impactHints,
   };
 }
 
@@ -183,6 +200,21 @@ export function renderBrief(b: Brief): string {
     for (const warning of b.coordinationWarnings) {
       lines.push(`- ${warning.reason}; coordinate ${warning.task} with ${warning.otherTask}.`);
     }
+  }
+  if (b.relatedFiles && b.relatedFiles.length > 0) {
+    lines.push("");
+    lines.push("## Related files");
+    for (const file of b.relatedFiles) lines.push(`- ${file}`);
+  }
+  if (b.concepts && b.concepts.length > 0) {
+    lines.push("");
+    lines.push("## Concepts");
+    for (const concept of b.concepts) lines.push(`- ${concept}`);
+  }
+  if (b.impactHints && b.impactHints.length > 0) {
+    lines.push("");
+    lines.push("## Impact hints");
+    for (const hint of b.impactHints) lines.push(`- ${hint}`);
   }
   lines.push("");
   lines.push(`## Next action`);

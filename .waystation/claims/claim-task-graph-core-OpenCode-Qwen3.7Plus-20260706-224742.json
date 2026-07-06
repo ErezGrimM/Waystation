@@ -2,10 +2,10 @@
   "id": "claim-task-graph-core-OpenCode-Qwen3.7Plus-20260706-224742",
   "task": "task-graph-core",
   "agent": "OpenCode-Qwen3.7Plus",
-  "status": "active",
+  "status": "completed",
   "branch": "main",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-07-06T22:47:42+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-07-06T22:55:49+03:00"
 }

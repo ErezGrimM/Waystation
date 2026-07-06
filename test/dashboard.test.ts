@@ -105,6 +105,29 @@ describe("dashboard API server", () => {
     expect(body.data.task.id).toBe("test-task");
   });
 
+  test("GET /api/tasks/:id/brief returns enriched brief with graph data", async () => {
+    const { mkdirSync, writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const graphDir = join(testRoot, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [{ id: "n1", type: "function", file: "src/core/brief.ts", name: "buildBrief" }],
+        edges: [],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+
+    const app = createApp(testRoot);
+    const res = await app.request("/api/tasks/test-task/brief");
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.data.relatedFiles).toBeDefined();
+    expect(body.data.concepts).toBeDefined();
+    expect(body.data.impactHints).toBeDefined();
+  });
+
   test("POST /api/tasks/:id/claim claims a task", async () => {
     const app = createApp(testRoot);
     const res = await app.request("/api/tasks/test-task/claim", {

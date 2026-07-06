@@ -1,0 +1,10 @@
+{
+  "id": "message-project-OpenCode-Qwen3.7Plus-20260706-230437-liie",
+  "thread": "project",
+  "from_agent": "OpenCode-Qwen3.7Plus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Completed task-gh-dashboard: Added GitHub import/export buttons to dashboard Issues page. POST /api/gh/import and POST /api/gh/export routes added to dashboard server, wired to core/gh.ts. Frontend has Import/Export buttons with repo input dialogs. 108 tests pass.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T23:04:37+03:00"
+}

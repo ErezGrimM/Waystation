@@ -13,6 +13,7 @@ import {
 } from "../src/core/generate.ts";
 import { importGitHubIssues } from "../src/core/gh.ts";
 import { getGitState } from "../src/core/git.ts";
+import { loadGraphData } from "../src/core/graph.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
 import { createIssue } from "../src/core/issue.ts";
@@ -655,6 +656,42 @@ describe("brief", () => {
     }
     expect(threw).toBe(true);
   });
+
+  test("renders enriched brief with graph data", () => {
+    const root = fixtureRoot([
+      {
+        id: "task-graph",
+        title: "Improve brief generation",
+        status: "todo",
+        priority: 2,
+        scope: null,
+        path_hints: ["src/core/brief.ts"],
+        prompts: [],
+        dependencies: [],
+        acceptance: [],
+      },
+    ]);
+
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+          { id: "n2", label: "readyTasks", file_type: "code", source_file: "src/core/tasks.ts" },
+        ],
+        edges: [{ source: "n1", target: "n2", relation: "calls" }],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+
+    const brief = buildBrief(root, "task-graph");
+    const rendered = renderBrief(brief);
+    expect(rendered).toContain("## Related files");
+    expect(rendered).toContain("## Concepts");
+    expect(rendered).toContain("Task Management");
+  });
 });
 
 describe("brief git claim resolution", () => {
@@ -889,5 +926,87 @@ describe("github import/export", () => {
     const result = await importGitHubIssues(root, "owner/nonexistent-zzz", "fake-token");
     expect(result.ok).toBe(false);
     expect(result.errors.map((d) => d.code)).toContain("github_api_error");
+  });
+});
+
+describe("graph enrichment", () => {
+  test("loadGraphData returns empty graph when file is missing", () => {
+    const root = fixtureRoot([D]);
+    const result = loadGraphData(root);
+    expect(result.ok).toBe(true);
+    expect(result.data?.nodes).toEqual([]);
+    expect(result.data?.edges).toEqual([]);
+  });
+
+  test("loadGraphData loads and validates graph data", () => {
+    const root = fixtureRoot([D]);
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+          { id: "n2", label: "readyTasks", file_type: "code", source_file: "src/core/tasks.ts" },
+        ],
+        edges: [{ source: "n1", target: "n2", relation: "calls" }],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+
+    const result = loadGraphData(root);
+    expect(result.ok).toBe(true);
+    expect(result.data?.nodes).toHaveLength(2);
+    expect(result.data?.edges).toHaveLength(1);
+    expect(result.data?.concepts).toHaveLength(1);
+  });
+
+  test("brief enrichment adds graph fields when graph is present", () => {
+    const root = fixtureRoot([
+      {
+        id: "task-graph",
+        title: "Improve brief generation",
+        status: "todo",
+        priority: 2,
+        scope: null,
+        path_hints: ["src/core/brief.ts"],
+        prompts: [],
+        dependencies: [],
+        acceptance: [],
+      },
+    ]);
+
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+          { id: "n2", label: "readyTasks", file_type: "code", source_file: "src/core/tasks.ts" },
+          { id: "n3", label: "index", file_type: "code", source_file: "src/cli/index.ts" },
+        ],
+        edges: [
+          { source: "n1", target: "n2", relation: "calls" },
+          { source: "n3", target: "n1", relation: "calls" },
+        ],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+
+    const brief = buildBrief(root, "task-graph");
+    expect(brief.relatedFiles).toBeDefined();
+    expect(brief.relatedFiles?.length).toBeGreaterThan(0);
+    expect(brief.concepts).toBeDefined();
+    expect(brief.concepts?.length).toBeGreaterThan(0);
+    expect(brief.impactHints).toBeDefined();
+  });
+
+  test("brief enrichment returns empty arrays when graph is missing", () => {
+    const root = fixtureRoot([D]);
+    const brief = buildBrief(root, "task-d");
+    expect(brief.relatedFiles).toEqual([]);
+    expect(brief.concepts).toEqual([]);
+    expect(brief.impactHints).toEqual([]);
   });
 });

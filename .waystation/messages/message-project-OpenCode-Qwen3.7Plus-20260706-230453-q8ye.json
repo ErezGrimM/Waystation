@@ -1,0 +1,10 @@
+{
+  "id": "message-project-OpenCode-Qwen3.7Plus-20260706-230453-q8ye",
+  "thread": "project",
+  "from_agent": "OpenCode-Qwen3.7Plus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Completed task-graph-core: Implemented Graphify context enrichment. Created src/core/graph.ts with loadGraphData() and enrichFromGraph(). Added Zod schemas for graph validation. Integrated into brief.ts to add relatedFiles, concepts, and impactHints to Brief interface. Graceful degradation when graph data missing. 112 tests pass.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T23:04:53+03:00"
+}

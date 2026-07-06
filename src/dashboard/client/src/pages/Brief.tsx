@@ -17,6 +17,9 @@ interface BriefData {
   scopeRules: string[];
   activeClaim: { id: string; agent: string } | null;
   nextAction: string;
+  relatedFiles?: string[];
+  concepts?: string[];
+  impactHints?: string[];
 }
 
 const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
@@ -138,6 +141,45 @@ export function Brief() {
                 <div className="section-label">Active claim</div>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                   {brief.activeClaim.agent} ({brief.activeClaim.id})
+                </div>
+              </div>
+            )}
+
+            {brief.relatedFiles && brief.relatedFiles.length > 0 && (
+              <div style={{ borderLeft: "2px solid #2a3340", paddingLeft: 16, marginBottom: 22 }}>
+                <div className="section-label">Related files</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {brief.relatedFiles.slice(0, 10).map((f) => (
+                    <div key={f} style={{ fontSize: 12, fontFamily: "var(--mono)", color: "var(--text-secondary)" }}>
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {brief.concepts && brief.concepts.length > 0 && (
+              <div style={{ borderLeft: "2px solid #2a3340", paddingLeft: 16, marginBottom: 22 }}>
+                <div className="section-label">Concepts</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {brief.concepts.slice(0, 5).map((c) => (
+                    <div key={c} style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {brief.impactHints && brief.impactHints.length > 0 && (
+              <div style={{ borderLeft: "2px solid var(--orange)", paddingLeft: 16, marginBottom: 22 }}>
+                <div className="section-label">Impact hints</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {brief.impactHints.slice(0, 5).map((h) => (
+                    <div key={h} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                      {h}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

@@ -219,6 +219,42 @@ describe("mcp server integration", () => {
     await server.close();
   });
 
+  test("get_brief returns enriched brief with graph data", async () => {
+    const { mkdirSync, writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const graphDir = join(testRoot, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [{ id: "n1", type: "function", file: "src/core/brief.ts", name: "buildBrief" }],
+        edges: [],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+
+    const server = buildServer(testRoot);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: "test-client", version: "0.0.1" });
+    await client.connect(clientTransport);
+
+    const res = await client.callTool({
+      name: "get_brief",
+      arguments: { task: "test-task" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.relatedFiles).toBeDefined();
+    expect(result.data.concepts).toBeDefined();
+    expect(result.data.impactHints).toBeDefined();
+
+    await client.close();
+    await server.close();
+  });
+
   test("validate_ledger returns ok", async () => {
     const server = buildServer(testRoot);
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
