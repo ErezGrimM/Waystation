@@ -64,21 +64,20 @@ Goal: the primitives that make multi-agent coordination real.
 Exit criteria: every command returns the envelope; every emitted code is
 catalogued (coverage test already enforces this for `validate`).
 
-## Phase 3 — Robustness & Onboarding (NEXT, tasks to be created)
+## Phase 3 — Robustness & Onboarding ✅ DONE (2026-07-06)
 
 Goal: make the project safe to hand to another contributor/agent and hard to
 corrupt. Small, high-leverage items:
-- **README.md** — how to run (Bun at `C:\bun`), project layout, the dogfood
-  loop. Currently that knowledge lives only in agent memory.
-- **`git init`** — there is no version control yet; the single biggest risk for
-  a codebase this size. Enables the "forkable" property the messaging/ledger
-  design assumes.
-- **`reindex` all record types** — today the index covers tasks; extend to
-  issues, claims, messages so `inbox`/thread queries move from in-memory to the
-  index (spec §9).
-- **Validate messages** — extend `validate` to cover message records
-  (schema, dangling `in_reply_to`, orphan threads).
-Exit criteria: a fresh clone + `bun install` + README gets someone to a green
+- **README.md** ✅ — how to run (Bun at `C:\bun`), project + ledger layout,
+  principles, the dogfood loop.
+- **`git init`** ✅ — repo initialized on `main`; `.gitignore` excludes
+  node_modules, `.agents`, `.claude/skills`, lockfile cruft, and the index;
+  `.gitattributes` normalizes line endings.
+- **`reindex` all record types** ✅ — `buildLedgerIndex` covers tasks, issues,
+  claims, messages; `inbox`/thread can be served from the index.
+- **Validate messages** ✅ — `validate` schema-checks messages and flags
+  dangling `in_reply_to` and orphan threads.
+Exit criteria (met): a fresh clone + `bun install` + README reaches a green
 `bun test` and a working `waystation` without tribal knowledge.
 
 ## Phase 4 — MCP Server (deferred phase)
