@@ -1,0 +1,27 @@
+{
+  "id": "task-init",
+  "title": "Implement `waystation init`",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-cli",
+  "path_hints": [
+    "src/cli/",
+    "src/core/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-06T07:45:00+03:00",
+  "updated_at": "2026-07-06T07:44:42+03:00",
+  "closed_at": "2026-07-06T07:44:42+03:00",
+  "description": "Spec §21 item 1: there is no `waystation init` — the ledger was hand-bootstrapped. Add a command that scaffolds a fresh .waystation/ in a project: config.json, the record subdirectories, an empty events.jsonl, and seed context/reports. Must be idempotent and refuse to clobber an existing ledger unless --force.\n",
+  "acceptance": [
+    "`waystation init` creates .waystation/ with config.json (project_id from the folder name or --project), tasks/ issues/ prompts/ scopes/ claims/ handoffs/ decisions/ messages/ dirs, and an empty events.jsonl.",
+    "Running init in an already-initialized project is a no-op with a clear message (or requires --force).",
+    "Init writes a project.initialized event.",
+    "After init, `waystation validate` passes on the empty ledger.",
+    "bun:test covers a fresh init and the already-initialized case."
+  ],
+  "notes": "Finish-V1 phase. Foundational: everything else assumes a ledger exists.\n"
+}

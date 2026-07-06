@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
+import { initLedger } from "../src/core/init.ts";
 import { generateBlocked, generateStatus, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
@@ -39,6 +40,27 @@ const A = { id: "task-a", title: "A", status: "done", priority: 1, dependencies:
 const B = { id: "task-b", title: "B", status: "ready", priority: 2, dependencies: ["task-a"] };
 const C = { id: "task-c", title: "C", status: "todo", priority: 1, dependencies: ["task-b"] };
 const D = { id: "task-d", title: "D", status: "ready", priority: 1, dependencies: [] };
+
+describe("init", () => {
+  test("creates a fresh ledger that validates clean", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-init-"));
+    tmpRoots.push(root);
+    const res = initLedger(root, { project: "demo" });
+    expect(res.ok).toBe(true);
+    expect(res.data?.created).toBe(true);
+    expect(existsSync(join(root, ".waystation", "config.json"))).toBe(true);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
+  test("is a no-op on an already-initialized ledger", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-init2-"));
+    tmpRoots.push(root);
+    initLedger(root);
+    const res = initLedger(root);
+    expect(res.data?.created).toBe(false);
+    expect(res.warnings.map((w) => w.code)).toContain("already_initialized");
+  });
+});
 
 describe("loadTasks + zod", () => {
   test("loads and validates JSON task records", () => {

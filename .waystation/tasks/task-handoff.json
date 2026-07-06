@@ -1,0 +1,21 @@
+{
+  "id": "task-handoff",
+  "title": "Implement handoff create/show",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": ["src/core/", "src/cli/", ".waystation/handoffs/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-skeleton-mutations"],
+  "created_at": "2026-07-06T07:45:00+03:00",
+  "updated_at": "2026-07-06T07:45:00+03:00",
+  "closed_at": null,
+  "description": "Spec §21 item 11 / §6.7: the handoff record type is specced but has no command. Add HandoffRecord (zod) and `handoff create --task <id> --from <agent> [--to <agent>]` plus `handoff show <id>`, written through the core write path with a handoff.created event. Handoffs are the one-shot baton pass (summary, changed files, unfinished, risks, next steps), distinct from messages.\n",
+  "acceptance": [
+    "HandoffRecord zod schema per spec §6.7; validate covers handoffs (schema, task existence).",
+    "`handoff create` writes a handoff record through the write path and appends handoff.created.",
+    "`handoff show <id>` prints a handoff (text + --json via the CommandResult envelope).",
+    "bun:test covers create + show and a handoff for a missing task."
+  ],
+  "notes": "Finish-V1 phase. Complements agent messaging (task-agent-messaging).\n"
+}

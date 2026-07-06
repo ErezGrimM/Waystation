@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { type BriefBudget, buildBrief, renderBrief } from "../core/brief.ts";
 import { generateReports, generateTaskViews, reindex } from "../core/generate.ts";
+import { initLedger } from "../core/init.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
 import { findProjectRoot, ledgerPaths } from "../core/paths.ts";
@@ -18,6 +19,21 @@ program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
   .version("0.0.1");
+
+program
+  .command("init")
+  .description("Scaffold a new .waystation/ ledger in the current directory")
+  .option("--project <id>", "project id (default: folder name)")
+  .option("--force", "reinitialize even if a ledger exists")
+  .option("--json", "output JSON")
+  .action((opts: { project?: string; force?: boolean; json?: boolean }) => {
+    const res = initLedger(process.cwd(), { project: opts.project, force: opts.force });
+    emitResult(res, opts.json, () => {
+      const r = res.data;
+      if (r?.created) process.stdout.write(`initialized ${r.root} (project: ${r.project})\n`);
+      else process.stdout.write("already initialized (use --force to reinitialize)\n");
+    });
+  });
 
 const task = program.command("task").description("Task commands");
 

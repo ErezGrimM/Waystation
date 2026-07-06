@@ -1,0 +1,22 @@
+{
+  "id": "task-prompt-render",
+  "title": "Implement prompt list/show/render",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": ["src/core/", "src/cli/", ".waystation/prompts/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-skeleton-task-next"],
+  "created_at": "2026-07-06T07:45:00+03:00",
+  "updated_at": "2026-07-06T07:45:00+03:00",
+  "closed_at": null,
+  "description": "Spec §21 item 10 / §11: prompts are loaded but there is no command to select and render them for an agent. Add a PromptRecord (zod), `prompt list`, `prompt show <id>`, and `prompt render --task <id> --agent <a> [--role <r>]` applying the selection precedence (global -> agent -> role -> scope -> task) and variable substitution ({{task_id}}, {{agent}}, {{scope}}, {{branch}}). Emit prompt.rendered when useful.\n",
+  "acceptance": [
+    "PromptRecord zod schema per spec §6.4; validate covers prompts (schema).",
+    "`prompt list` and `prompt show <id>` work (text + --json envelope).",
+    "`prompt render --task <id> --agent <a>` selects applicable prompts by applies_to and substitutes {{variables}}.",
+    "Selection precedence and variable substitution are unit-tested.",
+    "bun:test covers selection by agent/scope/task and one substitution."
+  ],
+  "notes": "Finish-V1 phase. The prompt-waystation-v1 record's commands (start/during/finish) reference the messaging/brief commands that now exist.\n"
+}

@@ -141,6 +141,12 @@ export const CODES = {
     hint: "Another process holds it; retry shortly.",
     retryable: true,
   },
+  already_initialized: {
+    severity: "warning",
+    message: "A .waystation ledger already exists here.",
+    hint: "Use --force to reinitialize, or run from a different directory.",
+    retryable: false,
+  },
   // degradations
   sqlite_backend_fallback: {
     severity: "warning",
