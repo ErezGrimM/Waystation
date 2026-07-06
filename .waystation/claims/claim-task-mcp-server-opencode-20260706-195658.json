@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-mcp-server-opencode-20260706-195658",
+  "task": "task-mcp-server",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T19:56:58+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T19:57:02+03:00"
+}

@@ -469,6 +469,18 @@ async function runMutation(json: boolean | undefined, fn: () => Promise<string>)
   }
 }
 
+program
+  .command("mcp")
+  .description("Start an MCP stdio server for coding agent integration")
+  .action(async () => {
+    const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
+    const { buildServer } = await import("../mcp/server.ts");
+    const root = findProjectRoot();
+    const server = buildServer(root);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  });
+
 try {
   await program.parseAsync(process.argv);
 } catch (err) {

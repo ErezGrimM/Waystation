@@ -6,5 +6,5 @@
 _none_
 
 ## Ready
-- `task-mcp-server` [p2] — Implement the MCP server (thin wrappers over core)
+_none_
 

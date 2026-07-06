@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-mcp-server` [p2] — Implement the MCP server (thin wrappers over core)
+_none_
 
 ## In progress
 _none_
@@ -19,6 +19,7 @@ _none_
 - `task-handoff` [p2] — Implement handoff create/show
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement `waystation init`
+- `task-mcp-server` [p2] — Implement the MCP server (thin wrappers over core)
 - `task-mcp-smoke` [p1] — Smoke-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON
 - `task-prompt-render` [p2] — Implement prompt list/show/render
