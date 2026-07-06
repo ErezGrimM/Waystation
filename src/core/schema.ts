@@ -1,0 +1,78 @@
+import { z } from "zod";
+
+/**
+ * Task status values (spec §6.2). `claimed` is intentionally NOT a status;
+ * claim state is tracked separately.
+ */
+export const TaskStatus = z.enum([
+  "todo",
+  "ready",
+  "in_progress",
+  "blocked",
+  "review",
+  "done",
+  "wont_do",
+]);
+export type TaskStatus = z.infer<typeof TaskStatus>;
+
+/**
+ * Task record schema (spec §6.2). Only the task type is fully modeled in the
+ * first walking-skeleton slice; other record types are tightened in
+ * task-skeleton-validate.
+ */
+export const TaskRecord = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  status: TaskStatus,
+  priority: z.number().int().nonnegative().default(3),
+  scope: z.string().nullable().optional(),
+  path_hints: z.array(z.string()).default([]),
+  prompts: z.array(z.string()).default([]),
+  dependencies: z.array(z.string()).default([]),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+  closed_at: z.string().nullable().optional(),
+  description: z.string().optional(),
+  acceptance: z.array(z.string()).default([]),
+  notes: z.string().optional(),
+});
+export type TaskRecord = z.infer<typeof TaskRecord>;
+
+/** Message kind values (spec §6.10). */
+export const MessageKind = z.enum(["update", "question", "verdict", "note"]);
+export type MessageKind = z.infer<typeof MessageKind>;
+
+/**
+ * Message record schema (spec §6.10). Append-only, immutable async inbox
+ * entry. `thread` is a task/issue id OR the reserved `project` channel.
+ */
+export const MessageRecord = z.object({
+  id: z.string().min(1),
+  thread: z.string().min(1),
+  from_agent: z.string().min(1),
+  to_agent: z.string().nullable().optional(),
+  kind: MessageKind.default("update"),
+  body: z.string(),
+  in_reply_to: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+export type MessageRecord = z.infer<typeof MessageRecord>;
+
+/** Claim status values (spec §6.6). */
+export const ClaimStatus = z.enum(["active", "released", "completed", "stale"]);
+export type ClaimStatus = z.infer<typeof ClaimStatus>;
+
+/** Claim record schema (spec §6.6). Claims track who is working on what. */
+export const ClaimRecord = z.object({
+  id: z.string().min(1),
+  task: z.string().min(1),
+  agent: z.string().min(1),
+  status: ClaimStatus,
+  branch: z.string().nullable().optional(),
+  worktree: z.string().nullable().optional(),
+  claimed_at: z.string(),
+  released_at: z.string().nullable().optional(),
+  completed_at: z.string().nullable().optional(),
+  notes: z.string().optional(),
+});
+export type ClaimRecord = z.infer<typeof ClaimRecord>;

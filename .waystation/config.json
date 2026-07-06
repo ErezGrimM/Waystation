@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "project_id": "waystation",
+  "project_name": "Waystation",
+  "root": ".",
+  "defaults": {
+    "agent": "unknown",
+    "brief_budget": "medium",
+    "status_report": ".waystation/reports/STATUS.md"
+  },
+  "id_rules": {
+    "task_prefix": "task",
+    "issue_prefix": "issue",
+    "prompt_prefix": "prompt",
+    "scope_prefix": "scope"
+  },
+  "git": {
+    "track_branches": true,
+    "track_worktrees": true
+  },
+  "generated_views": {
+    "enabled": true
+  }
+}

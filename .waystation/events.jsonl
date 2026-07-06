@@ -1,0 +1,75 @@
+{"type":"project.initialized","actor":"codex","ts":"2026-07-05T00:00:00+03:00","message":"Bootstrapped Waystation ledger files by hand."}
+{"type":"task.created","task":"task-bootstrap-ledger","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.status_changed","task":"task-bootstrap-ledger","actor":"codex","ts":"2026-07-05T00:00:00+03:00","from":"ready","to":"done"}
+{"type":"task.created","task":"task-scaffold-ts-cli","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-load-records","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-task-commands","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-claim-events","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-validate","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-brief","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"task.created","task":"task-reindex-report","actor":"codex","ts":"2026-07-05T00:00:00+03:00"}
+{"type":"decision.created","decision":"decision-implementation-stack","actor":"human","ts":"2026-07-06T12:00:00+03:00","message":"Stack decided: Bun + TypeScript."}
+{"type":"decision.created","decision":"decision-record-format","actor":"human","ts":"2026-07-06T12:05:00+03:00","message":"Canonical records are JSON; Markdown generated one-way for humans."}
+{"type":"decision.created","decision":"decision-dashboard-llm-features","actor":"human","ts":"2026-07-06T12:10:00+03:00","message":"LLM prompt-rewrite/agent-suggestion are dashboard-only, advisory, deferred."}
+{"type":"task.created","task":"task-migrate-ledger-json","actor":"claude-code","ts":"2026-07-06T12:15:00+03:00"}
+{"type":"task.created","task":"task-skeleton-task-next","actor":"claude-code","ts":"2026-07-06T12:20:00+03:00","message":"Walking-skeleton re-decomposition (style A)."}
+{"type":"task.created","task":"task-skeleton-read-commands","actor":"claude-code","ts":"2026-07-06T12:22:00+03:00"}
+{"type":"task.created","task":"task-skeleton-mutations","actor":"claude-code","ts":"2026-07-06T12:24:00+03:00"}
+{"type":"task.created","task":"task-skeleton-validate","actor":"claude-code","ts":"2026-07-06T12:26:00+03:00"}
+{"type":"task.created","task":"task-skeleton-brief","actor":"claude-code","ts":"2026-07-06T12:28:00+03:00"}
+{"type":"task.created","task":"task-skeleton-generate","actor":"claude-code","ts":"2026-07-06T12:30:00+03:00"}
+{"type":"task.status_changed","task":"task-load-records","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.status_changed","task":"task-task-commands","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.status_changed","task":"task-claim-events","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.status_changed","task":"task-validate","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.status_changed","task":"task-brief","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.status_changed","task":"task-reindex-report","actor":"claude-code","ts":"2026-07-06T12:32:00+03:00","from":"todo","to":"wont_do","message":"Superseded by walking-skeleton slices."}
+{"type":"task.claimed","task":"task-scaffold-cli","claim":"claim-task-scaffold-cli-claude-20260706-1240","actor":"claude-code","ts":"2026-07-06T12:40:00+03:00"}
+{"type":"task.claimed","task":"task-skeleton-task-next","claim":"claim-task-skeleton-task-next-claude-20260706-1242","actor":"claude-code","ts":"2026-07-06T12:42:00+03:00"}
+{"type":"task.status_changed","task":"task-scaffold-cli","actor":"claude-code","ts":"2026-07-06T12:50:00+03:00","from":"ready","to":"done"}
+{"type":"claim.completed","task":"task-scaffold-cli","claim":"claim-task-scaffold-cli-claude-20260706-1240","actor":"claude-code","ts":"2026-07-06T12:50:00+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-task-next","actor":"claude-code","ts":"2026-07-06T12:50:00+03:00","from":"todo","to":"done"}
+{"type":"claim.completed","task":"task-skeleton-task-next","claim":"claim-task-skeleton-task-next-claude-20260706-1242","actor":"claude-code","ts":"2026-07-06T12:50:00+03:00"}
+{"type":"task.claimed","task":"task-skeleton-read-commands","claim":"claim-task-skeleton-read-commands-claude-20260706-1253","actor":"claude-code","ts":"2026-07-06T12:53:00+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-read-commands","actor":"claude-code","ts":"2026-07-06T12:55:00+03:00","from":"todo","to":"done"}
+{"type":"claim.completed","task":"task-skeleton-read-commands","claim":"claim-task-skeleton-read-commands-claude-20260706-1253","actor":"claude-code","ts":"2026-07-06T12:55:00+03:00"}
+{"type":"task.claimed","task":"task-skeleton-mutations","claim":"claim-task-skeleton-mutations-claude-code-20260706-0213","actor":"claude-code","ts":"2026-07-05T23:13:33.591Z"}
+{"type":"task.status_changed","task":"task-skeleton-mutations","from":"todo","to":"in_progress","actor":"claude-code","ts":"2026-07-05T23:13:33.591Z"}
+{"type":"task.status_changed","task":"task-skeleton-mutations","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-05T23:13:33.686Z"}
+{"type":"claim.completed","task":"task-skeleton-mutations","claim":"claim-task-skeleton-mutations-claude-code-20260706-0213","actor":"claude-code","ts":"2026-07-05T23:13:33.686Z"}
+{"type":"issue.created","issue":"issue-timestamp-format","task":"task-skeleton-mutations","actor":"claude-code","ts":"2026-07-06T13:05:00+03:00"}
+{"type":"task.claimed","task":"task-skeleton-validate","claim":"claim-task-skeleton-validate-claude-code-20260706-0217","actor":"claude-code","ts":"2026-07-05T23:17:26.953Z"}
+{"type":"task.status_changed","task":"task-skeleton-validate","from":"todo","to":"in_progress","actor":"claude-code","ts":"2026-07-05T23:17:26.953Z"}
+{"type":"task.status_changed","task":"task-skeleton-validate","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-05T23:17:27.046Z"}
+{"type":"claim.completed","task":"task-skeleton-validate","claim":"claim-task-skeleton-validate-claude-code-20260706-0217","actor":"claude-code","ts":"2026-07-05T23:17:27.046Z"}
+{"type":"task.claimed","task":"task-migrate-ledger-json","claim":"claim-task-migrate-ledger-json-claude-code-20260706-0224","actor":"claude-code","ts":"2026-07-05T23:24:32.676Z"}
+{"type":"task.status_changed","task":"task-migrate-ledger-json","from":"todo","to":"in_progress","actor":"claude-code","ts":"2026-07-05T23:24:32.676Z"}
+{"type":"task.status_changed","task":"task-migrate-ledger-json","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-05T23:24:32.774Z"}
+{"type":"claim.completed","task":"task-migrate-ledger-json","claim":"claim-task-migrate-ledger-json-claude-code-20260706-0224","actor":"claude-code","ts":"2026-07-05T23:24:32.774Z"}
+{"type":"task.claimed","task":"task-skeleton-brief","claim":"claim-task-skeleton-brief-claude-code-20260706-0232","actor":"claude-code","ts":"2026-07-06T02:32:50+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-brief","from":"todo","to":"in_progress","actor":"claude-code","ts":"2026-07-06T02:32:50+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-brief","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T02:32:50+03:00"}
+{"type":"claim.completed","task":"task-skeleton-brief","claim":"claim-task-skeleton-brief-claude-code-20260706-0232","actor":"claude-code","ts":"2026-07-06T02:32:50+03:00"}
+{"type":"task.claimed","task":"task-skeleton-generate","claim":"claim-task-skeleton-generate-claude-code-20260706-0235","actor":"claude-code","ts":"2026-07-06T02:35:50+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-generate","from":"todo","to":"in_progress","actor":"claude-code","ts":"2026-07-06T02:35:50+03:00"}
+{"type":"task.status_changed","task":"task-skeleton-generate","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T02:35:50+03:00"}
+{"type":"claim.completed","task":"task-skeleton-generate","claim":"claim-task-skeleton-generate-claude-code-20260706-0235","actor":"claude-code","ts":"2026-07-06T02:35:50+03:00"}
+{"type":"task.created","task":"task-error-envelope","actor":"claude-code","ts":"2026-07-06T02:40:00+03:00","message":"Tracks convergence onto docs/error-philosophy.md."}
+{"type":"task.created","task":"task-agent-messaging","actor":"claude-code","ts":"2026-07-06T02:45:00+03:00","message":"Async inbox via message records (spec §6.10)."}
+{"type":"task.claimed","task":"task-agent-messaging","claim":"claim-task-agent-messaging-claude-code-20260706-0650","actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"task.status_changed","task":"task-agent-messaging","from":"ready","to":"in_progress","actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"message.posted","message":"message-task-agent-messaging-claude-code-20260706-065002-28mv","thread":"task-agent-messaging","from":"claude-code","to":null,"actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"message.posted","message":"message-project-claude-code-20260706-065002-lasw","thread":"project","from":"claude-code","to":null,"actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"task.status_changed","task":"task-agent-messaging","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"claim.completed","task":"task-agent-messaging","claim":"claim-task-agent-messaging-claude-code-20260706-0650","actor":"claude-code","ts":"2026-07-06T06:50:02+03:00"}
+{"type":"task.claimed","task":"task-error-envelope","claim":"claim-task-error-envelope-claude-code-20260706-0702","actor":"claude-code","ts":"2026-07-06T07:02:51+03:00"}
+{"type":"task.status_changed","task":"task-error-envelope","from":"ready","to":"in_progress","actor":"claude-code","ts":"2026-07-06T07:02:51+03:00"}
+{"type":"message.posted","message":"message-task-error-envelope-claude-code-20260706-070834-9s8m","thread":"task-error-envelope","from":"claude-code","to":null,"actor":"claude-code","ts":"2026-07-06T07:08:34+03:00"}
+{"type":"task.created","task":"task-readme","actor":"claude-code","ts":"2026-07-06T07:15:00+03:00","message":"Roadmap Phase 3."}
+{"type":"task.created","task":"task-git-init","actor":"claude-code","ts":"2026-07-06T07:15:00+03:00","message":"Roadmap Phase 3."}
+{"type":"task.created","task":"task-index-all-records","actor":"claude-code","ts":"2026-07-06T07:15:00+03:00","message":"Roadmap Phase 3."}
+{"type":"task.created","task":"task-validate-messages","actor":"claude-code","ts":"2026-07-06T07:15:00+03:00","message":"Roadmap Phase 3."}
+{"type":"task.claimed","task":"task-git-init","claim":"claim-task-git-init-claude-code-20260706-0716","actor":"claude-code","ts":"2026-07-06T07:16:35+03:00"}
+{"type":"task.status_changed","task":"task-git-init","from":"ready","to":"in_progress","actor":"claude-code","ts":"2026-07-06T07:16:35+03:00"}
+{"type":"task.status_changed","task":"task-git-init","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T07:18:20+03:00"}
+{"type":"claim.completed","task":"task-git-init","claim":"claim-task-git-init-claude-code-20260706-0716","actor":"claude-code","ts":"2026-07-06T07:18:20+03:00"}

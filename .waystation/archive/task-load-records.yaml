@@ -1,0 +1,36 @@
+id: task-load-records
+title: Load Waystation records from files
+status: wont_do
+priority: 1
+scope: scope-core
+path_hints:
+  - src/core/
+  - src/storage/
+  - .waystation/
+
+prompts:
+  - prompt-waystation-v1
+
+dependencies:
+  - task-scaffold-cli
+
+created_at: 2026-07-05T00:00:00+03:00
+updated_at: 2026-07-06T12:32:00+03:00
+closed_at: 2026-07-06T12:32:00+03:00
+
+description: |
+  Implement file loading for config, tasks, scopes, prompts, and events.
+
+acceptance:
+  - YAML records are parsed into typed objects.
+  - Unknown or invalid records produce useful errors.
+  - File paths are project-root relative.
+  - Tests cover successful load and malformed YAML.
+
+notes: |
+  SUPERSEDED 2026-07-06: The project moved to a walking-skeleton build (see
+  decision/summary). This horizontal "build the whole loader first" task is
+  replaced by the vertical slices, primarily task-skeleton-task-next (which
+  stands up loading + zod for tasks) and task-skeleton-validate (which
+  generalizes schemas to all record types). Also note records are now JSON,
+  not YAML.

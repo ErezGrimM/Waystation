@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-skeleton-mutations-claude-code-20260706-0213",
+  "task": "task-skeleton-mutations",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-05T23:13:33.591Z",
+  "released_at": null,
+  "completed_at": "2026-07-05T23:13:33.686Z"
+}

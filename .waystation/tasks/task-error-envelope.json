@@ -1,0 +1,32 @@
+{
+  "id": "task-error-envelope",
+  "title": "Adopt the structured error envelope (CommandResult / Diagnostic)",
+  "status": "in_progress",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "src/cli/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-skeleton-validate",
+    "task-skeleton-mutations"
+  ],
+  "created_at": "2026-07-06T02:40:00+03:00",
+  "updated_at": "2026-07-06T07:02:51+03:00",
+  "closed_at": null,
+  "description": "Converge the code onto docs/error-philosophy.md. Introduce a CommandResult envelope { ok, data, errors[], warnings[] } and a Diagnostic { code, message, details?, hint?, retryable } produced in core and rendered per surface. Generalize validate's Problem[] into Diagnostic, and convert RecordError/MutationError into coded diagnostics. Add a code catalog with a coverage test.\n",
+  "acceptance": [
+    "A CommandResult envelope with errors[] and warnings[] (both arrays) is defined and used by CLI commands.",
+    "Diagnostics carry code, message (template, no interpolated internals), optional details, optional hint, and retryable.",
+    "retryable is set at the code/class level only; no context-dependent verdict is auto-defaulted.",
+    "validate's Problem[] is expressed as Diagnostic[]; RecordError/MutationError map to coded diagnostics (e.g. schema_invalid, invalid_json, task_already_claimed, no_active_claim).",
+    "The bun:sqlite -> node:sqlite fallback emits a warning rather than being silent.",
+    "A code catalog exists and a bun:test asserts every emitted code is catalogued; codes are lower_snake_case and stable.",
+    "CLI exit codes: 0 when ok (warnings allowed), 1 when errors is non-empty."
+  ],
+  "notes": "Land the envelope shape (errors[] plural) and retryable-not-recoverable first — hardest to change once callers depend on them. See docs/error-philosophy.md 'Current State vs Target'.\n\nPROGRESS 2026-07-06 (in_progress): DONE — src/core/result.ts (Diagnostic, CommandResult, CODES catalog, diag(), toResult()); validate migrated to a CommandResult of coded diagnostics (schema -> schema_invalid); RecordError/MutationError carry a `code`; CLI renders coded errors with hints and the validate envelope; coverage tests assert every emitted code is catalogued and retryable is boolean. 35 tests green, typecheck+biome clean. REMAINING — (1) surface the bun:sqlite->node:sqlite fallback as a sqlite_backend_fallback warning via CommandResult; (2) roll the envelope across the remaining read commands (next/list/show/brief). The catalog already has codes for both.\n"
+}

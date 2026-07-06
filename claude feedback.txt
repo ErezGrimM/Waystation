@@ -1,0 +1,19 @@
+You're asking for a recommendation, so here it is with reasoning — short version: **TypeScript on Node, plain files as the source of truth, SQLite as the rebuildable index, one package that ships the CLI, an MCP server mode, and the dashboard.**
+
+## Recommended stack
+
+**Language: TypeScript (Node 22+, pnpm).** Two reasons. First, it's what you already work in — DuckBrain is a TS/pnpm project, so no context tax. Second, and more decisive for this particular tool: every consumer you named (Claude Code, Codex, OpenCode) already runs on Node, so `npx agentledger` / `pnpm dlx agentledger` is a zero-install integration path, and the MCP SDK (`@modelcontextprotocol/sdk`) is TypeScript-first. The main alternative is Go for a single static binary — worth it only if you expect environments without Node, which for AI coding agents is essentially never.
+
+**Source of truth: plain files in `.agentledger/`, committed to git.** Append-only JSONL for machine events (claims, progress, test runs, handoffs — one file per stream or per writer to avoid merge conflicts), and Markdown with YAML frontmatter for the human-facing records (tasks, issues, prompts). This is the load-bearing decision for a local-first tool: files merge in git, humans can read and edit them, and any agent can fall back to reading them raw if your tooling isn't available.
+
+**Index: SQLite, explicitly a disposable cache.** Use `better-sqlite3` (or `node:sqlite`, now stable) in WAL mode — many concurrent readers, one writer, which matches your multi-agent access pattern. The index is rebuilt from the files (`agentledger reindex`), never written to directly, so corruption or version skew is a non-event. You get FTS5 for free, which is exactly what "give me only the task-relevant context" queries and brief generation need. I'd steer you away from DuckDB here despite your familiarity with it: DuckDB is single-writer with coarse locking and optimized for analytical scans, while this workload is small point-lookups from several processes at once — SQLite's home turf.
+
+**Agent interface: CLI with `--json` on every command, plus `agentledger mcp` (stdio).** The CLI is the universal path — every agent can shell out. The MCP mode gives Claude Code and Codex typed tools (`get_brief`, `claim_task`, `log_progress`) without prompt gymnastics. Both are thin layers over the same query/write core, so it's cheap to offer both.
+
+**Dashboard: small local HTTP server (Hono) serving a static SPA, live updates via SSE.** Bind to 127.0.0.1, no auth. Build the front end with Vite + Preact or Svelte — it's a status board, not an app, so keep it light. SSE driven by `fs.watch` on the event logs gets you live progress with almost no machinery; skip WebSockets.
+
+**Concurrency:** append-only writes per agent stream sidestep most write contention; take a file lock (`proper-lockfile`) only around index writes.
+
+One thing I'd *not* do: reach for a heavy framework layer (I noticed a large Effect-TS dependency tree in this repo's `node_modules` — if that's your house style it works fine here too, but plain TS with a few small libs is entirely sufficient for this scope and keeps contributors' ramp-up short).
+
+If you later want a no-runtime single binary for distribution, `bun build --compile` gets you there from the same codebase without rewriting — so the TS choice doesn't lock you out of that.

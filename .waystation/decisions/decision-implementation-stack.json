@@ -1,0 +1,22 @@
+{
+  "id": "decision-implementation-stack",
+  "title": "Implement Waystation in Bun + TypeScript",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": null,
+  "created_at": "2026-07-06T12:00:00+03:00",
+  "decided_by": "human",
+  "context": "The implementation stack was open despite early docs asserting TypeScript/Node. Candidates evaluated: Node+pnpm, Bun, Deno, Go, and Rust. Priorities: iteration speed first; single-binary distribution only somewhat important; CLI + dashboard first with MCP later; a richer dashboard UI expected in the future. The dashboard frontend must be JS regardless of backend language, so 'rich UI' did not force a JS backend (a Go/Rust binary can embed a built SPA). Deno's main edge was cross-compiled single binaries; Go's was a small static binary; both traded away zod, shared FE/BE types, and reuse of TS reference implementations (Backlog.md, Taskmaster). MCP TypeScript SDK now runs on Node/Bun/Deno, removing MCP as a runtime blocker. Bun provides a first-party synchronous SQLite (bun:sqlite), a built-in test runner, and no-build-step TS.",
+  "decision": "Use Bun as the runtime with TypeScript. commander for the CLI; zod v4 as the schema authority; bun:sqlite for the disposable index; Hono for the local dashboard server; Vite + React for the dashboard UI (built and served/embedded); Biome for lint/format; bun:test for tests. @modelcontextprotocol/sdk is deferred to a later phase and is confirmed to run on Bun. Distribution via `bun build --compile` is accepted as a good-enough backstop; its weaker cross-compilation vs Deno is acceptable because distribution is only a secondary priority.",
+  "consequences": [
+    "Fastest iteration path for CLI + dashboard; single language across CLI, server, and UI with shared types.",
+    "bun:sqlite avoids native-module and downloaded-shared-library issues that affect other SQLite options.",
+    "Cross-compiled single-binary distribution is the one weak spot; revisit only if distribution escalates from 'somewhat' to 'critical' (Deno or Go would then be the fallback, and the JSON/JSONL canonical files make a tooling-layer rewrite non-migrating).",
+    "The optional `bun build --compile` cross-compile should be smoke-tested near release, not as a prerequisite to building.",
+    "yaml and gray-matter are dropped from the dependency list; see decision-record-format."
+  ],
+  "supersedes": [
+    "The provisional 'TypeScript/Node' assumption in lessons.md, prompt-waystation-v1, summary.md, and the task-scaffold task notes.",
+    "adr/ADR-0002 (Go + embedded React) and the Deno candidate are rejected in favor of this decision."
+  ]
+}

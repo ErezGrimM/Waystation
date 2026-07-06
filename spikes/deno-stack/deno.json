@@ -1,0 +1,16 @@
+{
+  "tasks": {
+    "version": "deno run --allow-env=CLICOLOR_FORCE,FORCE_COLOR,NO_COLOR,LOG_TOKENS,LOG_STREAM --allow-read=../../.waystation --allow-write=../../.waystation main.ts --version",
+    "list": "deno run --allow-env=CLICOLOR_FORCE,FORCE_COLOR,NO_COLOR,LOG_TOKENS,LOG_STREAM --allow-read=../../.waystation main.ts task list",
+    "reindex": "deno run --allow-env=CLICOLOR_FORCE,FORCE_COLOR,NO_COLOR,LOG_TOKENS,LOG_STREAM --allow-read=../../.waystation --allow-write=../../.waystation main.ts reindex",
+    "serve": "deno run --allow-env=CLICOLOR_FORCE,FORCE_COLOR,NO_COLOR,LOG_TOKENS,LOG_STREAM --allow-read=../../.waystation --allow-net=127.0.0.1:8787 main.ts serve",
+    "mcp:smoke": "deno run --allow-read=../../.waystation mcp_smoke.ts --smoke",
+    "compile": "deno compile --allow-env=CLICOLOR_FORCE,FORCE_COLOR,NO_COLOR,LOG_TOKENS,LOG_STREAM --allow-read --allow-write --allow-net --output waystation-spike main.ts"
+  },
+  "imports": {
+    "commander": "npm:commander@14",
+    "hono": "npm:hono@4",
+    "yaml": "npm:yaml@2",
+    "zod": "npm:zod@4"
+  }
+}

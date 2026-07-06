@@ -1,0 +1,14 @@
+{
+  "id": "scope-cli",
+  "name": "CLI",
+  "paths": ["src/cli/", "src/cli/index.ts", "package.json"],
+  "owner": null,
+  "default_prompts": ["prompt-waystation-v1"],
+  "rules": [
+    "CLI commands should be thin wrappers over core logic.",
+    "Prefer stable, scriptable output.",
+    "Add --json to read commands as early as possible."
+  ],
+  "default_tests": ["bun test"],
+  "notes": "Covers the command surface and user-facing CLI behavior.\n"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "waystation-bun-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "version": "bun run main.ts --version",
+    "list": "bun run main.ts task list",
+    "reindex": "bun run main.ts reindex",
+    "serve": "bun run main.ts serve",
+    "mcp:smoke": "bun run mcp_smoke.ts --smoke",
+    "compile": "bun build main.ts --compile --outfile waystation-spike.exe"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^14.0.3",
+    "hono": "^4.12.27",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.4"
+  }
+}
+

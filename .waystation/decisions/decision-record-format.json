@@ -1,0 +1,18 @@
+{
+  "id": "decision-record-format",
+  "title": "Canonical records are JSON; Markdown is generated one-way for humans",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": null,
+  "created_at": "2026-07-06T12:05:00+03:00",
+  "decided_by": "human",
+  "context": "The spec left the on-disk record format ambiguous ('*.yaml or *.md'). YAML has machine-write footguns as a canonical store written by agents: type coercion (the 'Norway problem', version strings parsed as floats), whitespace sensitivity, and imperfect round-tripping. The records are the durable source of truth (SQLite is only a disposable query index), so the format needs to be robust for unattended machine writes rather than optimized for hand-editing. Moving canonical state into a real database (e.g. PocketBase/SQLite-as-truth) was rejected earlier because it breaks the local-first, git-diffable, inspectable principle (spec §4).",
+  "decision": "All canonical state is JSON. Records are `.json` files, events remain `.jsonl`, and config is `config.json`. SQLite remains the disposable, rebuildable query index (not canonical). Markdown is generated one-way from JSON (JSON -> Markdown) for human browsing and tools like NotoView, per spec §16; generated Markdown is read-only and is never parsed back into records. zod is the schema authority regardless of on-disk representation: every read validates through zod, every write serializes from a validated object. The `yaml` and `gray-matter` dependencies are therefore unnecessary and are dropped.",
+  "consequences": [
+    "One canonical format everywhere; closes the spec §6/§16 '*.yaml or *.md' ambiguity.",
+    "Eliminates YAML coercion/round-trip fragility for agent-written records.",
+    "Humans read the generated Markdown and write via the CLI/dashboard (the validated core write path, spec §12) rather than hand-editing canonical files.",
+    "config.json loses inline comments; document the shape via zod / an optional config.schema.json. JSONC/JSON5 could restore comments later if the lack is painful, but no comment-parsing dependency is added now.",
+    "The existing hand-written .waystation/ ledger is still YAML and must be migrated to JSON (tracked as task-migrate-ledger-json)."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "task-validate-messages",
+  "title": "Extend validate to cover message records",
+  "status": "ready",
+  "priority": 3,
+  "scope": "scope-core",
+  "path_hints": ["src/core/validate.ts"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-agent-messaging", "task-skeleton-validate"],
+  "created_at": "2026-07-06T07:15:00+03:00",
+  "updated_at": "2026-07-06T07:15:00+03:00",
+  "closed_at": null,
+  "description": "validate does not yet check message records. Add message validation: schema, a dangling in_reply_to (points at a missing message), and an orphan thread (references a task/issue that does not exist, excluding the reserved `project` channel). Emit coded diagnostics via the error envelope.\n",
+  "acceptance": [
+    "validate loads and schema-checks message records.",
+    "A message whose in_reply_to points at a missing message is flagged.",
+    "A message whose thread is neither `project` nor an existing task/issue is flagged.",
+    "New codes are added to the CODES catalog; the coverage test still passes.",
+    "bun:test covers dangling in_reply_to and orphan thread."
+  ],
+  "notes": "Roadmap Phase 3. Depends on the error envelope catalog (task-error-envelope).\n"
+}

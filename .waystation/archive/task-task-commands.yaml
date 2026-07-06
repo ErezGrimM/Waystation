@@ -1,0 +1,33 @@
+id: task-task-commands
+title: Implement task list, show, and next
+status: wont_do
+priority: 2
+scope: scope-cli
+path_hints:
+  - src/cli/
+  - src/core/
+
+prompts:
+  - prompt-waystation-v1
+
+dependencies:
+  - task-load-records
+
+created_at: 2026-07-05T00:00:00+03:00
+updated_at: 2026-07-06T12:32:00+03:00
+closed_at: 2026-07-06T12:32:00+03:00
+
+description: |
+  Add the first useful read commands for tasks.
+
+acceptance:
+  - waystation task list shows tasks.
+  - waystation task show <id> shows one task.
+  - waystation task next returns ready tasks whose dependencies are done.
+  - Read commands support --json.
+  - Tests cover dependency filtering.
+
+notes: |
+  SUPERSEDED 2026-07-06 by the walking-skeleton re-decomposition. `task next`
+  now lives in task-skeleton-task-next (the first end-to-end slice) and
+  `task list`/`task show` in task-skeleton-read-commands.

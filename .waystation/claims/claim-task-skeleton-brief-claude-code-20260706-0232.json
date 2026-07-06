@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-skeleton-brief-claude-code-20260706-0232",
+  "task": "task-skeleton-brief",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T02:32:50+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T02:32:50+03:00"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "claim-task-scaffold-cli-claude-20260706-1240",
+  "task": "task-scaffold-cli",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T12:40:00+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T12:50:00+03:00",
+  "notes": "Scaffolded Bun + TypeScript project: package.json (commander/zod/proper-lockfile, Biome, tsc), tsconfig.json, biome.json, and src/ layout. `waystation --version` runs; bun test, typecheck, and biome check are wired and green.\n"
+}

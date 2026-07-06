@@ -1,0 +1,35 @@
+id: task-claim-events
+title: Implement claims and event appends
+status: wont_do
+priority: 2
+scope: scope-core
+path_hints:
+  - src/core/
+  - src/storage/
+  - .waystation/claims/
+  - .waystation/events.jsonl
+
+prompts:
+  - prompt-waystation-v1
+
+dependencies:
+  - task-load-records
+
+created_at: 2026-07-05T00:00:00+03:00
+updated_at: 2026-07-06T12:32:00+03:00
+closed_at: 2026-07-06T12:32:00+03:00
+
+description: |
+  Implement task claim, release, and finish mutations with append-only events.
+
+acceptance:
+  - waystation task claim <id> creates an active claim.
+  - waystation task release <id> releases the active claim.
+  - waystation task finish <id> marks a task done and completes the claim.
+  - Mutations append JSONL events.
+  - Multiple active claims for one task are rejected unless a future force flag is added.
+
+notes: |
+  SUPERSEDED 2026-07-06 by the walking-skeleton re-decomposition. This work is
+  now task-skeleton-mutations (claim/release/finish + write lock + event
+  append + index invalidation).

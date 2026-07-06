@@ -1,0 +1,22 @@
+{
+  "id": "task-skeleton-task-next",
+  "title": "Walking skeleton: end-to-end `waystation task next`",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": ["src/cli/", "src/core/", "src/storage/", "src/index/", ".waystation/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-scaffold-cli"],
+  "created_at": "2026-07-06T12:20:00+03:00",
+  "updated_at": "2026-07-06T12:50:00+03:00",
+  "closed_at": "2026-07-06T12:50:00+03:00",
+  "description": "The first and defining vertical slice. Build the thinnest thread that touches every layer so the architecture is proven end-to-end: CLI entry (commander) -> load a JSON task record from .waystation/tasks/ -> validate it with a zod task schema -> populate/query a bun:sqlite index -> print the next ready task. It must run against the real .waystation/ ledger, not fixtures. Only the task record type needs a full schema at this stage; other record types can be loaded loosely and tightened in later slices.\n",
+  "acceptance": [
+    "`waystation task next` runs against the real .waystation/ ledger and prints the next ready task (status ready with all dependencies done).",
+    "Task records are loaded from JSON and validated through a zod task schema; a malformed task produces a clear, actionable error.",
+    "A bun:sqlite index is created and queried as part of resolving `next` (even if minimal); deleting the index and re-running still works.",
+    "`--json` is supported on the command.",
+    "bun:test covers: next-selection with dependency filtering, and one intentionally-invalid task record rejected by zod."
+  ],
+  "notes": "This slice is deliberately expensive because it stands up commander + zod + bun:sqlite + JSON storage at once. That is the point: it de-risks whether the chosen stack composes before any breadth is built. Later slices widen this skeleton rather than adding new layers. During development this task and its siblings are themselves JSON task records, so they double as real fixtures before task-migrate-ledger-json converts the rest.\n"
+}

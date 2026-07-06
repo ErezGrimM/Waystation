@@ -1,0 +1,15 @@
+{
+  "id": "scope-core",
+  "name": "Core ledger",
+  "paths": ["src/core/", "src/storage/", "src/index/", ".waystation/"],
+  "owner": null,
+  "default_prompts": ["prompt-waystation-v1"],
+  "rules": [
+    "Canonical state is JSON files; SQLite is a rebuildable index, not source of truth.",
+    "Every read command should support --json where practical.",
+    "All mutations go through the single core write path (lock + atomic write + event append).",
+    "Keep V1 focused on CLI, validation, events, index rebuild, and brief generation."
+  ],
+  "default_tests": ["bun test"],
+  "notes": "Covers the core Waystation record model, storage behavior, event stream, validation, and index rebuild logic.\n"
+}

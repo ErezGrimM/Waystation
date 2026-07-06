@@ -1,0 +1,12 @@
+{
+  "id": "claim-task-skeleton-read-commands-claude-20260706-1253",
+  "task": "task-skeleton-read-commands",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T12:53:00+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T12:55:00+03:00",
+  "notes": "Added `waystation task list` (with --status filter and --json) and `waystation task show <id>` (with --json, non-zero exit on unknown id), thin wrappers over the existing loader. CLI integration tests via Bun.spawnSync cover list, status filter, show, and the not-found case. 12 tests pass; typecheck and biome clean.\n"
+}

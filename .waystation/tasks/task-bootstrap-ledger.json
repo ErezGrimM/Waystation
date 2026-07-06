@@ -1,0 +1,20 @@
+{
+  "id": "task-bootstrap-ledger",
+  "title": "Bootstrap Waystation ledger files",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [".waystation/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": [],
+  "created_at": "2026-07-05T00:00:00+03:00",
+  "updated_at": "2026-07-05T00:00:00+03:00",
+  "closed_at": "2026-07-05T00:00:00+03:00",
+  "description": "Create the initial hand-written Waystation project ledger so Waystation can be used to build Waystation before the CLI exists.\n",
+  "acceptance": [
+    ".waystation/config.json exists.",
+    "Initial scopes, prompts, tasks, events, reports, and context files exist.",
+    "The task list describes the V1 implementation path."
+  ],
+  "notes": "Completed manually as the first dogfooding step. The ledger was later consolidated from YAML to JSON (task-migrate-ledger-json).\n"
+}

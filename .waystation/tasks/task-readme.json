@@ -1,0 +1,21 @@
+{
+  "id": "task-readme",
+  "title": "Write README (run instructions, layout, dogfood loop)",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": ["README.md"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-skeleton-generate"],
+  "created_at": "2026-07-06T07:15:00+03:00",
+  "updated_at": "2026-07-06T07:15:00+03:00",
+  "closed_at": null,
+  "description": "The repo has no README. Capture how to run it (Bun at C:\\bun, not on PATH; `bun test`, `bun run typecheck`, `bunx biome check .`, `bun run src/cli/index.ts <cmd>`), the project layout (src/cli, src/core, src/index; .waystation ledger), the canonical-JSON + generated-Markdown model, and the dogfood loop. This knowledge currently lives only in agent memory (waystation-dev-setup).\n",
+  "acceptance": [
+    "A README.md at the repo root explains install/run/test with the real Bun path.",
+    "It documents the src/ layout and the .waystation/ ledger structure.",
+    "It states the core principles (JSON canonical, SQLite index, one write path, generated Markdown) and links docs/roadmap.md, docs/error-philosophy.md, and agentledger-spec.md.",
+    "A new contributor can go from clone to green `bun test` using only the README."
+  ],
+  "notes": "Roadmap Phase 3.\n"
+}

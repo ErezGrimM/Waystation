@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-migrate-ledger-json-claude-code-20260706-0224",
+  "task": "task-migrate-ledger-json",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-05T23:24:32.676Z",
+  "released_at": null,
+  "completed_at": "2026-07-05T23:24:32.774Z"
+}

@@ -1,0 +1,47 @@
+{
+  "id": "prompt-waystation-v1",
+  "title": "Waystation V1 implementation rules",
+  "version": 3,
+  "status": "active",
+  "applies_to": {
+    "agents": ["codex", "claude-code", "opencode"],
+    "roles": ["implementer", "reviewer"],
+    "scopes": ["scope-core", "scope-cli"],
+    "tasks": []
+  },
+  "priority": 50,
+  "purpose": "Keep Waystation's first implementation small, dogfoodable, and faithful to the local-first ledger model.\n",
+  "instructions": "Build Waystation as a Bun + TypeScript CLI first. Canonical state is JSON files under .waystation/ (config.json, per-record *.json, append-only events.jsonl). Treat SQLite (bun:sqlite) as a rebuildable index, never the source of truth. Generate Markdown one-way from JSON for humans; never parse it back. Defer the dashboard, GitHub sync, worktree automation, and agent launching until the core CLI and brief workflow are useful.\n",
+  "must_do": [
+    "Validate every record through zod on read; serialize from validated objects on write.",
+    "Route all mutations through the single core write path (lock + atomic write + event append).",
+    "Keep commands usable by coding agents (stable output, --json on reads).",
+    "Record important mutations as events.",
+    "Keep implementation slices small enough to review (walking skeleton, then widen).",
+    "Check your inbox (`waystation inbox --agent {{agent}}`) when you start, and periodically while working — other agents may have posted questions, updates, or verdicts.",
+    "Post a message to the task thread (`waystation message post --thread {{task_id}} --from {{agent}}`) at meaningful checkpoints: notable progress, a decision, a blocker, or a question for another agent.",
+    "Answer questions addressed to you (kind=question) before they block another agent; reply with in_reply_to to keep the thread coherent."
+  ],
+  "must_not": [
+    "Make SQLite the canonical source of truth.",
+    "Require a daemon for V1 CLI use.",
+    "Require GitHub, Claude Code, or any specific agent.",
+    "Build the dashboard before the CLI model settles.",
+    "Hand-edit canonical JSON as the normal write path (use the CLI/MCP).",
+    "Go silent on a long task — parallel agents and auditors rely on your posted updates to stay in sync."
+  ],
+  "commands": {
+    "start": [
+      "waystation brief --task {{task_id}} --agent {{agent}}",
+      "waystation inbox --agent {{agent}}"
+    ],
+    "during": [
+      "waystation inbox --agent {{agent}}",
+      "waystation message post --thread {{task_id}} --from {{agent}} --kind update --body \"<progress>\""
+    ],
+    "finish": [
+      "waystation message post --thread {{task_id}} --from {{agent}} --kind update --body \"<summary of what changed>\"",
+      "waystation handoff create --task {{task_id}} --from {{agent}}"
+    ]
+  }
+}

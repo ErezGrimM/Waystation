@@ -1,0 +1,12 @@
+{
+  "id": "claim-task-skeleton-task-next-claude-20260706-1242",
+  "task": "task-skeleton-task-next",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T12:42:00+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T12:50:00+03:00",
+  "notes": "Built the first end-to-end slice: commander CLI (`task next`, `task ready`, --json, --from-index), zod task schema + JSON loader, and a bun:sqlite index behind a runtime adapter (node:sqlite fallback). 8 bun:test cases pass, including the real bun:sqlite path and a zod-rejection case. Stack composition (Bun + commander + zod + bun:sqlite + JSON) is proven.\n"
+}

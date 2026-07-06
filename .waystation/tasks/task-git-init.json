@@ -1,0 +1,26 @@
+{
+  "id": "task-git-init",
+  "title": "Initialize git version control",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    ".gitignore",
+    ".git/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-06T07:15:00+03:00",
+  "updated_at": "2026-07-06T07:18:20+03:00",
+  "closed_at": "2026-07-06T07:18:20+03:00",
+  "description": "The project has no version control, which is the single biggest risk now that there is substantial code and a live ledger. Initialize git and make an initial commit. Version control also enables the 'forkable/inspectable' properties the ledger and messaging designs assume (git branches as the fork mechanism).\n",
+  "acceptance": [
+    "A git repository is initialized at the repo root.",
+    ".gitignore already excludes node_modules, .agents, dist, and .waystation/*.sqlite — confirm it is correct.",
+    "An initial commit captures the current tree (code, docs, .waystation ledger).",
+    "Do NOT commit node_modules, the bun-skills under .agents/, or the SQLite index."
+  ],
+  "notes": "Roadmap Phase 3. Ask the user before the first commit if unsure what to include; committing is a user-facing action.\n"
+}

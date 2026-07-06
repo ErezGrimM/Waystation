@@ -1,0 +1,31 @@
+{
+  "id": "task-skeleton-mutations",
+  "title": "Widen skeleton: claim/release/finish with events and locking",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "src/storage/",
+    ".waystation/claims/",
+    ".waystation/events.jsonl"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-skeleton-task-next"
+  ],
+  "created_at": "2026-07-06T12:24:00+03:00",
+  "updated_at": "2026-07-05T23:13:33.686Z",
+  "closed_at": "2026-07-05T23:13:33.686Z",
+  "description": "Add the mutation half of the skeleton — the first commands that write. This forces the core write path: acquire a local write lock (proper-lockfile), validate input, write the JSON record atomically, append a JSONL event, and invalidate or update the bun:sqlite index. Implement `task claim`, `task release`, and `task finish`.\n",
+  "acceptance": [
+    "`waystation task claim <id> --agent <a>` creates an active claim JSON record and appends a task.claimed event.",
+    "`waystation task release <id>` and `waystation task finish <id>` update claim/task state and append the matching events (claim.released / claim.completed / task.status_changed).",
+    "A second active claim on the same task is rejected (no force flag in V1).",
+    "Writes go through a single core write path shared with future CLI/dashboard/MCP callers (spec §12), are atomic, and hold the write lock.",
+    "bun:test covers a claim/finish round trip and the double-claim rejection; events.jsonl remains valid JSONL after mutations."
+  ],
+  "notes": "This is where the append-only event model and write safety become real. Keep the write path in core so the later dashboard and MCP layers reuse it rather than re-implementing writes.\n"
+}

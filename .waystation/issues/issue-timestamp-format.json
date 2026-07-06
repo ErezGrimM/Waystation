@@ -1,0 +1,27 @@
+{
+  "id": "issue-timestamp-format",
+  "title": "CLI writes UTC (Z) timestamps; ledger convention is +03:00 offset",
+  "status": "fixed",
+  "severity": "low",
+  "priority": 3,
+  "type": "quality",
+  "task": "task-skeleton-mutations",
+  "scope": "scope-core",
+  "file_hints": ["src/core/time.ts", "src/core/mutate.ts"],
+  "opened_by": "claude-code",
+  "assigned_to": null,
+  "created_at": "2026-07-06T13:05:00+03:00",
+  "updated_at": "2026-07-06T02:33:00+03:00",
+  "closed_at": null,
+  "resolution": "Fixed: timestamps centralized in src/core/time.ts (nowIso/idStamp) and standardized on LOCAL machine time with numeric offset (e.g. 2026-07-06T02:32:50+03:00), per owner decision. mutate.ts uses the helper. Verified via a dogfooded claim/finish. Existing UTC-Z records from earlier this session remain valid ISO and were left as-is.",
+  "description": "The mutation commands stamp records/events via `new Date().toISOString()`, which emits UTC with a trailing `Z` (e.g. 2026-07-05T23:13:33.686Z). The hand-authored ledger uses local offset format (e.g. 2026-07-06T12:24:00+03:00). Both are valid ISO-8601 and sort correctly, so this is cosmetic, not a correctness bug.\n",
+  "expected": "Timestamps written by the CLI use a consistent, project-standard format.\n",
+  "actual": "CLI-written timestamps are UTC `Z`; hand-authored ones are +03:00.\n",
+  "evidence": [
+    { "command": "waystation task finish task-skeleton-mutations --agent claude-code", "result": "closed_at set to 2026-07-05T23:13:33.686Z" }
+  ],
+  "next_steps": [
+    "Decide the canonical timestamp format (recommend: always UTC Z everywhere, and normalize the hand-authored records during task-migrate-ledger-json).",
+    "Centralize timestamp creation in one core helper so CLI/dashboard/MCP agree."
+  ]
+}

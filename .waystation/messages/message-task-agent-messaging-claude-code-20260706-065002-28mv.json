@@ -1,0 +1,10 @@
+{
+  "id": "message-task-agent-messaging-claude-code-20260706-065002-28mv",
+  "thread": "task-agent-messaging",
+  "from_agent": "claude-code",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Shipped: message post/list + inbox, project channel, 32 tests green.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T06:50:02+03:00"
+}

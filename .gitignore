@@ -1,0 +1,15 @@
+.tools/
+.agents/
+.claude/skills/
+skills-lock.json
+node_modules/
+dist/
+*.log
+
+# Leftover from the npm bootstrap; bun.lock is the canonical lockfile
+package-lock.json
+.waystation/*.sqlite
+.waystation/*.sqlite-*
+spikes/deno-stack/waystation-spike.exe
+spikes/bun-stack/node_modules/
+spikes/bun-stack/waystation-spike.exe

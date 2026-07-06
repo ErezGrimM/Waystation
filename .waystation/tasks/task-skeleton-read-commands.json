@@ -1,0 +1,22 @@
+{
+  "id": "task-skeleton-read-commands",
+  "title": "Widen skeleton: `task list` and `task show`",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": ["src/cli/", "src/core/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-skeleton-task-next"],
+  "created_at": "2026-07-06T12:22:00+03:00",
+  "updated_at": "2026-07-06T12:55:00+03:00",
+  "closed_at": "2026-07-06T12:55:00+03:00",
+  "description": "Widen the read side of the skeleton by reusing the loader, schema, and index from task-skeleton-task-next. Add `waystation task list` and `waystation task show <id>` with stable, scriptable output.\n",
+  "acceptance": [
+    "`waystation task list` lists tasks with their status.",
+    "`waystation task show <id>` shows one task, and errors cleanly on an unknown id.",
+    "Both commands support `--json`.",
+    "No new storage or index layer is introduced — these commands reuse the core built in task-skeleton-task-next.",
+    "bun:test covers list output and show-by-id including the not-found case."
+  ],
+  "notes": "Thin CLI wrappers over existing core logic (scope-cli rule). If a command needs new core behavior, that is a signal the previous slice was too thin.\n"
+}

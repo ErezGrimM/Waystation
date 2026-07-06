@@ -1,0 +1,17 @@
+{
+  "id": "decision-dashboard-llm-features",
+  "title": "LLM prompt-rewrite and agent-suggestion are dashboard-only, advisory, and deferred",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": null,
+  "created_at": "2026-07-06T12:10:00+03:00",
+  "decided_by": "human",
+  "context": "An internal-LLM capability was proposed: rewriting prompts and suggesting which LLM/agent should take each task. This runs into the spec's Non-Goals (§3): Waystation is 'not a general LLM prompting framework' and 'not an autonomous agent runner'. The concern is keeping the core ledger local-first and fully functional with no API key configured.",
+  "decision": "LLM features live in the dashboard only, as explicit human-triggered, advisory actions ('rewrite this prompt', 'suggest an agent for this task') that stream results. They are not baked into core brief/prompt-render logic, never run automatically, and never dispatch work. The dashboard performs them via the same core write path (spec §12), writing results back as normal records/edits. LLM API configuration lives in a dashboard-specific config block, so `waystation init` and CLI/MCP usage never require an API key. This is deferred past V1 (future integration, spec §22).",
+  "consequences": [
+    "Core CLI/MCP stays local-first with zero LLM dependency.",
+    "Feature is opt-in and isolated to the dashboard; no Non-Goals violation.",
+    "Streaming responses favor the JS dashboard stack (Hono SSE + React), consistent with the chosen Bun stack.",
+    "Deferred: not part of the V1 milestone scope."
+  ]
+}

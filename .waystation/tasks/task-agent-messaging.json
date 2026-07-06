@@ -1,0 +1,35 @@
+{
+  "id": "task-agent-messaging",
+  "title": "Agent messaging: shared async inbox via message records",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "src/cli/",
+    ".waystation/messages/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-skeleton-generate",
+    "task-skeleton-mutations"
+  ],
+  "created_at": "2026-07-06T02:45:00+03:00",
+  "updated_at": "2026-07-06T06:50:02+03:00",
+  "closed_at": "2026-07-06T06:50:02+03:00",
+  "description": "Give parallel agents a shared async inbox without a sidecar service, chat server, or external tool — messages live in the ledger they already use, inheriting durability, timestamps, forkability, and after-the-fact inspectability (spec §6.10). A coder posts step updates; an audit agent polls verdicts. Complements handoffs (a one-shot baton pass) with ongoing back-and-forth.\n",
+  "acceptance": [
+    "Message record type per spec §6.10: id, thread (a task/issue id OR the reserved `project` folder-wide channel), from_agent, to_agent (nullable=broadcast), kind (update|question|verdict|note), body, in_reply_to, created_at.",
+    "Chat is scoped per project folder (one .waystation ledger = one message space); no cross-project inbox. A `project` channel carries folder-wide messages in addition to task/issue threads.",
+    "Messages are immutable and one file per record under .waystation/messages/ (lowest merge friction for parallel branches); no edit/delete.",
+    "`message post` writes through the single core write path (lock + atomic write) and appends a message.posted event.",
+    "`message list --thread <id>` shows a thread; `inbox --agent <a> [--since <cursor>] [--json]` returns messages addressed to the agent or broadcast on threads it holds a claim on.",
+    "The inbox is a query over records (a per-agent cursor, not a mutation). NOTE: served in-memory today; moves to the SQLite index when reindex covers messages.",
+    "bun:test covers posting, project-channel + claimed-thread broadcast, own-message exclusion, and inbox filtering by recipient + since-cursor.",
+    "DEFERRED to the MCP phase: expose post_message and get_inbox as MCP tools over the same core logic.",
+    "DEFERRED to task-error-envelope: return message results/errors via the CommandResult envelope."
+  ],
+  "notes": "Beads stores comments in its Dolt DB; Waystation's git-committed JSON files are the equivalent (durable, forkable, inspectable). Keep it async and file-based — no real-time/presence/streaming, which would pull toward the deferred daemon and the 'do not become a chat tool' non-goal (§3). Uses the error envelope from task-error-envelope once that lands.\n"
+}
