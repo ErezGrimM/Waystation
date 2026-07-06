@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
-import { ClaimRecord, TaskRecord } from "./schema.ts";
+import { ClaimRecord, MessageRecord, TaskRecord } from "./schema.ts";
 
 /** True if a record file exists for `id` in `dir` as either JSON or YAML. */
 function recordExists(dir: string, id: string): boolean {
@@ -197,6 +197,60 @@ export function validateLedger(root?: string): CommandResult<null> {
         );
       }
     });
+  }
+
+  // --- messages: schema, dangling in_reply_to, orphan thread ---
+  const messageIds = new Set<string>();
+  const messages: Array<{ id: string; thread: string; in_reply_to?: string | null }> = [];
+  for (const name of listJson(paths.messages)) {
+    const file = join(paths.messages, name);
+    let data: unknown;
+    try {
+      data = JSON.parse(readFileSync(file, "utf8"));
+    } catch (err) {
+      diags.push(
+        diag("invalid_json", {
+          message: `${name}: invalid JSON`,
+          details: { file: name, cause: (err as Error).message },
+        }),
+      );
+      continue;
+    }
+    const parsed = MessageRecord.safeParse(data);
+    if (!parsed.success) {
+      diags.push(
+        diag("schema_invalid", {
+          message: `${name}: ${parsed.error.issues[0]?.message}`,
+          details: { file: name },
+        }),
+      );
+      continue;
+    }
+    messageIds.add(parsed.data.id);
+    messages.push({
+      id: parsed.data.id,
+      thread: parsed.data.thread,
+      in_reply_to: parsed.data.in_reply_to,
+    });
+  }
+  const issuesDir = join(paths.ledger, "issues");
+  for (const m of messages) {
+    if (m.in_reply_to && !messageIds.has(m.in_reply_to)) {
+      diags.push(
+        diag("dangling_reply", {
+          message: `message ${m.id} replies to missing message: ${m.in_reply_to}`,
+          details: { message: m.id, in_reply_to: m.in_reply_to },
+        }),
+      );
+    }
+    if (m.thread !== "project" && !taskExists(m.thread) && !recordExists(issuesDir, m.thread)) {
+      diags.push(
+        diag("orphan_thread", {
+          message: `message ${m.id} on unknown thread: ${m.thread}`,
+          details: { message: m.id, thread: m.thread },
+        }),
+      );
+    }
   }
 
   return toResult(null, diags);

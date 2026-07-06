@@ -98,6 +98,18 @@ export const CODES = {
     hint: "Create the prompt or clear the reference.",
     retryable: false,
   },
+  dangling_reply: {
+    severity: "warning",
+    message: "Message replies to a message that does not exist.",
+    hint: "The referenced message may have been pruned; check in_reply_to.",
+    retryable: false,
+  },
+  orphan_thread: {
+    severity: "warning",
+    message: "Message thread is neither `project` nor an existing task/issue.",
+    hint: "The thread's task/issue may have been removed or archived.",
+    retryable: false,
+  },
   // mutation / lookup surface
   no_such_task: {
     severity: "error",

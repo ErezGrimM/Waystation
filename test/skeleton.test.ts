@@ -212,6 +212,27 @@ describe("validate", () => {
     const bad = { id: "task-bad", title: "Bad", status: "nope", dependencies: [] };
     expect(codes(fixtureRoot([bad]))).toContain("schema_invalid");
   });
+
+  const t0 = new Date("2026-07-06T10:00:00Z");
+
+  test("flags a dangling in_reply_to", async () => {
+    const root = fixtureRoot([D]);
+    await postMessage(root, { thread: "task-d", from: "a", body: "x", inReplyTo: "message-nope" }, t0, "d1");
+    expect(codes(root)).toContain("dangling_reply");
+  });
+
+  test("flags a message on an unknown (orphan) thread", async () => {
+    const root = fixtureRoot([D]);
+    await postMessage(root, { thread: "task-ghost", from: "a", body: "x" }, t0, "o1");
+    expect(codes(root)).toContain("orphan_thread");
+  });
+
+  test("project channel and existing task threads are not orphan", async () => {
+    const root = fixtureRoot([D]);
+    await postMessage(root, { thread: "project", from: "a", body: "x" }, t0, "p1");
+    await postMessage(root, { thread: "task-d", from: "a", body: "y" }, t0, "p2");
+    expect(codes(root)).not.toContain("orphan_thread");
+  });
 });
 
 describe("error envelope", () => {

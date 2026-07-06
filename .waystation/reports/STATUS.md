@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-validate-messages` [p3] — Extend validate to cover message records
+_none_
 
 ## In progress
 - `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
@@ -25,6 +25,7 @@ _none_
 - `task-skeleton-read-commands` [p2] — Widen skeleton: `task list` and `task show`
 - `task-skeleton-task-next` [p1] — Walking skeleton: end-to-end `waystation task next`
 - `task-skeleton-validate` [p2] — Widen skeleton: full-ledger validation
+- `task-validate-messages` [p3] — Extend validate to cover message records
 
 ## Won't do
 _none_

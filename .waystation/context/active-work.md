@@ -6,5 +6,5 @@
 - `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
 
 ## Ready
-- `task-validate-messages` [p3] — Extend validate to cover message records
+_none_
 
