@@ -3,7 +3,6 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-readme` [p2] — Write README (run instructions, layout, dogfood loop)
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-validate-messages` [p3] — Extend validate to cover message records
 
@@ -18,6 +17,7 @@ _none_
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-git-init` [p1] — Initialize git version control
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON
+- `task-readme` [p2] — Write README (run instructions, layout, dogfood loop)
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-skeleton-brief` [p1] — Widen skeleton: `waystation brief --task <id>`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
