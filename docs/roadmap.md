@@ -52,17 +52,15 @@ commands → mutations (write path) → validate → brief → generate.
 Exit criteria (met): Waystation manages its own task list; reports are
 generated, not hand-written; `validate` clean.
 
-## Phase 2 — Coordination Primitives ⏳ IN PROGRESS
+## Phase 2 — Coordination Primitives ✅ DONE (2026-07-06)
 
 Goal: the primitives that make multi-agent coordination real.
 - **Agent messaging** ✅ — async inbox, `project` channel, per-folder scope.
-- **Error envelope** ⏳ (`task-error-envelope`). Remaining:
-  1. Surface the `bun:sqlite`→`node:sqlite` fallback as a
-     `sqlite_backend_fallback` **warning** through a `CommandResult`.
-  2. Roll the envelope across the remaining read commands (`next`, `list`,
-     `show`, `brief`) so they return `CommandResult` with `warnings[]` too.
-Exit criteria: every command returns the envelope; every emitted code is
-catalogued (coverage test already enforces this for `validate`).
+- **Error envelope** ✅ (`task-error-envelope`) — `CommandResult`/`Diagnostic`
+  with a code catalog; `validate` + read commands (`next`/`ready`/`list`/
+  `show`/`brief`/`reindex`) emit the envelope; `RecordError`/`MutationError`
+  carry codes; the `bun:sqlite`→`node:sqlite` fallback surfaces as a
+  `sqlite_backend_fallback` warning; a coverage test enforces the catalog.
 
 ## Phase 3 — Robustness & Onboarding ✅ DONE (2026-07-06)
 
