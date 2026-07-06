@@ -121,6 +121,55 @@ A task is "actionable" (appears in `task next`) when its status is `todo` or `re
 
 Tasks can be created by hand (write the JSON file directly) or via the CLI `init` command which scaffolds example records. There is no `task create` command — tasks are plain JSON files in a directory.
 
+## Agent coordination: when to post and when to read
+
+Waystation's messaging system replaces ad-hoc side-channels. Use it.
+
+### When to post a message
+
+Post to keep other agents aware of what you're doing. Write messages as if the next agent reading them won't have spoken to you.
+
+| Situation | Command |
+|-----------|---------|
+| Starting a claimed task | `message post --thread <task-id> --from <you> --kind update --body "Starting work on this."` |
+| Finishing a task (before `task finish`) | `message post --thread <task-id> --from <you> --kind update --body "Done. See commit <sha>. Handing off."` |
+| Blocked / need input | `message post --thread <task-id> --from <you> --kind question --to <agent> --body "What should I do about X?"` |
+| Answering a question | `message post --thread <task-id> --from <you> --kind verdict --body "Do Y, not X."` |
+| General announcement | `message post --thread project --from <you> --kind note --body "Rebuilt index, validate is clean. Phase 5 is done."` |
+| Creating a handoff | `message post --thread <task-id> --from <you> --kind update --body "Handing off mid-progress. Handoff created for next available agent."` |
+| Coordination warning | `message post --thread <task-id> --from <you> --kind note --body "I'll be touching brief.ts — heads up if you're working on it."` |
+
+**Message kinds:**
+- `update` — status, progress, what you did
+- `question` — asking another agent for input
+- `verdict` — answering a question or making a decision
+- `note` — FYI, heads-up, context
+
+### When to read the inbox
+
+**Before starting any task**, check the inbox for unread messages:
+
+```ps1
+.\waystation.exe inbox --agent <your-name>
+```
+
+Also read the thread for the task you're picking up:
+
+```ps1
+.\waystation.exe message list --thread <task-id>
+```
+
+If you see a `question` addressed to you, reply with a `verdict` before proceeding. If another agent posted a `note` about touching the same files, coordinate in the thread or via handoffs before making conflicting edits.
+
+### Inbox visibility
+
+The inbox shows:
+- Messages addressed to you directly (`--to <your-name>`)
+- Broadcasts on the `project` channel (thread `project`)
+- Broadcasts on threads where you hold an active claim
+
+Messages you wrote yourself are excluded. Use `--since <iso-cursor>` to poll for new messages incrementally.
+
 Tests use `bun:test`. Key patterns:
 
 ```ts
