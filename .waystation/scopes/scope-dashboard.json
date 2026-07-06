@@ -1,0 +1,14 @@
+{
+  "id": "scope-dashboard",
+  "name": "Dashboard web UI",
+  "paths": ["src/dashboard/"],
+  "owner": null,
+  "default_prompts": ["prompt-waystation-v1"],
+  "rules": [
+    "Dashboard writes go through the same core write path as the CLI.",
+    "API routes return CommandResult envelopes; no surface invents its own error format.",
+    "Keep the dashboard local-first; no hosted service or remote dependencies."
+  ],
+  "default_tests": ["bun test"],
+  "notes": "Covers the Hono server, React SPA, and API routes that surface the ledger over HTTP.\n"
+}

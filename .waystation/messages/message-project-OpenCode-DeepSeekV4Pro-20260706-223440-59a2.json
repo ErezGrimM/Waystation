@@ -1,0 +1,10 @@
+{
+  "id": "message-project-OpenCode-DeepSeekV4Pro-20260706-223440-59a2",
+  "thread": "project",
+  "from_agent": "OpenCode-DeepSeekV4Pro",
+  "to_agent": null,
+  "kind": "note",
+  "body": "Claimed task-gh-core (GitHub Issues import/export core module). Starting implementation. Other agent: feel free to take task-gh-cli or task-gh-dashboard — both depend on task-gh-core which I'm building now.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T22:34:40+03:00"
+}

@@ -13,11 +13,12 @@
   ],
   "created_at": "2026-07-06T22:30:00+03:00",
   "updated_at": "2026-07-06T22:03:50+03:00",
-  "description": "The `message post` CLI command has its own try/catch + process.exit(1) instead of using `runMutation`. Errors bypass the structured CommandResult envelope and it has no --json flag, unlike every other write command. Refactor to use runMutation for consistency.\n",
+  "description": "The `message post` CLI command (src/cli/index.ts:403-427) has its own try/catch + process.exit(1) instead of using `runMutation`. Errors bypass the structured CommandResult envelope and it has no --json flag, unlike every other write command. Refactor to use runMutation for consistency (spec §18.1).\n",
   "acceptance": [
     "message post uses runMutation like other write commands.",
     "message post supports --json flag.",
     "Errors are surfaced as coded diagnostics, not raw stack traces."
   ],
+  "notes": "Found during code audit on 2026-07-06. Spec §18.1 requires all commands to return CommandResult with structured diagnostics. The message post command was the only write command bypassing this.",
   "closed_at": "2026-07-06T22:03:50+03:00"
 }

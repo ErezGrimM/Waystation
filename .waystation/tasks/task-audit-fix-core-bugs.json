@@ -21,5 +21,6 @@
     "mutate.ts error message does not contain '(as JSON)'.",
     "All existing tests still pass."
   ],
+  "notes": "Found during code audit on 2026-07-06. These are correctness bugs that could cause incorrect behavior (timestamp comparison) or confusing error messages (leaked implementation detail).",
   "closed_at": "2026-07-06T22:02:57+03:00"
 }

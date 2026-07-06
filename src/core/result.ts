@@ -211,6 +211,26 @@ export const CODES = {
     hint: "Specify the task id: waystation brief --task <id>.",
     retryable: false,
   },
+  // github
+  no_github_token: {
+    severity: "error",
+    message: "GITHUB_TOKEN environment variable is not set.",
+    hint: "Create a GitHub personal access token with repo scope and set GITHUB_TOKEN.",
+    retryable: false,
+  },
+  github_api_error: {
+    severity: "error",
+    message: "GitHub API request failed.",
+    hint: "Check the repository name, token permissions, and network connectivity.",
+    retryable: false,
+  },
+  // graph
+  graph_data_invalid: {
+    severity: "warning",
+    message: "Graph data is missing or invalid.",
+    hint: "Run Graphify to generate graph data, or check the graph path configuration.",
+    retryable: false,
+  },
 } as const satisfies Record<string, CodeSpec>;
 
 export type Code = keyof typeof CODES;

@@ -4,6 +4,7 @@ import type { BriefBudget } from "../core/brief.ts";
 import { buildBrief } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
 import { reindex } from "../core/generate.ts";
+import { exportGitHubIssues, importGitHubIssues } from "../core/gh.ts";
 import { getGitState } from "../core/git.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
@@ -155,6 +156,36 @@ export function createApp(root: string, distDir?: string): Hono {
       const issue = await createIssue(root, body);
       emit("issue.created", { issue: issue.id, title: body.title });
       return json(okResult(issue));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  // ── github integration ──
+
+  app.post("/api/gh/import", async (c) => {
+    try {
+      const body = await c.req.json<{ repo: string }>();
+      const token = process.env.GITHUB_TOKEN ?? "";
+      const result = await importGitHubIssues(root, body.repo, token);
+      if (result.ok) {
+        emit("gh.imported", { repo: body.repo, count: result.data?.imported ?? 0 });
+      }
+      return json(result);
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.post("/api/gh/export", async (c) => {
+    try {
+      const body = await c.req.json<{ repo: string }>();
+      const token = process.env.GITHUB_TOKEN ?? "";
+      const result = await exportGitHubIssues(root, body.repo, token);
+      if (result.ok) {
+        emit("gh.exported", { repo: body.repo, count: result.data?.exported ?? 0 });
+      }
+      return json(result);
     } catch (e) {
       return json(catchDiag(e));
     }

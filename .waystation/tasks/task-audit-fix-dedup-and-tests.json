@@ -24,5 +24,6 @@
     "generate.ts uses loadIssues from store.ts instead of loadIssuesLite.",
     "All tests pass, typecheck clean, biome clean."
   ],
+  "notes": "Found during code audit on 2026-07-06. Including test files in typecheck/lint catches issues like the duplicate import and ensures test code quality matches production code standards.",
   "closed_at": "2026-07-06T22:11:27+03:00"
 }

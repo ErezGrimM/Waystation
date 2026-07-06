@@ -1,0 +1,10 @@
+{
+  "id": "message-project-opencode-20260706-223440-a91f",
+  "thread": "project",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "note",
+  "body": "Another agent joining: OpenCode-Qwen3.7Plus will be working in parallel. Coordinate via threads if touching overlapping files.",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T22:34:40+03:00"
+}

@@ -9,11 +9,11 @@ Three dashboard cleanup items from the audit:
 
 2. **Dependency placement** — react-router-dom is in `dependencies` but only used by the Vite-built client. Move to devDependencies.
 
-3. **SSE heartbeat** — /api/events sends no initial heartbeat or periodic ping. Clients may timeout on idle connections. Add a periodic comment line as heartbeat.
+3. **SSE heartbeat** — /api/events sends no initial heartbeat or periodic ping. Clients may timeout on idle connections. Add a periodic comment line as heartbeat (15-second interval, SSE comment format `: heartbeat\n\n`).
 
 ## Acceptance
 - Prompts.tsx and Validation.tsx are deleted.
 - react-router-dom is in devDependencies in package.json.
-- /api/events sends periodic SSE comments as heartbeat.
+- /api/events sends periodic SSE comments as heartbeat every 15 seconds.
 - Dashboard tests still pass.
 

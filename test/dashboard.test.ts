@@ -245,4 +245,28 @@ describe("dashboard API server", () => {
     expect(body.ok).toBe(true);
     expect(body.data.task).toBe("test-task");
   });
+
+  test("POST /api/gh/import returns no_github_token when token is missing", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/gh/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo: "owner/repo" }),
+    });
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.errors[0].code).toBe("no_github_token");
+  });
+
+  test("POST /api/gh/export returns no_github_token when token is missing", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/gh/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo: "owner/repo" }),
+    });
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.errors[0].code).toBe("no_github_token");
+  });
 });

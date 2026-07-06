@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { enrichFromGraph, loadGraphData } from "./graph.ts";
 import { getGitState } from "./git.ts";
 import { type ActiveClaimOverlap, overlapsForTask } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";

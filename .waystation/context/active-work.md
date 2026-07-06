@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-_none_
+- `task-gh-core` [p2] — GitHub Issues import/export core module (API + field mapping)
 
 ## Coordination warnings
 _none_

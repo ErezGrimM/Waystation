@@ -1,0 +1,23 @@
+{
+  "id": "task-graph-brief",
+  "title": "Wire Graphify enrichment into brief, CLI, MCP, and dashboard",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": ["src/core/brief.ts", "src/cli/index.ts", "src/dashboard/client/src/pages/Brief.tsx"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-graph-core"],
+  "created_at": "2026-07-06T22:56:00+03:00",
+  "updated_at": "2026-07-06T22:56:00+03:00",
+  "closed_at": null,
+  "description": "Wire the Graphify enrichment from task-graph-core into all surfacing layers: brief output (CLI text), MCP get_brief tool, and the dashboard Brief page. Each layer adds related files, concepts, and impact hints to the existing brief display — no new commands or pages, just richer existing output.\n",
+  "acceptance": [
+    "CLI: `waystation brief --task <id>` output includes '## Related files' (with file paths and relationship type), '## Concepts' (topic summaries), and '## Impact hints' (dependency warnings) sections when graph data is available.",
+    "MCP: get_brief tool returns the enriched Brief interface with relatedFiles, concepts, impactHints arrays.",
+    "Dashboard: Brief page shows related files, concepts, and impact hints in labeled sections (matching the existing mockup design style).",
+    "All layers degrade gracefully when graph data is absent — sections are simply omitted.",
+    "bun:test: CLI integration test renders brief with graph data; dashboard API returns enriched brief; MCP tool returns enriched brief.",
+    "typecheck, biome check, and waystation validate all clean."
+  ],
+  "notes": "Surfacing pattern: brief.ts is the single authority that returns the enriched Brief. CLI, MCP, and dashboard just call buildBrief() — they don't need to know about graph. The renderBrief() function in brief.ts adds the new sections. Dashboard Brief page already has a sectioned design — add Related files, Concepts, and Impact hints sections. Keep the display compact: max 10 related files, 5 concepts, 5 impact hints in the UI.\n"
+}

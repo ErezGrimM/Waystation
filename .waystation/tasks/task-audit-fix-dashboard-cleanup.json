@@ -3,7 +3,7 @@
   "title": "Clean up dashboard: dead pages, dep placement, SSE heartbeat",
   "status": "done",
   "priority": 3,
-  "scope": "scope-core",
+  "scope": "scope-dashboard",
   "path_hints": [
     "src/dashboard/client/src/pages/",
     "src/dashboard/server.ts",
@@ -13,12 +13,13 @@
   "dependencies": [],
   "created_at": "2026-07-06T22:30:00+03:00",
   "updated_at": "2026-07-06T22:05:00+03:00",
-  "description": "Three dashboard cleanup items from the audit:\n\n1. **Dead pages** — Prompts.tsx and Validation.tsx exist in src/dashboard/client/src/pages/ but are not routed in App.tsx. Remove them.\n\n2. **Dependency placement** — react-router-dom is in `dependencies` but only used by the Vite-built client. Move to devDependencies.\n\n3. **SSE heartbeat** — /api/events sends no initial heartbeat or periodic ping. Clients may timeout on idle connections. Add a periodic comment line as heartbeat.\n",
+  "description": "Three dashboard cleanup items from the audit:\n\n1. **Dead pages** — Prompts.tsx and Validation.tsx exist in src/dashboard/client/src/pages/ but are not routed in App.tsx. Remove them.\n\n2. **Dependency placement** — react-router-dom is in `dependencies` but only used by the Vite-built client. Move to devDependencies.\n\n3. **SSE heartbeat** — /api/events sends no initial heartbeat or periodic ping. Clients may timeout on idle connections. Add a periodic comment line as heartbeat (15-second interval, SSE comment format `: heartbeat\\n\\n`).\n",
   "acceptance": [
     "Prompts.tsx and Validation.tsx are deleted.",
     "react-router-dom is in devDependencies in package.json.",
-    "/api/events sends periodic SSE comments as heartbeat.",
+    "/api/events sends periodic SSE comments as heartbeat every 15 seconds.",
     "Dashboard tests still pass."
   ],
+  "notes": "Found during code audit on 2026-07-06. SSE heartbeat prevents client timeouts on idle connections. The 15-second interval balances responsiveness with network efficiency.",
   "closed_at": "2026-07-06T22:05:00+03:00"
 }

@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-gh-core` [p2] — GitHub Issues import/export core module (API + field mapping)
 
 ## In progress
 _none_
@@ -15,7 +15,8 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-_none_
+- `task-gh-cli` [p2] — GitHub Issues CLI commands (import/export)
+- `task-gh-dashboard` [p3] — GitHub Issues import/export buttons on dashboard Issues page
 
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints
@@ -24,7 +25,7 @@ _none_
 - `task-audit-fix-core-bugs` [p1] — Fix core correctness bugs found in code audit
 - `task-audit-fix-dashboard-cleanup` [p3] — Clean up dashboard: dead pages, dep placement, SSE heartbeat
 - `task-audit-fix-dedup-and-tests` [p3] — Deduplicate readJson, fix test/lint config, clean up generate
-- `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file randomness
+- `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file naming
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims

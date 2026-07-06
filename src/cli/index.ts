@@ -549,6 +549,53 @@ program
     await server.connect(transport);
   });
 
+const gh = program.command("gh").description("GitHub Issues integration");
+
+gh.command("import")
+  .description("Import issues from a GitHub repository into the ledger")
+  .requiredOption("--repo <repo>", "repository (owner/name)")
+  .option("--json", "output JSON")
+  .option("--force", "overwrite existing records")
+  .action(async (opts: { repo: string; json?: boolean; force?: boolean }) => {
+    const root = findProjectRoot();
+    const token = process.env.GITHUB_TOKEN ?? "";
+    if (!token) {
+      const result = toResult(null, [diag("no_github_token" as never)]);
+      emitResult(result, opts.json, () => {});
+      return;
+    }
+    const { importGitHubIssues } = await import("../core/gh.ts");
+    const result = await importGitHubIssues(root, opts.repo, token);
+    emitResult(result, opts.json, () => {
+      const d = result.data;
+      if (d) {
+        process.stdout.write(`Imported ${d.imported} issues: ${d.ids.join(", ")}\n`);
+      }
+    });
+  });
+
+gh.command("export")
+  .description("Export ledger issues to a GitHub repository")
+  .requiredOption("--repo <repo>", "repository (owner/name)")
+  .option("--json", "output JSON")
+  .action(async (opts: { repo: string; json?: boolean }) => {
+    const root = findProjectRoot();
+    const token = process.env.GITHUB_TOKEN ?? "";
+    if (!token) {
+      const result = toResult(null, [diag("no_github_token" as never)]);
+      emitResult(result, opts.json, () => {});
+      return;
+    }
+    const { exportGitHubIssues } = await import("../core/gh.ts");
+    const result = await exportGitHubIssues(root, opts.repo, token);
+    emitResult(result, opts.json, () => {
+      const d = result.data;
+      if (d) {
+        process.stdout.write(`Exported ${d.exported} issues: ${d.ids.join(", ")}\n`);
+      }
+    });
+  });
+
 program
   .command("dashboard")
   .description("Start the local dashboard web UI (http://127.0.0.1:8787)")

@@ -33,6 +33,10 @@ export function Issues() {
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
   const [msg, setMsg] = useState("");
+  const [showImport, setShowImport] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [repo, setRepo] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const load = () => {
     api<IssueItem[]>("/api/issues").then((r) => {
@@ -58,9 +62,101 @@ export function Issues() {
     }
   };
 
+  const doImport = async () => {
+    if (!repo) return;
+    setLoading(true);
+    const r = await api<{ imported: number; ids: string[] }>("/api/gh/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo }),
+    });
+    setLoading(false);
+    if (r.ok && r.data) {
+      setMsg(`Imported ${r.data.imported} issues from GitHub`);
+      setShowImport(false);
+      setRepo("");
+      load();
+    } else {
+      setMsg(r.errors?.[0]?.message ?? "Import failed");
+    }
+  };
+
+  const doExport = async () => {
+    if (!repo) return;
+    setLoading(true);
+    const r = await api<{ exported: number; ids: string[] }>("/api/gh/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo }),
+    });
+    setLoading(false);
+    if (r.ok && r.data) {
+      setMsg(`Exported ${r.data.exported} issues to GitHub`);
+      setShowExport(false);
+      setRepo("");
+    } else {
+      setMsg(r.errors?.[0]?.message ?? "Export failed");
+    }
+  };
+
   return (
     <div>
       <h1>Issues</h1>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <button className="btn-secondary" onClick={() => setShowImport(true)}>
+          Import from GitHub
+        </button>
+        <button className="btn-secondary" onClick={() => setShowExport(true)}>
+          Export to GitHub
+        </button>
+      </div>
+
+      {showImport && (
+        <div className="panel" style={{ marginBottom: 16, padding: 16 }}>
+          <div className="panel-header">Import from GitHub</div>
+          <div className="panel-body">
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                className="input"
+                value={repo}
+                onChange={(e) => setRepo(e.target.value)}
+                placeholder="owner/repo"
+                style={{ flex: 1 }}
+              />
+              <button className="btn-primary" onClick={doImport} disabled={loading}>
+                {loading ? "Importing..." : "Import"}
+              </button>
+              <button className="btn-outline" onClick={() => { setShowImport(false); setRepo(""); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExport && (
+        <div className="panel" style={{ marginBottom: 16, padding: 16 }}>
+          <div className="panel-header">Export to GitHub</div>
+          <div className="panel-body">
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                className="input"
+                value={repo}
+                onChange={(e) => setRepo(e.target.value)}
+                placeholder="owner/repo"
+                style={{ flex: 1 }}
+              />
+              <button className="btn-primary" onClick={doExport} disabled={loading}>
+                {loading ? "Exporting..." : "Export"}
+              </button>
+              <button className="btn-outline" onClick={() => { setShowExport(false); setRepo(""); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="title" style={{ flex: 1 }} />
@@ -70,7 +166,7 @@ export function Issues() {
           Create
         </button>
       </div>
-      {msg && <div style={{ color: msg === "created" ? "var(--green)" : "var(--red)", marginBottom: 12 }}>{msg}</div>}
+      {msg && <div style={{ color: msg === "created" || msg.includes("Imported") || msg.includes("Exported") ? "var(--green)" : "var(--red)", marginBottom: 12 }}>{msg}</div>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {issues.map((i) => {

@@ -11,6 +11,7 @@ import {
   generateTaskViews,
   reindex,
 } from "../src/core/generate.ts";
+import { importGitHubIssues } from "../src/core/gh.ts";
 import { getGitState } from "../src/core/git.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
@@ -872,5 +873,21 @@ describe("ledger index (all record types)", () => {
       .map((m) => m.body)
       .sort();
     expect(fromIdx).toEqual(inMem);
+  });
+});
+
+describe("github import/export", () => {
+  test("importGitHubIssues returns no_github_token when token is empty", async () => {
+    const root = fixtureRoot([D]);
+    const result = await importGitHubIssues(root, "owner/repo", "");
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((d) => d.code)).toContain("no_github_token");
+  });
+
+  test("importGitHubIssues returns github_api_error for invalid repo", async () => {
+    const root = fixtureRoot([D]);
+    const result = await importGitHubIssues(root, "owner/nonexistent-zzz", "fake-token");
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((d) => d.code)).toContain("github_api_error");
   });
 });
