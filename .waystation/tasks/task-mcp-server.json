@@ -1,0 +1,22 @@
+{
+  "id": "task-mcp-server",
+  "title": "Implement the MCP server (thin wrappers over core)",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": ["src/mcp/", "src/cli/"],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-mcp-smoke"],
+  "created_at": "2026-07-06T17:15:00+03:00",
+  "updated_at": "2026-07-06T17:15:00+03:00",
+  "closed_at": null,
+  "description": "Expose the core ledger over MCP stdio (spec §14) so coding agents can drive Waystation directly. Tools are thin wrappers over existing core functions — no new behavior. A `waystation mcp` command starts the stdio server.\n",
+  "acceptance": [
+    "Tools: get_status, get_next_task, get_task, claim_task, release_task, get_brief, render_prompt, create_handoff, list_issues, create_issue, post_message, get_inbox, validate_ledger.",
+    "Each tool calls the same core logic as the CLI and returns structured results (reusing the CommandResult/Diagnostic shape where sensible).",
+    "Writes go through the single core write path (lock + atomic write + events).",
+    "`waystation mcp` starts the stdio server.",
+    "bun:test covers a client calling get_next_task and claim_task over an in-memory transport."
+  ],
+  "notes": "Phase 4 (roadmap). Depends on task-mcp-smoke confirming the SDK on Bun. Do not reimplement writes — reuse src/core.\n"
+}

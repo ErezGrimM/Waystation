@@ -1,0 +1,26 @@
+{
+  "id": "task-mcp-smoke",
+  "title": "Smoke-test @modelcontextprotocol/sdk on Bun",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/mcp/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-06T17:15:00+03:00",
+  "updated_at": "2026-07-06T17:18:02+03:00",
+  "closed_at": "2026-07-06T17:18:02+03:00",
+  "description": "Before building the MCP server (Phase 4), verify the one unproven dependency: that @modelcontextprotocol/sdk imports and runs on Bun. Construct an McpServer, register a trivial tool, connect a client over an in-memory transport, list and call the tool. This de-risks the whole phase.\n",
+  "acceptance": [
+    "@modelcontextprotocol/sdk installs and imports under Bun.",
+    "A minimal McpServer with one registered tool can be constructed.",
+    "A client connected via an in-memory transport can list the tool and call it, getting the expected result.",
+    "A bun:test covers the round trip; typecheck and biome stay clean."
+  ],
+  "notes": "Phase 4 (roadmap). If the SDK misbehaves on Bun, fall back to Node for the MCP entrypoint (the core stays Bun) or a thin shim — decide here.\n"
+}

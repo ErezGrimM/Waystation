@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-mcp-smoke-claude-code-20260706-171700",
+  "task": "task-mcp-smoke",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T17:17:00+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T17:18:02+03:00"
+}
