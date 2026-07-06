@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
-import { ClaimRecord, IssueRecord, MessageRecord, TaskRecord } from "./schema.ts";
+import { ClaimRecord, HandoffRecord, IssueRecord, MessageRecord, TaskRecord } from "./schema.ts";
 
 /** True if a record file exists for `id` in `dir` as either JSON or YAML. */
 function recordExists(dir: string, id: string): boolean {
@@ -221,6 +221,42 @@ export function validateLedger(root?: string): CommandResult<null> {
         diag("multiple_active_claims", {
           message: `task ${taskId} has ${count} active claims`,
           details: { task: taskId, count },
+        }),
+      );
+    }
+  }
+
+  // --- handoffs: schema + task existence ---
+  const handoffsDir = join(paths.ledger, "handoffs");
+  for (const name of listJson(handoffsDir)) {
+    const file = join(handoffsDir, name);
+    let data: unknown;
+    try {
+      data = JSON.parse(readFileSync(file, "utf8"));
+    } catch (err) {
+      diags.push(
+        diag("invalid_json", {
+          message: `${name}: invalid JSON`,
+          details: { file: name, cause: (err as Error).message },
+        }),
+      );
+      continue;
+    }
+    const parsed = HandoffRecord.safeParse(data);
+    if (!parsed.success) {
+      diags.push(
+        diag("schema_invalid", {
+          message: `${name}: ${parsed.error.issues[0]?.message}`,
+          details: { file: name },
+        }),
+      );
+      continue;
+    }
+    if (!taskExists(parsed.data.task)) {
+      diags.push(
+        diag("handoff_orphan", {
+          message: `handoff ${parsed.data.id} references missing task: ${parsed.data.task}`,
+          details: { handoff: parsed.data.id, task: parsed.data.task },
         }),
       );
     }

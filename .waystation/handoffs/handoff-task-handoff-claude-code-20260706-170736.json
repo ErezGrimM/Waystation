@@ -1,0 +1,15 @@
+{
+  "id": "handoff-task-handoff-claude-code-20260706-170736",
+  "task": "task-handoff",
+  "from_agent": "claude-code",
+  "to_agent": null,
+  "branch": null,
+  "worktree": null,
+  "created_at": "2026-07-06T17:07:36+03:00",
+  "summary": "handoff create/show implemented; validate covers handoffs",
+  "changed_files": [],
+  "tests": [],
+  "unfinished": [],
+  "risks": [],
+  "next_steps": []
+}

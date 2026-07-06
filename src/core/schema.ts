@@ -58,6 +58,24 @@ export const IssueRecord = z.object({
 });
 export type IssueRecord = z.infer<typeof IssueRecord>;
 
+/** Handoff record schema (spec §6.7): a one-shot baton pass between agents. */
+export const HandoffRecord = z.object({
+  id: z.string().min(1),
+  task: z.string().min(1),
+  from_agent: z.string().min(1),
+  to_agent: z.string().nullable().optional(),
+  branch: z.string().nullable().optional(),
+  worktree: z.string().nullable().optional(),
+  created_at: isoTs,
+  summary: z.string().optional(),
+  changed_files: z.array(z.string()).default([]),
+  tests: z.array(z.object({ command: z.string(), status: z.string() })).default([]),
+  unfinished: z.array(z.string()).default([]),
+  risks: z.array(z.string()).default([]),
+  next_steps: z.array(z.string()).default([]),
+});
+export type HandoffRecord = z.infer<typeof HandoffRecord>;
+
 /** Message kind values (spec §6.10). */
 export const MessageKind = z.enum(["update", "question", "verdict", "note"]);
 export type MessageKind = z.infer<typeof MessageKind>;

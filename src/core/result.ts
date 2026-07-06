@@ -111,10 +111,22 @@ export const CODES = {
     retryable: false,
   },
   // mutation / lookup surface
+  handoff_orphan: {
+    severity: "error",
+    message: "Handoff references a task that does not exist.",
+    hint: "Remove the handoff or restore the task.",
+    retryable: false,
+  },
   no_such_task: {
     severity: "error",
     message: "No such task.",
     hint: "Check the task id (waystation task list).",
+    retryable: false,
+  },
+  not_found: {
+    severity: "error",
+    message: "Record not found.",
+    hint: "Check the id.",
     retryable: false,
   },
   task_already_claimed: {

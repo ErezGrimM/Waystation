@@ -3,7 +3,6 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-handoff` [p2] — Implement handoff create/show
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 
 ## In progress
@@ -17,6 +16,7 @@ _none_
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
 - `task-git-init` [p1] — Initialize git version control
+- `task-handoff` [p2] — Implement handoff create/show
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement `waystation init`
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON

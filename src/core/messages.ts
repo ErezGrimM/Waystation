@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { RecordError } from "./records.ts";
@@ -7,6 +7,7 @@ import {
   activeClaimForTask,
   appendEventUnlocked,
   loadClaims,
+  readJsonFile,
   withLedgerLock,
   writeJsonAtomic,
 } from "./store.ts";
@@ -44,7 +45,7 @@ export function loadMessages(root?: string): MessageRecord[] {
   for (const name of entries) {
     if (!name.endsWith(".json")) continue;
     const file = join(dir, name);
-    const parsed = MessageSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
+    const parsed = MessageSchema.safeParse(readJsonFile(file));
     if (!parsed.success) {
       throw new RecordError(
         file,

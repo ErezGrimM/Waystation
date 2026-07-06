@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
+import { createHandoff, getHandoff } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
 import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
@@ -74,6 +75,46 @@ describe("audit fixes", () => {
     );
     expect(m.id.includes("/")).toBe(false);
     expect(m.id.includes("..")).toBe(false);
+  });
+});
+
+describe("handoff", () => {
+  const now = new Date("2026-07-06T10:00:00Z");
+
+  test("create writes a handoff and appends handoff.created", async () => {
+    const root = fixtureRoot([D]);
+    const h = await createHandoff(root, { task: "task-d", from: "coder", summary: "did part 1" }, now);
+    expect(h.task).toBe("task-d");
+    expect(getHandoff(root, h.id)?.summary).toBe("did part 1");
+    expect(readFileSync(join(root, ".waystation", "events.jsonl"), "utf8")).toContain(
+      "handoff.created",
+    );
+  });
+
+  test("create throws for a missing task", async () => {
+    const root = fixtureRoot([D]);
+    let threw = false;
+    try {
+      await createHandoff(root, { task: "task-ghost", from: "x" }, now);
+    } catch (e) {
+      threw = e instanceof MutationError;
+    }
+    expect(threw).toBe(true);
+  });
+
+  test("validate flags a handoff referencing a missing task", () => {
+    const root = fixtureRoot([D]);
+    mkdirSync(join(root, ".waystation", "handoffs"), { recursive: true });
+    writeFileSync(
+      join(root, ".waystation", "handoffs", "h.json"),
+      JSON.stringify({
+        id: "handoff-x",
+        task: "task-ghost",
+        from_agent: "a",
+        created_at: "2026-07-06T10:00:00Z",
+      }),
+    );
+    expect(validateLedger(root).errors.map((d) => d.code)).toContain("handoff_orphan");
   });
 });
 

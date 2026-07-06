@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { type BriefBudget, buildBrief, renderBrief } from "../core/brief.ts";
 import { generateReports, generateTaskViews, reindex } from "../core/generate.ts";
+import { createHandoff, getHandoff } from "../core/handoff.ts";
 import { initLedger } from "../core/init.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
@@ -229,6 +230,51 @@ program
     }
     emitResult(okResult({ written }), opts.json, () => {
       for (const f of written) process.stdout.write(`generated ${f}\n`);
+    });
+  });
+
+const handoff = program.command("handoff").description("Agent handoffs (baton pass)");
+
+handoff
+  .command("create")
+  .description("Create a handoff for a task")
+  .requiredOption("--task <id>", "task id")
+  .requiredOption("--from <agent>", "handing-off agent")
+  .option("--to <agent>", "receiving agent (omit for next available)")
+  .option("--summary <text>", "summary of current state")
+  .option("--json", "output JSON")
+  .action(
+    async (opts: { task: string; from: string; to?: string; summary?: string; json?: boolean }) => {
+      await runMutation(opts.json, async () => {
+        const h = await createHandoff(findProjectRoot(), {
+          task: opts.task,
+          from: opts.from,
+          to: opts.to ?? null,
+          summary: opts.summary,
+        });
+        return `created ${h.id}`;
+      });
+    },
+  );
+
+handoff
+  .command("show")
+  .argument("<id>", "handoff id")
+  .option("--json", "output JSON")
+  .action((id: string, opts: { json?: boolean }) => {
+    const h = getHandoff(findProjectRoot(), id) ?? null;
+    const res = h
+      ? okResult(h)
+      : toResult(null, [diag("not_found", { message: `no such handoff: ${id}`, details: { id } })]);
+    emitResult(res, opts.json, () => {
+      if (!h) return;
+      process.stdout.write(`${h.id}\n`);
+      process.stdout.write(`  task:    ${h.task}\n`);
+      process.stdout.write(`  from:    ${h.from_agent}${h.to_agent ? ` -> ${h.to_agent}` : ""}\n`);
+      if (h.summary) process.stdout.write(`\n${h.summary.trimEnd()}\n`);
+      if (h.next_steps.length) {
+        process.stdout.write(`\nnext steps:\n${h.next_steps.map((s) => `  - ${s}`).join("\n")}\n`);
+      }
     });
   });
 

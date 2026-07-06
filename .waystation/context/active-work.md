@@ -6,6 +6,5 @@
 _none_
 
 ## Ready
-- `task-handoff` [p2] — Implement handoff create/show
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 

@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-handoff-claude-code-20260706-170321",
+  "task": "task-handoff",
+  "agent": "claude-code",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T17:03:21+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T17:07:36+03:00"
+}

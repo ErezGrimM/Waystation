@@ -20,7 +20,7 @@ import {
 } from "./schema.ts";
 
 /** Parse a JSON file, raising a coded RecordError on malformed JSON. */
-function readJsonFile(file: string): unknown {
+export function readJsonFile(file: string): unknown {
   let raw: string;
   try {
     raw = readFileSync(file, "utf8");
