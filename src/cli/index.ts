@@ -6,9 +6,10 @@ import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
 import { findProjectRoot, ledgerPaths } from "../core/paths.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
-import { CODES } from "../core/result.ts";
+import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import { nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
+import { backendWarnings } from "../index/ledgerIndex.ts";
 import { buildTaskIndex, readyFromIndex } from "../index/taskIndex.ts";
 
 const program = new Command();
@@ -27,18 +28,20 @@ task
   .option("--from-index", "resolve via the SQLite index instead of in-memory")
   .action(async (opts: { json?: boolean; fromIndex?: boolean }) => {
     const tasks = loadTasks();
+    const line = (t: { id: string; title: string; priority: number } | null) =>
+      process.stdout.write(t ? `${t.id}  [p${t.priority}]  ${t.title}\n` : "No ready tasks.\n");
 
     if (opts.fromIndex) {
-      const paths = ledgerPaths();
-      const db = await buildTaskIndex(paths.index, tasks);
+      const db = await buildTaskIndex(ledgerPaths().index, tasks);
       const ready = readyFromIndex(db);
+      const warnings = backendWarnings(db.backend);
       db.close();
       const chosen = ready[0] ?? null;
-      emitNext(chosen, opts.json);
+      emitResult(okResult(chosen, warnings), opts.json, () => line(chosen));
       return;
     }
-
-    emitNext(nextTask(tasks), opts.json);
+    const chosen = nextTask(tasks);
+    emitResult(okResult(chosen), opts.json, () => line(chosen));
   });
 
 task
@@ -47,17 +50,13 @@ task
   .option("--json", "output JSON")
   .action((opts: { json?: boolean }) => {
     const ready = readyTasks(loadTasks());
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(ready, null, 2)}\n`);
-      return;
-    }
-    if (ready.length === 0) {
-      process.stdout.write("No ready tasks.\n");
-      return;
-    }
-    for (const t of ready) {
-      process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
-    }
+    emitResult(okResult(ready), opts.json, () => {
+      if (ready.length === 0) {
+        process.stdout.write("No ready tasks.\n");
+        return;
+      }
+      for (const t of ready) process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
+    });
   });
 
 task
@@ -69,17 +68,15 @@ task
     let tasks = loadTasks();
     if (opts.status) tasks = tasks.filter((t) => t.status === opts.status);
     tasks.sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id));
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(tasks, null, 2)}\n`);
-      return;
-    }
-    if (tasks.length === 0) {
-      process.stdout.write("No tasks.\n");
-      return;
-    }
-    for (const t of tasks) {
-      process.stdout.write(`${t.id}  [p${t.priority}]  ${t.status.padEnd(11)}  ${t.title}\n`);
-    }
+    emitResult(okResult(tasks), opts.json, () => {
+      if (tasks.length === 0) {
+        process.stdout.write("No tasks.\n");
+        return;
+      }
+      for (const t of tasks) {
+        process.stdout.write(`${t.id}  [p${t.priority}]  ${t.status.padEnd(11)}  ${t.title}\n`);
+      }
+    });
   });
 
 task
@@ -88,24 +85,22 @@ task
   .description("Show a single task")
   .option("--json", "output JSON")
   .action((id: string, opts: { json?: boolean }) => {
-    const found = loadTasks().find((t) => t.id === id);
-    if (!found) {
-      process.stderr.write(`error: no such task: ${id}\n`);
-      process.exit(1);
-    }
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(found, null, 2)}\n`);
-      return;
-    }
-    process.stdout.write(`${found.id}\n`);
-    process.stdout.write(`  title:        ${found.title}\n`);
-    process.stdout.write(`  status:       ${found.status}\n`);
-    process.stdout.write(`  priority:     ${found.priority}\n`);
-    if (found.scope) process.stdout.write(`  scope:        ${found.scope}\n`);
-    if (found.dependencies.length) {
-      process.stdout.write(`  dependencies: ${found.dependencies.join(", ")}\n`);
-    }
-    if (found.description) process.stdout.write(`\n${found.description.trimEnd()}\n`);
+    const found = loadTasks().find((t) => t.id === id) ?? null;
+    const res = found
+      ? okResult(found)
+      : toResult(null, [diag("no_such_task", { message: `no such task: ${id}`, details: { id } })]);
+    emitResult(res, opts.json, () => {
+      if (!found) return;
+      process.stdout.write(`${found.id}\n`);
+      process.stdout.write(`  title:        ${found.title}\n`);
+      process.stdout.write(`  status:       ${found.status}\n`);
+      process.stdout.write(`  priority:     ${found.priority}\n`);
+      if (found.scope) process.stdout.write(`  scope:        ${found.scope}\n`);
+      if (found.dependencies.length) {
+        process.stdout.write(`  dependencies: ${found.dependencies.join(", ")}\n`);
+      }
+      if (found.description) process.stdout.write(`\n${found.description.trimEnd()}\n`);
+    });
   });
 
 task
@@ -147,10 +142,12 @@ program
   .action((opts: { task: string; budget: string; json?: boolean }) => {
     try {
       const brief = buildBrief(findProjectRoot(), opts.task, opts.budget as BriefBudget);
-      process.stdout.write(opts.json ? `${JSON.stringify(brief, null, 2)}\n` : renderBrief(brief));
+      emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
     } catch (e) {
-      process.stderr.write(`error: ${(e as Error).message}\n`);
-      process.exit(1);
+      const res = toResult(null, [
+        diag("no_such_task", { message: (e as Error).message, details: { task: opts.task } }),
+      ]);
+      emitResult(res, opts.json, () => {});
     }
   });
 
@@ -175,11 +172,17 @@ program
 program
   .command("reindex")
   .description("Rebuild the SQLite index from canonical records")
-  .action(async () => {
-    const c = await reindex(findProjectRoot());
-    process.stdout.write(
-      `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims} claims, ${c.messages} messages\n`,
-    );
+  .option("--json", "output JSON")
+  .action(async (opts: { json?: boolean }) => {
+    const res = await reindex(findProjectRoot());
+    emitResult(res, opts.json, () => {
+      const c = res.data;
+      if (c) {
+        process.stdout.write(
+          `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims} claims, ${c.messages} messages\n`,
+        );
+      }
+    });
   });
 
 program
@@ -284,19 +287,21 @@ function renderMessage(m: {
   return `[${m.kind}] ${m.from_agent}${to} (${m.thread}) ${m.created_at}\n  ${m.body}\n`;
 }
 
-function emitNext(
-  chosen: { id: string; title: string; priority: number } | null,
-  asJson?: boolean,
+/** Emit a CommandResult: JSON envelope with --json, else human text + any
+ * warnings/errors on stderr. Exits non-zero when the result is not ok. */
+function emitResult<T>(
+  res: CommandResult<T>,
+  json: boolean | undefined,
+  renderText: () => void,
 ): void {
-  if (asJson) {
-    process.stdout.write(`${JSON.stringify(chosen, null, 2)}\n`);
-    return;
+  if (json) {
+    process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+  } else {
+    renderText();
+    for (const w of res.warnings) process.stderr.write(`warning [${w.code}] ${w.message}\n`);
+    for (const e of res.errors) process.stderr.write(`error [${e.code}] ${e.message}\n`);
   }
-  if (!chosen) {
-    process.stdout.write("No ready tasks.\n");
-    return;
-  }
-  process.stdout.write(`${chosen.id}  [p${chosen.priority}]  ${chosen.title}\n`);
+  if (!res.ok) process.exit(1);
 }
 
 try {

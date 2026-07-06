@@ -8,7 +8,7 @@ import { generateBlocked, generateStatus, reindex } from "../src/core/generate.t
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
-import { buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
+import { backendWarnings, buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
@@ -118,14 +118,16 @@ describe("CLI: task list / show", () => {
     expect(r.out).toContain("task-d");
   });
 
-  test("list --status filters", () => {
+  test("list --status filters (envelope)", () => {
     const r = run(["task", "list", "--status", "done", "--json"]);
-    expect((JSON.parse(r.out) as Array<{ id: string }>).map((t) => t.id)).toEqual(["task-a"]);
+    const res = JSON.parse(r.out) as { ok: boolean; data: Array<{ id: string }> };
+    expect(res.ok).toBe(true);
+    expect(res.data.map((t) => t.id)).toEqual(["task-a"]);
   });
 
-  test("show by id returns the task", () => {
+  test("show by id returns the task (envelope)", () => {
     const r = run(["task", "show", "task-b", "--json"]);
-    expect((JSON.parse(r.out) as { id: string }).id).toBe("task-b");
+    expect((JSON.parse(r.out) as { data: { id: string } }).data.id).toBe("task-b");
   });
 
   test("show unknown id exits non-zero", () => {
@@ -305,10 +307,12 @@ describe("generate", () => {
     expect(md).toContain("task-c");
   });
 
-  test("reindex returns per-type counts and creates the index file", async () => {
+  test("reindex returns a CommandResult with per-type counts", async () => {
     const root = fixtureRoot([A, D]);
-    const c = await reindex(root);
-    expect(c.tasks).toBe(2);
+    const res = await reindex(root);
+    expect(res.ok).toBe(true);
+    expect(Array.isArray(res.warnings)).toBe(true);
+    expect(res.data?.tasks).toBe(2);
     expect(existsSync(join(root, ".waystation", "index.sqlite"))).toBe(true);
   });
 });
@@ -382,9 +386,14 @@ describe("ledger index (all record types)", () => {
     await postMessage(root, { thread: "task-d", from: "coder", body: "hi" }, now, "zzz1");
 
     const c1 = await reindex(root);
-    expect(c1).toEqual({ tasks: 2, issues: 1, claims: 1, messages: 1 });
+    expect(c1.data).toEqual({ tasks: 2, issues: 1, claims: 1, messages: 1 });
     const c2 = await reindex(root); // rebuild over the same file
-    expect(c2).toEqual(c1);
+    expect(c2.data).toEqual(c1.data);
+  });
+
+  test("backendWarnings flags only the node:sqlite fallback", () => {
+    expect(backendWarnings("node:sqlite").map((d) => d.code)).toEqual(["sqlite_backend_fallback"]);
+    expect(backendWarnings("bun:sqlite")).toEqual([]);
   });
 
   test("inboxFromIndex matches the in-memory inbox", async () => {

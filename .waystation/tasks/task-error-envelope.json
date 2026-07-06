@@ -1,7 +1,7 @@
 {
   "id": "task-error-envelope",
   "title": "Adopt the structured error envelope (CommandResult / Diagnostic)",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "scope": "scope-core",
   "path_hints": [
@@ -16,8 +16,8 @@
     "task-skeleton-mutations"
   ],
   "created_at": "2026-07-06T02:40:00+03:00",
-  "updated_at": "2026-07-06T07:02:51+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-06T07:37:04+03:00",
+  "closed_at": "2026-07-06T07:37:04+03:00",
   "description": "Converge the code onto docs/error-philosophy.md. Introduce a CommandResult envelope { ok, data, errors[], warnings[] } and a Diagnostic { code, message, details?, hint?, retryable } produced in core and rendered per surface. Generalize validate's Problem[] into Diagnostic, and convert RecordError/MutationError into coded diagnostics. Add a code catalog with a coverage test.\n",
   "acceptance": [
     "A CommandResult envelope with errors[] and warnings[] (both arrays) is defined and used by CLI commands.",
@@ -28,5 +28,5 @@
     "A code catalog exists and a bun:test asserts every emitted code is catalogued; codes are lower_snake_case and stable.",
     "CLI exit codes: 0 when ok (warnings allowed), 1 when errors is non-empty."
   ],
-  "notes": "Land the envelope shape (errors[] plural) and retryable-not-recoverable first — hardest to change once callers depend on them. See docs/error-philosophy.md 'Current State vs Target'.\n\nPROGRESS 2026-07-06 (in_progress): DONE — src/core/result.ts (Diagnostic, CommandResult, CODES catalog, diag(), toResult()); validate migrated to a CommandResult of coded diagnostics (schema -> schema_invalid); RecordError/MutationError carry a `code`; CLI renders coded errors with hints and the validate envelope; coverage tests assert every emitted code is catalogued and retryable is boolean. 35 tests green, typecheck+biome clean. REMAINING — (1) surface the bun:sqlite->node:sqlite fallback as a sqlite_backend_fallback warning via CommandResult; (2) roll the envelope across the remaining read commands (next/list/show/brief). The catalog already has codes for both.\n"
+  "notes": "Land the envelope shape (errors[] plural) and retryable-not-recoverable first — hardest to change once callers depend on them. See docs/error-philosophy.md 'Current State vs Target'.\n\nPROGRESS 2026-07-06 (in_progress): DONE — src/core/result.ts (Diagnostic, CommandResult, CODES catalog, diag(), toResult()); validate migrated to a CommandResult of coded diagnostics (schema -> schema_invalid); RecordError/MutationError carry a `code`; CLI renders coded errors with hints and the validate envelope; coverage tests assert every emitted code is catalogued and retryable is boolean. 35 tests green, typecheck+biome clean. REMAINING — (1) surface the bun:sqlite->node:sqlite fallback as a sqlite_backend_fallback warning via CommandResult; (2) roll the envelope across the remaining read commands (next/list/show/brief). The catalog already has codes for both.\n\nCOMPLETE 2026-07-06: both remaining items done. The bun:sqlite->node:sqlite fallback is surfaced via backendWarnings() as a sqlite_backend_fallback warning (in reindex and task next --from-index). The CommandResult envelope now covers next/ready/list/show/brief/reindex (and validate), rendered as JSON with --json or human text + stderr warnings/errors otherwise. 42 tests green.\n"
 }

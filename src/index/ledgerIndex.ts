@@ -1,5 +1,13 @@
+import { type Diagnostic, diag } from "../core/result.ts";
 import type { ClaimRecord, IssueRecord, MessageRecord, TaskRecord } from "../core/schema.ts";
-import { type Db, openDb } from "./db.ts";
+import { type Db, openDb, type SqliteBackend } from "./db.ts";
+
+/** A warning if the fallback SQLite backend (node:sqlite) served the query. */
+export function backendWarnings(backend: SqliteBackend): Diagnostic[] {
+  return backend === "node:sqlite"
+    ? [diag("sqlite_backend_fallback", { details: { backend } })]
+    : [];
+}
 
 export interface LedgerData {
   tasks: TaskRecord[];

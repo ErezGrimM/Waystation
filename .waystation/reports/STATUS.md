@@ -6,7 +6,7 @@
 _none_
 
 ## In progress
-- `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
+_none_
 
 ## Waiting (blocked by dependencies)
 _none_
@@ -14,6 +14,7 @@ _none_
 ## Done
 - `task-agent-messaging` [p2] — Agent messaging: shared async inbox via message records
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
+- `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
 - `task-git-init` [p1] — Initialize git version control
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON

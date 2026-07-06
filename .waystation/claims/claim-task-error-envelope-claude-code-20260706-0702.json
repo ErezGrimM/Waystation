@@ -2,10 +2,10 @@
   "id": "claim-task-error-envelope-claude-code-20260706-0702",
   "task": "task-error-envelope",
   "agent": "claude-code",
-  "status": "active",
+  "status": "completed",
   "branch": null,
   "worktree": null,
   "claimed_at": "2026-07-06T07:02:51+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-07-06T07:37:04+03:00"
 }

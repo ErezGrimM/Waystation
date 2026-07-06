@@ -7,11 +7,15 @@
  * this adapter normalizes the small API differences.
  */
 
+export type SqliteBackend = "bun:sqlite" | "node:sqlite";
+
 export interface Db {
   exec(sql: string): void;
   all<T = Record<string, unknown>>(sql: string, ...params: unknown[]): T[];
   run(sql: string, ...params: unknown[]): void;
   close(): void;
+  /** Which SQLite backend served this connection. */
+  backend: SqliteBackend;
 }
 
 const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
@@ -27,6 +31,7 @@ export async function openDb(path: string): Promise<Db> {
         db.query(sql).run(...(params as never[]));
       },
       close: () => db.close(),
+      backend: "bun:sqlite",
     };
   }
   // node:sqlite — experimental in Node 22/24 but API-stable enough for a
@@ -40,5 +45,6 @@ export async function openDb(path: string): Promise<Db> {
       db.prepare(sql).run(...(params as never[]));
     },
     close: () => db.close(),
+    backend: "node:sqlite",
   };
 }

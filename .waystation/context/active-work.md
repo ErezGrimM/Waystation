@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-- `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
+_none_
 
 ## Ready
 _none_
