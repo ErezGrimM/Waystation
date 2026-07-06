@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   backendWarnings,
@@ -164,6 +164,17 @@ export function generateTaskViews(root?: string): number {
   const dir = join(paths.ledger, "views", "tasks");
   mkdirSync(dir, { recursive: true });
   const tasks = loadTasks(root);
+
+  // Prune stale view files no longer backed by a current task (idempotency).
+  const current = new Set(tasks.map((t) => `${t.id}.md`));
+  try {
+    for (const f of readdirSync(dir)) {
+      if (f.endsWith(".md") && !current.has(f)) rmSync(join(dir, f));
+    }
+  } catch {
+    // dir may not exist yet; nothing to prune
+  }
+
   for (const t of tasks) {
     const md = [
       GENERATED_HEADER,

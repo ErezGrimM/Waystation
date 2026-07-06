@@ -1,7 +1,7 @@
 {
   "id": "issue-validate-robustness-gaps",
   "title": "Validation/generation gaps: issues unvalidated, stale views not pruned, unwrapped JSON.parse, cross-type id collisions",
-  "status": "open",
+  "status": "fixed",
   "severity": "medium",
   "priority": 3,
   "type": "bug",

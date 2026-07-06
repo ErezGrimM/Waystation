@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
-import { ClaimRecord, MessageRecord, TaskRecord } from "./schema.ts";
+import { ClaimRecord, IssueRecord, MessageRecord, TaskRecord } from "./schema.ts";
 
 /** True if a record file exists for `id` in `dir` as either JSON or YAML. */
 function recordExists(dir: string, id: string): boolean {
@@ -52,6 +52,7 @@ export function validateLedger(root?: string): CommandResult<null> {
   const diags: Diagnostic[] = [];
   const tasks: TaskRecord[] = [];
   const seenTaskIds = new Set<string>();
+  const seenIssueIds = new Set<string>();
 
   // --- tasks: JSON validity, schema, duplicate ids ---
   for (const name of listJson(paths.tasks)) {
@@ -130,6 +131,50 @@ export function validateLedger(root?: string): CommandResult<null> {
     diags.push(
       diag("cycle", { message: `circular dependency: ${cycle.join(" -> ")}`, details: { cycle } }),
     );
+  }
+
+  // --- issues: schema, duplicate id (incl. cross-type collision with tasks) ---
+  const issuesDir = join(paths.ledger, "issues");
+  for (const name of listJson(issuesDir)) {
+    const file = join(issuesDir, name);
+    let data: unknown;
+    try {
+      data = JSON.parse(readFileSync(file, "utf8"));
+    } catch (err) {
+      diags.push(
+        diag("invalid_json", {
+          message: `${name}: invalid JSON`,
+          details: { file: name, cause: (err as Error).message },
+        }),
+      );
+      continue;
+    }
+    const parsed = IssueRecord.safeParse(data);
+    if (!parsed.success) {
+      diags.push(
+        diag("schema_invalid", {
+          message: `${name}: ${parsed.error.issues[0]?.message}`,
+          details: { file: name },
+        }),
+      );
+      continue;
+    }
+    if (seenIssueIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `duplicate issue id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    } else if (seenTaskIds.has(parsed.data.id)) {
+      diags.push(
+        diag("duplicate_id", {
+          message: `issue id collides with a task id: ${parsed.data.id}`,
+          details: { id: parsed.data.id },
+        }),
+      );
+    }
+    seenIssueIds.add(parsed.data.id);
   }
 
   // --- claims: schema, task existence, single active claim per task ---
@@ -233,7 +278,6 @@ export function validateLedger(root?: string): CommandResult<null> {
       in_reply_to: parsed.data.in_reply_to,
     });
   }
-  const issuesDir = join(paths.ledger, "issues");
   for (const m of messages) {
     if (m.in_reply_to && !messageIds.has(m.in_reply_to)) {
       diags.push(

@@ -1,7 +1,7 @@
 {
   "id": "issue-event-log-atomicity",
   "title": "Event log append and record writes are not atomic/lock-guarded across processes",
-  "status": "open",
+  "status": "fixed",
   "severity": "high",
   "priority": 1,
   "type": "bug",

@@ -1,4 +1,13 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  writeSync,
+} from "node:fs";
 import { join } from "node:path";
 import lockfile from "proper-lockfile";
 import { ledgerPaths } from "./paths.ts";
@@ -10,21 +19,63 @@ import {
   IssueRecord as IssueSchema,
 } from "./schema.ts";
 
-/** Atomically write a JSON record: write to a temp file, then rename over. */
+/** Parse a JSON file, raising a coded RecordError on malformed JSON. */
+function readJsonFile(file: string): unknown {
+  let raw: string;
+  try {
+    raw = readFileSync(file, "utf8");
+  } catch (err) {
+    throw new RecordError(file, `cannot read file: ${(err as Error).message}`, "invalid_json");
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new RecordError(file, `invalid JSON: ${(err as Error).message}`, "invalid_json");
+  }
+}
+
+/**
+ * Atomically and durably write a JSON record: write to a unique temp file,
+ * fsync it, then rename over the target. The unique temp name (pid + random)
+ * prevents concurrent writers to the same record from clobbering each other's
+ * temp file (issue-event-log-atomicity).
+ */
 export function writeJsonAtomic(file: string, value: unknown): void {
   mkdirSync(join(file, ".."), { recursive: true });
-  const tmp = `${file}.tmp`;
-  writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  const tmp = `${file}.${process.pid}.${Math.random().toString(36).slice(2, 8)}.tmp`;
+  const data = `${JSON.stringify(value, null, 2)}\n`;
+  const fd = openSync(tmp, "w");
+  try {
+    writeSync(fd, data);
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
   renameSync(tmp, file);
 }
 
-/** Append one JSON object as a line to events.jsonl. */
-export function appendEvent(root: string, event: Record<string, unknown>): void {
+/**
+ * Append one event line to events.jsonl. Uses a single O_APPEND write + fsync
+ * so the line is written atomically and durably. Callers that already hold the
+ * ledger lock (mutations) should use this directly; standalone callers should
+ * use `appendEvent`, which takes the lock.
+ */
+export function appendEventUnlocked(root: string, event: Record<string, unknown>): void {
   const paths = ledgerPaths(root);
   mkdirSync(paths.ledger, { recursive: true });
   const line = `${JSON.stringify(event)}\n`;
-  // appendFileSync creates the file if missing.
-  writeFileSync(paths.events, line, { flag: "a", encoding: "utf8" });
+  const fd = openSync(paths.events, "a");
+  try {
+    writeSync(fd, line);
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
+/** Append an event while holding the ledger lock (for standalone callers). */
+export async function appendEvent(root: string, event: Record<string, unknown>): Promise<void> {
+  await withLedgerLock(root, () => appendEventUnlocked(root, event));
 }
 
 /**
@@ -36,8 +87,8 @@ export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T):
   mkdirSync(paths.ledger, { recursive: true });
   const release = await lockfile.lock(paths.ledger, {
     realpath: false,
-    retries: { retries: 10, minTimeout: 20, maxTimeout: 200 },
-    stale: 15_000,
+    retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },
+    stale: 60_000,
   });
   try {
     return await fn();
@@ -67,9 +118,13 @@ export function loadClaims(root?: string): ClaimRecord[] {
   for (const name of entries) {
     if (!name.endsWith(".json")) continue;
     const file = join(dir, name);
-    const parsed = ClaimSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
+    const parsed = ClaimSchema.safeParse(readJsonFile(file));
     if (!parsed.success) {
-      throw new RecordError(file, `schema: ${parsed.error.issues[0]?.message ?? "invalid claim"}`);
+      throw new RecordError(
+        file,
+        `schema: ${parsed.error.issues[0]?.message ?? "invalid claim"}`,
+        "schema_invalid",
+      );
     }
     claims.push(parsed.data);
   }
@@ -93,7 +148,7 @@ export function loadIssues(root?: string): IssueRecord[] {
   for (const name of entries) {
     if (!name.endsWith(".json")) continue;
     const file = join(dir, name);
-    const parsed = IssueSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
+    const parsed = IssueSchema.safeParse(readJsonFile(file));
     if (!parsed.success) {
       throw new RecordError(
         file,

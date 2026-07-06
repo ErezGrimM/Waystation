@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
 import { initLedger } from "../src/core/init.ts";
-import { generateBlocked, generateStatus, reindex } from "../src/core/generate.ts";
+import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
@@ -78,21 +78,21 @@ describe("audit fixes", () => {
 });
 
 describe("init", () => {
-  test("creates a fresh ledger that validates clean", () => {
+  test("creates a fresh ledger that validates clean", async () => {
     const root = mkdtempSync(join(tmpdir(), "waystation-init-"));
     tmpRoots.push(root);
-    const res = initLedger(root, { project: "demo" });
+    const res = await initLedger(root, { project: "demo" });
     expect(res.ok).toBe(true);
     expect(res.data?.created).toBe(true);
     expect(existsSync(join(root, ".waystation", "config.json"))).toBe(true);
     expect(validateLedger(root).ok).toBe(true);
   });
 
-  test("is a no-op on an already-initialized ledger", () => {
+  test("is a no-op on an already-initialized ledger", async () => {
     const root = mkdtempSync(join(tmpdir(), "waystation-init2-"));
     tmpRoots.push(root);
-    initLedger(root);
-    const res = initLedger(root);
+    await initLedger(root);
+    const res = await initLedger(root);
     expect(res.data?.created).toBe(false);
     expect(res.warnings.map((w) => w.code)).toContain("already_initialized");
   });
@@ -281,6 +281,23 @@ describe("validate", () => {
     expect(codes(root)).toContain("dangling_reply");
   });
 
+  test("flags a malformed issue record", () => {
+    const root = fixtureRoot([A]);
+    mkdirSync(join(root, ".waystation", "issues"), { recursive: true });
+    writeFileSync(join(root, ".waystation", "issues", "issue-bad.json"), JSON.stringify({ id: "issue-bad" }));
+    expect(codes(root)).toContain("schema_invalid");
+  });
+
+  test("flags an issue id colliding with a task id", () => {
+    const root = fixtureRoot([A]); // task-a
+    mkdirSync(join(root, ".waystation", "issues"), { recursive: true });
+    writeFileSync(
+      join(root, ".waystation", "issues", "x.json"),
+      JSON.stringify({ id: "task-a", title: "X", status: "open" }),
+    );
+    expect(codes(root)).toContain("duplicate_id");
+  });
+
   test("flags a message on an unknown (orphan) thread", async () => {
     const root = fixtureRoot([D]);
     await postMessage(root, { thread: "task-ghost", from: "a", body: "x" }, t0, "o1");
@@ -365,6 +382,16 @@ describe("generate", () => {
     expect(md).toContain("task-c");
   });
 
+  test("generateTaskViews prunes stale view files", () => {
+    const root = fixtureRoot([A]);
+    const dir = join(root, ".waystation", "views", "tasks");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "task-gone.md"), "stale");
+    generateTaskViews(root);
+    expect(existsSync(join(dir, "task-gone.md"))).toBe(false);
+    expect(existsSync(join(dir, "task-a.md"))).toBe(true);
+  });
+
   test("reindex returns a CommandResult with per-type counts", async () => {
     const root = fixtureRoot([A, D]);
     const res = await reindex(root);
@@ -412,21 +439,23 @@ describe("messages / inbox", () => {
     expect(inbox(root, "auditor").map((m) => m.body)).toContain("fyi");
   });
 
-  test("since cursor excludes older messages", async () => {
+  test("since cursor excludes strictly-older messages (boundary inclusive)", async () => {
     const root = fixtureRoot([D]);
-    const old = await postMessage(
+    await postMessage(
       root,
       { thread: PROJECT_THREAD, from: "coder", body: "old" },
       new Date("2026-07-06T09:00:00Z"),
       "ffff",
     );
-    await postMessage(
+    const recent = await postMessage(
       root,
       { thread: PROJECT_THREAD, from: "coder", body: "new" },
       new Date("2026-07-06T11:00:00Z"),
       "gggg",
     );
-    expect(inbox(root, "auditor", old.created_at).map((m) => m.body)).toEqual(["new"]);
+    // Cursor at the newer message's timestamp: the older one is strictly before
+    // (dropped); the boundary message itself is kept (never lost).
+    expect(inbox(root, "auditor", recent.created_at).map((m) => m.body)).toEqual(["new"]);
   });
 });
 

@@ -141,6 +141,12 @@ export const CODES = {
     hint: "Another process holds it; retry shortly.",
     retryable: true,
   },
+  unexpected_error: {
+    severity: "error",
+    message: "An unexpected error occurred.",
+    hint: "This is likely a bug; check the message and file an issue.",
+    retryable: false,
+  },
   already_initialized: {
     severity: "warning",
     message: "A .waystation ledger already exists here.",

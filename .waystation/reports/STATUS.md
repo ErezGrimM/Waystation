@@ -34,8 +34,5 @@ _none_
 _none_
 
 ## Open issues
-- `issue-envelope-write-commands` [medium] — Write commands and some errors bypass the CommandResult envelope
-- `issue-event-log-atomicity` [high] — Event log append and record writes are not atomic/lock-guarded across processes
-- `issue-timestamp-iso-cursor` [medium] — Timestamps are unvalidated strings and the inbox --since cursor is lossy at second granularity
-- `issue-validate-robustness-gaps` [medium] — Validation/generation gaps: issues unvalidated, stale views not pruned, unwrapped JSON.parse, cross-type id collisions
+_none_
 

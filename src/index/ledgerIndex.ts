@@ -141,7 +141,7 @@ export function inboxFromIndex(db: Db, agent: string, since?: string): IndexedMe
       .map((r) => r.task),
   );
   return selectMessages(db, "").filter((m) => {
-    if (since && m.created_at <= since) return false;
+    if (since && m.created_at < since) return false;
     if (m.from_agent === agent) return false;
     if (m.to_agent === agent) return true;
     if (m.to_agent === null && (m.thread === PROJECT_THREAD || claimed.has(m.thread))) return true;

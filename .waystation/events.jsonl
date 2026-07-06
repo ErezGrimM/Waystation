@@ -98,3 +98,7 @@
 {"type":"issue.created","issue":"issue-envelope-write-commands","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
 {"type":"issue.created","issue":"issue-timestamp-iso-cursor","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
 {"type":"issue.created","issue":"issue-validate-robustness-gaps","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
+{"type":"issue.updated","issue":"issue-event-log-atomicity","actor":"claude-code","ts":"2026-07-06T08:30:00+03:00","from":"open","to":"fixed"}
+{"type":"issue.updated","issue":"issue-envelope-write-commands","actor":"claude-code","ts":"2026-07-06T08:30:00+03:00","from":"open","to":"fixed"}
+{"type":"issue.updated","issue":"issue-timestamp-iso-cursor","actor":"claude-code","ts":"2026-07-06T08:30:00+03:00","from":"open","to":"fixed"}
+{"type":"issue.updated","issue":"issue-validate-robustness-gaps","actor":"claude-code","ts":"2026-07-06T08:30:00+03:00","from":"open","to":"fixed"}

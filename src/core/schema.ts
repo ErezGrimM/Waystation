@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+/** An ISO-8601-parseable timestamp string (rejects garbage like "yesterday"). */
+const isoTs = z
+  .string()
+  .refine((s) => !Number.isNaN(Date.parse(s)), { message: "must be an ISO-8601 timestamp" });
+
 /**
  * Task status values (spec §6.2). `claimed` is intentionally NOT a status;
  * claim state is tracked separately.
@@ -29,9 +34,9 @@ export const TaskRecord = z.object({
   path_hints: z.array(z.string()).default([]),
   prompts: z.array(z.string()).default([]),
   dependencies: z.array(z.string()).default([]),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  closed_at: z.string().nullable().optional(),
+  created_at: isoTs.optional(),
+  updated_at: isoTs.optional(),
+  closed_at: isoTs.nullable().optional(),
   description: z.string().optional(),
   acceptance: z.array(z.string()).default([]),
   notes: z.string().optional(),
@@ -69,7 +74,7 @@ export const MessageRecord = z.object({
   kind: MessageKind.default("update"),
   body: z.string(),
   in_reply_to: z.string().nullable().optional(),
-  created_at: z.string(),
+  created_at: isoTs,
 });
 export type MessageRecord = z.infer<typeof MessageRecord>;
 
@@ -85,9 +90,9 @@ export const ClaimRecord = z.object({
   status: ClaimStatus,
   branch: z.string().nullable().optional(),
   worktree: z.string().nullable().optional(),
-  claimed_at: z.string(),
-  released_at: z.string().nullable().optional(),
-  completed_at: z.string().nullable().optional(),
+  claimed_at: isoTs,
+  released_at: isoTs.nullable().optional(),
+  completed_at: isoTs.nullable().optional(),
   notes: z.string().optional(),
 });
 export type ClaimRecord = z.infer<typeof ClaimRecord>;

@@ -5,7 +5,7 @@ import { RecordError } from "./records.ts";
 import { type MessageKind, type MessageRecord, MessageRecord as MessageSchema } from "./schema.ts";
 import {
   activeClaimForTask,
-  appendEvent,
+  appendEventUnlocked,
   loadClaims,
   withLedgerLock,
   writeJsonAtomic,
@@ -94,7 +94,7 @@ export async function postMessage(
     };
     const parsed = MessageSchema.parse(message); // fail loudly on a bad message
     writeJsonAtomic(messageFile(root, parsed.id), parsed);
-    appendEvent(root, {
+    appendEventUnlocked(root, {
       type: "message.posted",
       message: parsed.id,
       thread: parsed.thread,
@@ -127,7 +127,9 @@ export function inbox(root: string, agent: string, since?: string): MessageRecor
   );
   return loadMessages(root)
     .filter((m) => {
-      if (since && m.created_at <= since) return false;
+      // Strictly-before so same-second messages are never skipped (may re-show
+      // the boundary second; re-showing is safe, losing is not).
+      if (since && m.created_at < since) return false;
       if (m.from_agent === agent) return false;
       if (m.to_agent === agent) return true;
       if (m.to_agent == null && (m.thread === PROJECT_THREAD || claimedThreads.has(m.thread))) {

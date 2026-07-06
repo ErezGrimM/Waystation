@@ -26,8 +26,8 @@ program
   .option("--project <id>", "project id (default: folder name)")
   .option("--force", "reinitialize even if a ledger exists")
   .option("--json", "output JSON")
-  .action((opts: { project?: string; force?: boolean; json?: boolean }) => {
-    const res = initLedger(process.cwd(), { project: opts.project, force: opts.force });
+  .action(async (opts: { project?: string; force?: boolean; json?: boolean }) => {
+    const res = await initLedger(process.cwd(), { project: opts.project, force: opts.force });
     emitResult(res, opts.json, () => {
       const r = res.data;
       if (r?.created) process.stdout.write(`initialized ${r.root} (project: ${r.project})\n`);
@@ -123,30 +123,39 @@ task
   .command("claim")
   .argument("<id>", "task id")
   .requiredOption("--agent <agent>", "claiming agent")
+  .option("--json", "output JSON")
   .description("Claim a task (creates an active claim, moves task to in_progress)")
-  .action(async (id: string, opts: { agent: string }) => {
-    const claim = await claimTask(findProjectRoot(), id, opts.agent);
-    process.stdout.write(`claimed ${id} as ${claim.id}\n`);
+  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
+    await runMutation(opts.json, async () => {
+      const claim = await claimTask(findProjectRoot(), id, opts.agent);
+      return `claimed ${id} as ${claim.id}`;
+    });
   });
 
 task
   .command("release")
   .argument("<id>", "task id")
   .requiredOption("--agent <agent>", "releasing agent")
+  .option("--json", "output JSON")
   .description("Release the active claim on a task (moves task back to ready)")
-  .action(async (id: string, opts: { agent: string }) => {
-    await releaseTask(findProjectRoot(), id, opts.agent);
-    process.stdout.write(`released ${id}\n`);
+  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
+    await runMutation(opts.json, async () => {
+      await releaseTask(findProjectRoot(), id, opts.agent);
+      return `released ${id}`;
+    });
   });
 
 task
   .command("finish")
   .argument("<id>", "task id")
   .requiredOption("--agent <agent>", "finishing agent")
+  .option("--json", "output JSON")
   .description("Finish a task (marks it done and completes any active claim)")
-  .action(async (id: string, opts: { agent: string }) => {
-    await finishTask(findProjectRoot(), id, opts.agent);
-    process.stdout.write(`finished ${id}\n`);
+  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
+    await runMutation(opts.json, async () => {
+      await finishTask(findProjectRoot(), id, opts.agent);
+      return `finished ${id}`;
+    });
   });
 
 program
@@ -160,8 +169,11 @@ program
       const brief = buildBrief(findProjectRoot(), opts.task, opts.budget as BriefBudget);
       emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
     } catch (e) {
+      // A plain "not found" maps to no_such_task; a RecordError surfaces its
+      // real code (e.g. a corrupt task file) instead of being mislabeled.
+      const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
       const res = toResult(null, [
-        diag("no_such_task", { message: (e as Error).message, details: { task: opts.task } }),
+        diag(code as never, { message: (e as Error).message, details: { task: opts.task } }),
       ]);
       emitResult(res, opts.json, () => {});
     }
@@ -207,14 +219,17 @@ program
     "Regenerate STATUS.md and context files (active-work.md, blocked.md) from the ledger",
   )
   .option("--views", "also regenerate views/tasks/*.md")
-  .action((opts: { views?: boolean }) => {
+  .option("--json", "output JSON")
+  .action((opts: { views?: boolean; json?: boolean }) => {
     const root = findProjectRoot();
     const written = generateReports(root);
     if (opts.views) {
       const n = generateTaskViews(root);
       written.push(`views/tasks/ (${n} files)`);
     }
-    for (const f of written) process.stdout.write(`generated ${f}\n`);
+    emitResult(okResult({ written }), opts.json, () => {
+      for (const f of written) process.stdout.write(`generated ${f}\n`);
+    });
   });
 
 const message = program.command("message").description("Agent messages (async inbox)");
@@ -320,15 +335,31 @@ function emitResult<T>(
   if (!res.ok) process.exit(1);
 }
 
+/** Run a mutation, emitting a CommandResult. MutationError/RecordError map to
+ * their code; anything else to unexpected_error. */
+async function runMutation(json: boolean | undefined, fn: () => Promise<string>): Promise<void> {
+  try {
+    const msg = await fn();
+    emitResult(okResult({ message: msg }), json, () => process.stdout.write(`${msg}\n`));
+  } catch (e) {
+    const code =
+      e instanceof MutationError || e instanceof RecordError ? e.code : "unexpected_error";
+    emitResult(
+      toResult(null, [diag(code as never, { message: (e as Error).message })]),
+      json,
+      () => {},
+    );
+  }
+}
+
 try {
   await program.parseAsync(process.argv);
 } catch (err) {
-  if (err instanceof RecordError || err instanceof MutationError) {
-    const code = err.code;
-    const spec = code in CODES ? CODES[code as keyof typeof CODES] : undefined;
-    process.stderr.write(`error [${code}]: ${err.message}\n`);
-    if (spec?.hint) process.stderr.write(`  hint: ${spec.hint}\n`);
-    process.exit(1);
-  }
-  throw err;
+  // Convert ANY error into a coded diagnostic line (no raw stack dump).
+  const code =
+    err instanceof RecordError || err instanceof MutationError ? err.code : "unexpected_error";
+  const spec = code in CODES ? CODES[code as keyof typeof CODES] : undefined;
+  process.stderr.write(`error [${code}]: ${(err as Error).message}\n`);
+  if (spec?.hint) process.stderr.write(`  hint: ${spec.hint}\n`);
+  process.exit(1);
 }

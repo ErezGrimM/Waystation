@@ -4,7 +4,7 @@ import { loadTasks } from "./records.ts";
 import type { ClaimRecord, TaskRecord } from "./schema.ts";
 import {
   activeClaimForTask,
-  appendEvent,
+  appendEventUnlocked,
   withLedgerLock,
   writeClaim,
   writeJsonAtomic,
@@ -66,8 +66,14 @@ export async function claimTask(
     writeClaim(root, claim);
     const from = task.status;
     writeTask(root, { ...task, status: "in_progress", updated_at: ts });
-    appendEvent(root, { type: "task.claimed", task: id, claim: claim.id, actor: agent, ts });
-    appendEvent(root, {
+    appendEventUnlocked(root, {
+      type: "task.claimed",
+      task: id,
+      claim: claim.id,
+      actor: agent,
+      ts,
+    });
+    appendEventUnlocked(root, {
       type: "task.status_changed",
       task: id,
       from,
@@ -94,8 +100,14 @@ export async function releaseTask(
     writeClaim(root, { ...claim, status: "released", released_at: ts });
     const from = task.status;
     writeTask(root, { ...task, status: "ready", updated_at: ts });
-    appendEvent(root, { type: "claim.released", task: id, claim: claim.id, actor: agent, ts });
-    appendEvent(root, {
+    appendEventUnlocked(root, {
+      type: "claim.released",
+      task: id,
+      claim: claim.id,
+      actor: agent,
+      ts,
+    });
+    appendEventUnlocked(root, {
       type: "task.status_changed",
       task: id,
       from,
@@ -123,7 +135,7 @@ export async function finishTask(
     }
     const from = task.status;
     writeTask(root, { ...task, status: "done", updated_at: ts, closed_at: ts });
-    appendEvent(root, {
+    appendEventUnlocked(root, {
       type: "task.status_changed",
       task: id,
       from,
@@ -132,7 +144,13 @@ export async function finishTask(
       ts,
     });
     if (claim) {
-      appendEvent(root, { type: "claim.completed", task: id, claim: claim.id, actor: agent, ts });
+      appendEventUnlocked(root, {
+        type: "claim.completed",
+        task: id,
+        claim: claim.id,
+        actor: agent,
+        ts,
+      });
     }
   });
 }

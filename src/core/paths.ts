@@ -1,5 +1,14 @@
-import { existsSync } from "node:fs";
+import { statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+
+/** True only if `p` exists and is a directory (a file named .waystation must not count). */
+function isDir(p: string): boolean {
+  try {
+    return statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Find the project root by walking upward from `start` until a `.waystation`
@@ -9,7 +18,7 @@ export function findProjectRoot(start: string = process.cwd()): string {
   let dir = resolve(start);
   // Walk up to the filesystem root.
   for (;;) {
-    if (existsSync(join(dir, ".waystation"))) return dir;
+    if (isDir(join(dir, ".waystation"))) return dir;
     const parent = dirname(dir);
     if (parent === dir) return resolve(start);
     dir = parent;

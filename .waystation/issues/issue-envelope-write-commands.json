@@ -1,7 +1,7 @@
 {
   "id": "issue-envelope-write-commands",
   "title": "Write commands and some errors bypass the CommandResult envelope",
-  "status": "open",
+  "status": "fixed",
   "severity": "medium",
   "priority": 2,
   "type": "quality",

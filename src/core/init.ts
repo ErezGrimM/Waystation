@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, diag, okResult } from "./result.ts";
-import { appendEvent, writeJsonAtomic } from "./store.ts";
+import { appendEventUnlocked, withLedgerLock, writeJsonAtomic } from "./store.ts";
 import { nowIso } from "./time.ts";
 
 const SUBDIRS = [
@@ -26,10 +26,10 @@ export interface InitResult {
 }
 
 /** Scaffold a fresh .waystation/ ledger. Idempotent unless `force`. */
-export function initLedger(
+export async function initLedger(
   root: string,
   opts: { project?: string; force?: boolean } = {},
-): CommandResult<InitResult> {
+): Promise<CommandResult<InitResult>> {
   const paths = ledgerPaths(root);
   const project = opts.project ?? (basename(root) || "project");
 
@@ -39,31 +39,39 @@ export function initLedger(
     ]);
   }
 
+  // Create the ledger dir first (the lock target), then do all writes under the lock.
   mkdirSync(paths.ledger, { recursive: true });
-  for (const d of SUBDIRS) mkdirSync(join(paths.ledger, d), { recursive: true });
+  return withLedgerLock(root, () => {
+    for (const d of SUBDIRS) mkdirSync(join(paths.ledger, d), { recursive: true });
 
-  writeJsonAtomic(paths.config, {
-    version: 1,
-    project_id: project,
-    project_name: project,
-    root: ".",
-    defaults: {
-      agent: "unknown",
-      brief_budget: "medium",
-      status_report: ".waystation/reports/STATUS.md",
-    },
-    id_rules: {
-      task_prefix: "task",
-      issue_prefix: "issue",
-      prompt_prefix: "prompt",
-      scope_prefix: "scope",
-    },
-    git: { track_branches: true, track_worktrees: true },
-    generated_views: { enabled: true },
+    writeJsonAtomic(paths.config, {
+      version: 1,
+      project_id: project,
+      project_name: project,
+      root: ".",
+      defaults: {
+        agent: "unknown",
+        brief_budget: "medium",
+        status_report: ".waystation/reports/STATUS.md",
+      },
+      id_rules: {
+        task_prefix: "task",
+        issue_prefix: "issue",
+        prompt_prefix: "prompt",
+        scope_prefix: "scope",
+      },
+      git: { track_branches: true, track_worktrees: true },
+      generated_views: { enabled: true },
+    });
+
+    if (!existsSync(paths.events)) writeFileSync(paths.events, "");
+    appendEventUnlocked(root, {
+      type: "project.initialized",
+      project,
+      actor: "waystation",
+      ts: nowIso(),
+    });
+
+    return okResult({ root, created: true, project });
   });
-
-  if (!existsSync(paths.events)) writeFileSync(paths.events, "");
-  appendEvent(root, { type: "project.initialized", project, actor: "waystation", ts: nowIso() });
-
-  return okResult({ root, created: true, project });
 }

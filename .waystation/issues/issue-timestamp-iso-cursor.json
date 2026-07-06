@@ -1,7 +1,7 @@
 {
   "id": "issue-timestamp-iso-cursor",
   "title": "Timestamps are unvalidated strings and the inbox --since cursor is lossy at second granularity",
-  "status": "open",
+  "status": "fixed",
   "severity": "medium",
   "priority": 2,
   "type": "bug",
