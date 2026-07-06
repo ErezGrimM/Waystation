@@ -1,0 +1,15 @@
+{
+  "id": "handoff-task-mcp-server-claude-code-20260706-172229",
+  "task": "task-mcp-server",
+  "from_agent": "claude-code",
+  "to_agent": null,
+  "branch": null,
+  "worktree": null,
+  "created_at": "2026-07-06T17:22:29+03:00",
+  "summary": "V1 is complete and committed (git main). Next: build the MCP server. The SDK (@modelcontextprotocol/sdk@1.29.0) is PROVEN on Bun via test/mcp.test.ts (McpServer + Client round trip over InMemoryTransport). BUILD: src/mcp/ server + a waystation mcp command starting a StdioServerTransport, exposing thin tool wrappers over EXISTING core (do not reimplement): get_status, get_next_task, get_task, claim_task, release_task, get_brief, render_prompt, create_handoff, list_issues, create_issue, post_message, get_inbox, validate_ledger. Reuse src/core (tasks.nextTask, mutate.claim/finish, brief.buildBrief, prompt.selectPrompts/renderPrompt, handoff.createHandoff, messages.postMessage/inbox, validate.validateLedger). ALL writes must go through the single write path (withLedgerLock in src/core/store.ts); map tool output to the CommandResult/Diagnostic envelope (src/core/result.ts). Run with C:\\bun\\bin\\bun.exe (NOT on PATH). Verify: bun test, bun run typecheck, bunx biome check .  Then dogfood: claim/finish task-mcp-server, reindex, report, validate, commit.",
+  "changed_files": [],
+  "tests": [],
+  "unfinished": [],
+  "risks": [],
+  "next_steps": []
+}

@@ -1,0 +1,10 @@
+{
+  "id": "message-project-claude-code-20260706-172229-exvz",
+  "thread": "project",
+  "from_agent": "claude-code",
+  "to_agent": null,
+  "kind": "note",
+  "body": "V1 done. task-mcp-server is ready to claim; see its handoff (waystation handoff show / brief --task task-mcp-server).",
+  "in_reply_to": null,
+  "created_at": "2026-07-06T17:22:29+03:00"
+}
