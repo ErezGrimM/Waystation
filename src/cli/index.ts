@@ -620,7 +620,8 @@ program
       );
 
       app.use("*", async (c, next) => {
-        if (c.req.path.startsWith("/api/")) return next();
+        if (c.req.path.startsWith("/api/") || c.req.path.startsWith("/graphify-out/"))
+          return next();
         const target = `http://127.0.0.1:${vitePort}${c.req.path}`;
         const res = await fetch(target);
         return new Response(res.body, {
