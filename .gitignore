@@ -14,3 +14,7 @@ spikes/deno-stack/waystation-spike.exe
 spikes/bun-stack/node_modules/
 spikes/bun-stack/waystation-spike.exe
 waystation.exe
+graphify-out/cache/
+graphify-out/cost.json
+graphify-out/.graphify_python
+graphify-out/.graphify_*
