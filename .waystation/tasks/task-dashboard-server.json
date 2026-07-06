@@ -1,0 +1,33 @@
+{
+  "id": "task-dashboard-server",
+  "title": "Implement the dashboard API server (Hono + SSE + CLI command)",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/dashboard/",
+    "src/core/events.ts",
+    "src/cli/index.ts",
+    "test/dashboard.test.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-06T20:00:00+03:00",
+  "updated_at": "2026-07-06T20:08:56+03:00",
+  "closed_at": "2026-07-06T20:08:56+03:00",
+  "description": "Build the dashboard API server: a Hono app embedded in Bun.serve that exposes REST endpoints over the core ledger (thin wrappers, same pattern as MCP). Includes an in-process SSE event bus for live updates and the `waystation dashboard` CLI command with `--dev` flag for Vite HMR proxying. Phase 5.1 of docs/roadmap.md.\n",
+  "acceptance": [
+    "src/core/events.ts exports an EventEmitter for in-process mutation notifications (emit on write, subscribe for SSE).",
+    "src/dashboard/server.ts exports createApp(root): Hono with all API routes registered (see notes for route map). Transport wiring is separate so tests can use Hono's test client.",
+    "API routes return CommandResult/Diagnostic envelope (same {ok,data,errors,warnings} contract as CLI/MCP). Map thrown MutationError/RecordError to codes.",
+    "SSE endpoint GET /api/events streams JSON events when in-process mutations fire.",
+    "`waystation dashboard` starts Hono on 127.0.0.1:8787 serving API routes.",
+    "`waystation dashboard --dev` additionally starts Vite dev server on port 5173 and proxies non-API requests to it.",
+    "Dependencies added: hono (runtime), vite + @vitejs/plugin-react (dev).",
+    "bun:test: Hono test client calls GET /api/status, GET /api/tasks, POST /api/issues, and verifies SSE events on write.",
+    "typecheck (tsc --noEmit), biome check, and `waystation validate` all clean; full `bun test` green."
+  ],
+  "notes": "API ROUTE MAP (route -> core fn): GET /api/status -> loadTasks counts + nextTask; GET /api/tasks -> loadTasks; GET /api/tasks/:id -> loadTasks find; GET /api/tasks/:id/brief -> buildBrief; POST /api/tasks/:id/claim {agent} -> claimTask; POST /api/tasks/:id/release {agent} -> releaseTask; POST /api/tasks/:id/finish {agent} -> finishTask; GET /api/issues -> loadIssues; POST /api/issues {title,...} -> createIssue; GET /api/messages?thread= -> threadMessages; GET /api/messages/inbox/:agent -> inbox; POST /api/messages {thread,from,body,...} -> postMessage; GET /api/prompts -> loadPrompts; GET /api/prompts/render?task=&agent=&role= -> selectPrompts+renderPrompt; GET /api/validate -> validateLedger; GET /api/events -> SSE stream. ALL writes through core/store.ts. Event bus: when API performs a write, call events.emit('mutation', {type,data}) for SSE broadcast. RUN: C:\\bun\\bin\\bun.exe run src/cli/index.ts dashboard. Phase 5 of docs/roadmap.md.\n"
+}

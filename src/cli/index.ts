@@ -481,6 +481,47 @@ program
     await server.connect(transport);
   });
 
+program
+  .command("dashboard")
+  .description("Start the local dashboard web UI (http://127.0.0.1:8787)")
+  .option("--dev", "start Vite dev server alongside and proxy to it")
+  .option("--port <port>", "port", "8787")
+  .action(async (opts: { dev?: boolean; port: string }) => {
+    const { createApp } = await import("../dashboard/server.ts");
+    const { join } = await import("node:path");
+    const root = findProjectRoot();
+    const distDir = join(root, "src", "dashboard", "client", "dist");
+    const app = createApp(root, opts.dev ? undefined : distDir);
+    const port = Number(opts.port);
+
+    if (opts.dev) {
+      const vitePort = 5173;
+      const _viteProc = Bun.spawn(
+        ["bun", "x", "vite", "--port", String(vitePort), "--strictPort"],
+        {
+          cwd: root,
+          stdio: ["ignore", "inherit", "inherit"],
+        },
+      );
+
+      app.use("*", async (c, next) => {
+        if (c.req.path.startsWith("/api/")) return next();
+        const target = `http://127.0.0.1:${vitePort}${c.req.path}`;
+        const res = await fetch(target);
+        return new Response(res.body, {
+          status: res.status,
+          headers: res.headers,
+        });
+      });
+
+      process.stderr.write(`Vite dev server on http://127.0.0.1:${vitePort}\n`);
+      process.stderr.write(`Dashboard on http://127.0.0.1:${port}\n`);
+    }
+
+    process.stderr.write(`Waystation dashboard listening on http://127.0.0.1:${port}\n`);
+    Bun.serve({ hostname: "127.0.0.1", port, fetch: app.fetch });
+  });
+
 try {
   await program.parseAsync(process.argv);
 } catch (err) {

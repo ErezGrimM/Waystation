@@ -123,3 +123,11 @@
 {"type":"task.status_changed","task":"task-mcp-server","from":"todo","to":"in_progress","actor":"opencode","ts":"2026-07-06T19:56:58+03:00"}
 {"type":"task.status_changed","task":"task-mcp-server","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T19:57:02+03:00"}
 {"type":"claim.completed","task":"task-mcp-server","claim":"claim-task-mcp-server-opencode-20260706-195658","actor":"opencode","ts":"2026-07-06T19:57:02+03:00"}
+{"type":"task.claimed","task":"task-dashboard-server","claim":"claim-task-dashboard-server-opencode-20260706-200253","actor":"opencode","ts":"2026-07-06T20:02:53+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-server","from":"todo","to":"in_progress","actor":"opencode","ts":"2026-07-06T20:02:53+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-server","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T20:08:56+03:00"}
+{"type":"claim.completed","task":"task-dashboard-server","claim":"claim-task-dashboard-server-opencode-20260706-200253","actor":"opencode","ts":"2026-07-06T20:08:56+03:00"}
+{"type":"task.claimed","task":"task-dashboard-frontend","claim":"claim-task-dashboard-frontend-opencode-20260706-203002","actor":"opencode","ts":"2026-07-06T20:30:02+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-frontend","from":"todo","to":"in_progress","actor":"opencode","ts":"2026-07-06T20:30:02+03:00"}
+{"type":"task.status_changed","task":"task-dashboard-frontend","from":"in_progress","to":"done","actor":"opencode","ts":"2026-07-06T20:35:41+03:00"}
+{"type":"claim.completed","task":"task-dashboard-frontend","claim":"claim-task-dashboard-frontend-opencode-20260706-203002","actor":"opencode","ts":"2026-07-06T20:35:41+03:00"}

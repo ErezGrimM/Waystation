@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-dashboard-server-opencode-20260706-200253",
+  "task": "task-dashboard-server",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T20:02:53+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T20:08:56+03:00"
+}

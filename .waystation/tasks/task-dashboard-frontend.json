@@ -1,0 +1,38 @@
+{
+  "id": "task-dashboard-frontend",
+  "title": "Implement the dashboard SPA (Vite + React + TanStack Query)",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/dashboard/client/",
+    "src/dashboard/server.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-dashboard-server"
+  ],
+  "created_at": "2026-07-06T20:01:00+03:00",
+  "updated_at": "2026-07-06T20:35:41+03:00",
+  "closed_at": "2026-07-06T20:35:41+03:00",
+  "description": "Build the Vite + React SPA served by the dashboard Hono server. Pages: Dashboard (overview + next task + quick actions), Tasks (list + detail + brief + claim/release/finish), Issues (list + create), Messages (inbox), Prompts (list + render preview), Validation (results). All data fetched via the API routes from task-dashboard-server; SSE for live updates. Phase 5.2 of docs/roadmap.md.\n",
+  "acceptance": [
+    "src/dashboard/client/ is a Vite project with @vitejs/plugin-react configured.",
+    "React Router for client-side routing: / (Dashboard), /tasks, /tasks/:id, /issues, /messages, /prompts, /validation.",
+    "src/dashboard/client/src/api.ts wraps fetch() with CommandResult envelope handling (extract data, surface errors/warnings).",
+    "Dashboard page shows status counts, next ready task, and quick-action buttons.",
+    "Tasks page lists all tasks with status/priority filters; clicking a task opens detail view.",
+    "TaskDetail page shows full task + brief + claim/release/finish actions.",
+    "Issues page lists issues and has a create form.",
+    "Messages page shows inbox for a given agent (input field) and a thread view.",
+    "Prompts page lists prompts and renders a selected prompt for a given task/agent context.",
+    "Validation page shows errors/warnings from validateLedger.",
+    "EventSource on /api/events triggers refetch of relevant data (live updates).",
+    "Production build: `vite build` outputs to src/dashboard/client/dist/, Hono serves it.",
+    "Dev mode: `waystation dashboard --dev` starts Vite HMR + Hono proxy.",
+    "typecheck, biome check, and `waystation validate` all clean; full `bun test` green."
+  ],
+  "notes": "STACK: React (not Preact/Solid — chosen for ecosystem depth, see lessons.md), Vite bundler, React Router (minimal — import react-router-dom from npm), no CSS framework (keep it simple, inline styles or a single CSS file). SSE: use browser EventSource API to connect to /api/events; on event, call queryClient.invalidateQueries(). TanStack Query can be added if fetching complexity warrants it, but V1 can use plain fetch + useEffect + useState. LLM features (prompt rewrite, agent suggestion) are DEFERRED per decision-dashboard-llm-features. RUN: C:\\bun\\bin\\bun.exe run src/cli/index.ts dashboard --dev. Phase 5 of docs/roadmap.md.\n"
+}
