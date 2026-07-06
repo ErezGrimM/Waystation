@@ -1,0 +1,28 @@
+{
+  "id": "scope-git",
+  "name": "Git and worktree integration",
+  "paths": [
+    "src/core/",
+    "src/cli/",
+    "src/dashboard/",
+    ".waystation/claims/",
+    "docs/roadmap.md",
+    "adr/"
+  ],
+  "owner": null,
+  "default_prompts": [
+    "prompt-waystation-v1"
+  ],
+  "rules": [
+    "Read git state; do not automate branch, worktree, PR, or remote operations in V1.",
+    "Claims remain canonical JSON records; git branch/worktree data is advisory context.",
+    "Keep CLI, MCP, and dashboard behavior as thin surfaces over shared core logic.",
+    "Warnings about overlap should be conservative and explain uncertainty."
+  ],
+  "default_tests": [
+    "bun test",
+    "bun run typecheck",
+    "bun run check"
+  ],
+  "notes": "Roadmap Phase 6. Covers branch/worktree detection, mapping git context to claims, overlap warnings, and the worktree messaging-scope decision.\n"
+}

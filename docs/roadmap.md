@@ -103,14 +103,14 @@ human-triggered, streamed, with API keys in dashboard-only config (see
 `decision-dashboard-llm-features`).
 Out of scope: real-time presence/chat transport; auth beyond localhost binding.
 
-## Phase 6 — Git & Worktree Integration (later)
+## Phase 6 — Git & Worktree Integration (in progress)
 
 Goal: read git state and support worktree-per-agent parallelism (spec §17).
 Scope: detect branch/worktree, map to active claims, warn on overlapping file
-hints. **Open boundary to resolve:** "chat is per project folder" means per
-*checkout* — agents in separate worktrees won't see each other's messages until
-merge. Decide whether that's acceptable or whether messages need a shared
-location.
+hints. Messaging remains scoped to the current checkout/worktree for V1:
+agents in separate worktrees see each other's ledger messages when records are
+merged, not through a live shared inbox. See
+[ADR-0003](../adr/ADR-0003-worktree-message-scope.md).
 Out of scope: creating branches/worktrees/PRs automatically (V1 non-goal).
 
 ## Phase 7 — External Integrations (later)
@@ -132,7 +132,6 @@ service a hard dependency.
 
 ## Open decisions
 
-1. Worktree vs folder scope for messaging (Phase 6).
-2. When to `git init` (recommended: Phase 3, before more code accretes).
-3. Whether summary.md-style hand docs stay separate from generated context
+1. When to `git init` (recommended: Phase 3, before more code accretes).
+2. Whether summary.md-style hand docs stay separate from generated context
    (current answer: yes, generation never touches hand-authored docs).

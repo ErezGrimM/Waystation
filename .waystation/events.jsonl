@@ -137,3 +137,15 @@
 {"type":"issue.created","issue":"issue-generated-reports-status-buckets","title":"Generated status and blocked reports misclassify review and blocked tasks","actor":"mcp","ts":"2026-07-06T21:15:00+03:00"}
 {"type":"issue.created","issue":"issue-dashboard-git-commit-pathspecs","title":"Dashboard git commit endpoint trusts arbitrary pathspecs and ignores git add failure","actor":"mcp","ts":"2026-07-06T21:15:00+03:00"}
 {"type":"issue.created","issue":"issue-dashboard-api-helper-error-handling","title":"Frontend API helper treats every response as a valid JSON CommandResult","actor":"mcp","ts":"2026-07-06T21:15:00+03:00"}
+{"type":"task.claimed","task":"task-phase6-worktree-message-scope-decision","claim":"claim-task-phase6-worktree-message-scope-decision-codex-20260706-212210","actor":"codex","ts":"2026-07-06T21:22:10+03:00"}
+{"type":"task.status_changed","task":"task-phase6-worktree-message-scope-decision","from":"ready","to":"in_progress","actor":"codex","ts":"2026-07-06T21:22:10+03:00"}
+{"type":"task.status_changed","task":"task-phase6-worktree-message-scope-decision","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-06T21:23:12+03:00"}
+{"type":"claim.completed","task":"task-phase6-worktree-message-scope-decision","claim":"claim-task-phase6-worktree-message-scope-decision-codex-20260706-212210","actor":"codex","ts":"2026-07-06T21:23:12+03:00"}
+{"type":"task.claimed","task":"task-git-state-core","claim":"claim-task-git-state-core-codex-20260706-212831","actor":"codex","ts":"2026-07-06T21:28:31+03:00"}
+{"type":"task.status_changed","task":"task-git-state-core","from":"ready","to":"in_progress","actor":"codex","ts":"2026-07-06T21:28:31+03:00"}
+{"type":"task.status_changed","task":"task-git-state-core","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-06T21:30:54+03:00"}
+{"type":"claim.completed","task":"task-git-state-core","claim":"claim-task-git-state-core-codex-20260706-212831","actor":"codex","ts":"2026-07-06T21:30:54+03:00"}
+{"type":"task.claimed","task":"task-claim-git-context","claim":"claim-task-claim-git-context-codex-20260706-213117","actor":"codex","ts":"2026-07-06T21:31:17+03:00"}
+{"type":"task.status_changed","task":"task-claim-git-context","from":"todo","to":"in_progress","actor":"codex","ts":"2026-07-06T21:31:17+03:00"}
+{"type":"task.status_changed","task":"task-claim-git-context","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-06T21:32:28+03:00"}
+{"type":"claim.completed","task":"task-claim-git-context","claim":"claim-task-claim-git-context-codex-20260706-213117","actor":"codex","ts":"2026-07-06T21:32:28+03:00"}

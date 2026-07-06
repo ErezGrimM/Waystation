@@ -1,0 +1,35 @@
+{
+  "id": "task-dashboard-git-worktree-visibility",
+  "title": "Show git and worktree context in dashboard and MCP",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/dashboard/server.ts",
+    "src/dashboard/client/src/pages/Git.tsx",
+    "src/dashboard/client/src/pages/Claims.tsx",
+    "src/mcp/server.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-claim-git-context",
+    "task-active-claim-overlap-warnings"
+  ],
+  "created_at": "2026-07-06T22:05:00+03:00",
+  "updated_at": "2026-07-06T22:05:00+03:00",
+  "closed_at": null,
+  "description": "Expose Phase 6 git/worktree context through the local dashboard and MCP server. The dashboard should make it easy to see the current checkout, active claims, and overlap warnings; MCP should expose the same read-only context for agents.\n",
+  "acceptance": [
+    "Dashboard API exposes git state and active-claim git context through shared core helpers.",
+    "Dashboard Git or Claims pages show current branch, worktree path, active claim mappings, and overlap warnings.",
+    "MCP exposes a read-only tool for git/worktree status and active-claim mappings.",
+    "All new endpoints/tools return CommandResult envelopes with coded diagnostics.",
+    "No endpoint creates branches, creates worktrees, pushes, pulls, or opens PRs.",
+    "Tests cover dashboard API and MCP tool responses.",
+    "bun test, typecheck, biome check, and waystation validate are clean."
+  ],
+  "notes": "This is the UI/API surfacing task after the core Phase 6 behaviors exist.\n"
+}

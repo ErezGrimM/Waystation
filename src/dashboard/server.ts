@@ -4,6 +4,7 @@ import type { BriefBudget } from "../core/brief.ts";
 import { buildBrief } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
 import { reindex } from "../core/generate.ts";
+import { getGitState } from "../core/git.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
@@ -35,13 +36,8 @@ function emit(type: string, data: Record<string, unknown>) {
 }
 
 function gitStatusFiles(root: string): string[] {
-  const proc = Bun.spawnSync(["git", "status", "--porcelain"], { cwd: root });
-  return proc.stdout
-    .toString()
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => line.slice(3));
+  const state = getGitState(root);
+  return state.data?.status.files.map((file) => file.file) ?? [];
 }
 
 export function createApp(root: string, distDir?: string): Hono {
@@ -268,26 +264,18 @@ export function createApp(root: string, distDir?: string): Hono {
   // ── git ──
 
   app.get("/api/git/status", async (_c) => {
-    try {
-      const proc = Bun.spawnSync(["git", "status", "--porcelain"], { cwd: root });
-      const statusLines = proc.stdout.toString().trim().split("\n").filter(Boolean);
-      const staged = statusLines.filter((l) => /^[MADRC]/.test(l) || /^[MADRC] [MADRC]/.test(l));
-      const unstaged = statusLines.filter((l) => /^.[MADRC]/.test(l));
-      const untracked = statusLines.filter((l) => l.startsWith("??"));
-      return json(
-        okResult({
-          changed: staged.length + unstaged.length,
-          untracked: untracked.length,
-          files: statusLines.map((line) => {
-            const status = line.slice(0, 2).trim();
-            const file = line.slice(3);
-            return { status, file };
-          }),
-        }),
-      );
-    } catch (e) {
-      return json(catchDiag(e));
-    }
+    const state = getGitState(root);
+    if (!state.ok || !state.data) return json(state);
+    return json(
+      okResult({
+        root: state.data.root,
+        worktree: state.data.worktree,
+        branch: state.data.branch,
+        detached: state.data.detached,
+        head: state.data.head,
+        ...state.data.status,
+      }),
+    );
   });
 
   app.get("/api/git/diff", async (_c) => {

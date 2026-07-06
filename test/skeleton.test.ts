@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildBrief } from "../src/core/brief.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
+import { getGitState } from "../src/core/git.ts";
 import { initLedger } from "../src/core/init.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { generateBlocked, generateStatus, generateTaskViews, reindex } from "../src/core/generate.ts";
@@ -84,6 +85,57 @@ describe("audit fixes", () => {
     await expect(
       createIssue(root, { id: "../tasks/task-d", title: "bad" }),
     ).rejects.toThrow("invalid issue id");
+  });
+});
+
+describe("git state", () => {
+  test("returns a coded error outside a git repository", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-non-git-"));
+    tmpRoots.push(root);
+    const res = getGitState(root);
+    expect(res.ok).toBe(false);
+    expect(res.errors[0]?.code).toBe("git_not_repository");
+  });
+
+  test("detects branch, worktree, and status in a git repository", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-git-"));
+    tmpRoots.push(root);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    writeFileSync(join(root, "note.txt"), "hello");
+    const res = getGitState(root);
+    expect(res.ok).toBe(true);
+    expect(res.data?.root).toBeTruthy();
+    expect(res.data?.worktree).toBeTruthy();
+    expect(res.data?.branch).toBeTruthy();
+    expect(res.data?.status.untracked).toBe(1);
+    expect(res.data?.status.files.map((f) => f.file)).toContain("note.txt");
+  });
+
+  test("preserves a leading dot in modified dotfile paths", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-git-dotfile-"));
+    tmpRoots.push(root);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    writeFileSync(join(root, ".dotfile"), "one");
+    Bun.spawnSync(["git", "add", ".dotfile"], { cwd: root });
+    Bun.spawnSync(
+      ["git", "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-qm", "init"],
+      { cwd: root },
+    );
+    writeFileSync(join(root, ".dotfile"), "two");
+    const res = getGitState(root);
+    expect(res.data?.status.files.map((f) => f.file)).toContain(".dotfile");
+  });
+
+  test("CLI git status returns the CommandResult envelope", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-git-cli-"));
+    tmpRoots.push(root);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
+    const p = Bun.spawnSync({ cmd: [process.execPath, "run", cli, "git", "status", "--json"], cwd: root });
+    const res = JSON.parse(p.stdout.toString()) as { ok: boolean; data: { worktree: string } };
+    expect(p.exitCode).toBe(0);
+    expect(res.ok).toBe(true);
+    expect(res.data.worktree).toBeTruthy();
   });
 });
 
@@ -305,11 +357,34 @@ describe("mutations: claim / release / finish", () => {
     const root = fixtureRoot([D]);
     const claim = await claimTask(root, "task-d", "tester", fixedNow);
     expect(claim.status).toBe("active");
+    expect(claim.branch).toBeNull();
+    expect(claim.worktree).toBeNull();
     expect(loadTasks(root).find((t) => t.id === "task-d")?.status).toBe("in_progress");
     expect(activeClaimForTask(root, "task-d")?.id).toBe(claim.id);
     const events = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8");
     expect(events).toContain("task.claimed");
     expect(events).toContain("task.status_changed");
+  });
+
+  test("claim records explicit branch and worktree context", async () => {
+    const root = fixtureRoot([D]);
+    const claim = await claimTask(root, "task-d", "tester", fixedNow, {
+      branch: "codex/task-d",
+      worktree: "C:/worktrees/task-d",
+    });
+    expect(claim.branch).toBe("codex/task-d");
+    expect(claim.worktree).toBe("C:/worktrees/task-d");
+    const events = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8");
+    expect(events).toContain("codex/task-d");
+    expect(events).toContain("C:/worktrees/task-d");
+  });
+
+  test("claim derives branch and worktree context from git when available", async () => {
+    const root = fixtureRoot([D]);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    const claim = await claimTask(root, "task-d", "tester", fixedNow);
+    expect(claim.branch).toBeTruthy();
+    expect(claim.worktree).toBeTruthy();
   });
 
   test("a second active claim is rejected", async () => {

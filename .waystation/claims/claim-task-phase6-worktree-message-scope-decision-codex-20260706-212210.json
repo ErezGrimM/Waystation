@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-phase6-worktree-message-scope-decision-codex-20260706-212210",
+  "task": "task-phase6-worktree-message-scope-decision",
+  "agent": "codex",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T21:22:10+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T21:23:12+03:00"
+}

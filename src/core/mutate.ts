@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { getGitState } from "./git.ts";
 import { ledgerPaths } from "./paths.ts";
 import { loadTasks } from "./records.ts";
 import type { ClaimRecord, TaskRecord } from "./schema.ts";
@@ -21,6 +22,11 @@ export class MutationError extends Error {
   }
 }
 
+export interface ClaimGitContext {
+  branch?: string | null;
+  worktree?: string | null;
+}
+
 function taskFile(root: string, id: string): string {
   return join(ledgerPaths(root).tasks, `${id}.json`);
 }
@@ -36,12 +42,22 @@ function writeTask(root: string, task: TaskRecord): void {
   writeJsonAtomic(taskFile(root, task.id), task);
 }
 
+function claimGitContext(root: string, override: ClaimGitContext = {}): Required<ClaimGitContext> {
+  const state = getGitState(root);
+  const derived = state.data;
+  return {
+    branch: override.branch !== undefined ? override.branch : (derived?.branch ?? null),
+    worktree: override.worktree !== undefined ? override.worktree : (derived?.worktree ?? null),
+  };
+}
+
 /** Claim a task: create an active claim and move the task to in_progress. */
 export async function claimTask(
   root: string,
   id: string,
   agent: string,
   now: Date = new Date(),
+  gitContext?: ClaimGitContext,
 ): Promise<ClaimRecord> {
   return withLedgerLock(root, () => {
     const task = requireTask(root, id);
@@ -52,13 +68,14 @@ export async function claimTask(
       throw new MutationError(`task ${id} already has an active claim`, "task_already_claimed");
     }
     const ts = nowIso(now);
+    const context = claimGitContext(root, gitContext);
     const claim: ClaimRecord = {
       id: `claim-${safeIdPart(id)}-${safeIdPart(agent)}-${idStamp(now)}`,
       task: id,
       agent,
       status: "active",
-      branch: null,
-      worktree: null,
+      branch: context.branch,
+      worktree: context.worktree,
       claimed_at: ts,
       released_at: null,
       completed_at: null,
@@ -71,6 +88,8 @@ export async function claimTask(
       task: id,
       claim: claim.id,
       actor: agent,
+      branch: claim.branch,
+      worktree: claim.worktree,
       ts,
     });
     appendEventUnlocked(root, {

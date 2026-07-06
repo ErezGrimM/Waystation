@@ -178,6 +178,18 @@ export const CODES = {
     hint: "Result is correct; run under Bun for the primary backend.",
     retryable: false,
   },
+  git_not_repository: {
+    severity: "error",
+    message: "Current directory is not inside a git worktree.",
+    hint: "Run from a git checkout, or initialize git for this project.",
+    retryable: false,
+  },
+  git_command_failed: {
+    severity: "error",
+    message: "A git command failed.",
+    hint: "Check that git is installed and the repository is healthy.",
+    retryable: false,
+  },
 } as const satisfies Record<string, CodeSpec>;
 
 export type Code = keyof typeof CODES;

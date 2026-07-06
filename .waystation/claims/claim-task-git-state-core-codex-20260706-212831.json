@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-git-state-core-codex-20260706-212831",
+  "task": "task-git-state-core",
+  "agent": "codex",
+  "status": "completed",
+  "branch": null,
+  "worktree": null,
+  "claimed_at": "2026-07-06T21:28:31+03:00",
+  "released_at": null,
+  "completed_at": "2026-07-06T21:30:54+03:00"
+}

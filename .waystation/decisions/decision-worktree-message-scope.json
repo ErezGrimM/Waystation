@@ -1,0 +1,18 @@
+{
+  "id": "decision-worktree-message-scope",
+  "title": "Keep messages scoped to the current checkout/worktree in V1",
+  "status": "accepted",
+  "scope": "scope-git",
+  "task": "task-phase6-worktree-message-scope-decision",
+  "created_at": "2026-07-06T22:20:00+03:00",
+  "decided_by": "Erez",
+  "context": "Phase 6 adds Git/worktree awareness. A repository can have multiple worktrees, and each worktree has its own checkout copy of .waystation. The project needed to decide whether V1 introduces shared cross-worktree message storage or keeps messages checkout-local.",
+  "decision": "V1 keeps messages, claims, handoffs, events, and other ledger records scoped to the current checkout/worktree. Separate worktrees see each other's message records through Git merges, not through a live shared inbox.",
+  "consequences": [
+    "No shared message store, daemon, or cross-worktree locking is introduced in Phase 6.",
+    "Git/worktree integration should make the current checkout/worktree visible in CLI, MCP, dashboard, and briefs.",
+    "Users working in separate worktrees must merge or inspect the other worktree to see its latest ledger records.",
+    "A shared cross-worktree inbox can be reconsidered later if real workflow pressure justifies the added complexity."
+  ],
+  "adr": "adr/ADR-0003-worktree-message-scope.md"
+}

@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { type BriefBudget, buildBrief, renderBrief } from "../core/brief.ts";
 import { generateReports, generateTaskViews, reindex } from "../core/generate.ts";
+import { type GitState, getGitState } from "../core/git.ts";
 import { createHandoff, getHandoff } from "../core/handoff.ts";
 import { initLedger } from "../core/init.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
@@ -125,14 +126,24 @@ task
   .command("claim")
   .argument("<id>", "task id")
   .requiredOption("--agent <agent>", "claiming agent")
+  .option("--branch <branch>", "git branch to record on the claim")
+  .option("--worktree <path>", "git worktree path to record on the claim")
   .option("--json", "output JSON")
   .description("Claim a task (creates an active claim, moves task to in_progress)")
-  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
-    await runMutation(opts.json, async () => {
-      const claim = await claimTask(findProjectRoot(), id, opts.agent);
-      return `claimed ${id} as ${claim.id}`;
-    });
-  });
+  .action(
+    async (
+      id: string,
+      opts: { agent: string; branch?: string; worktree?: string; json?: boolean },
+    ) => {
+      await runMutation(opts.json, async () => {
+        const claim = await claimTask(findProjectRoot(), id, opts.agent, new Date(), {
+          branch: opts.branch,
+          worktree: opts.worktree,
+        });
+        return `claimed ${id} as ${claim.id}`;
+      });
+    },
+  );
 
 task
   .command("release")
@@ -423,6 +434,21 @@ program
     for (const m of msgs) process.stdout.write(renderMessage(m));
   });
 
+const git = program.command("git").description("Git/worktree commands");
+
+git
+  .command("status")
+  .description("Show current git branch, worktree, and status summary")
+  .option("--json", "output JSON")
+  .action((opts: { json?: boolean }) => {
+    const res = getGitState(findProjectRoot());
+    emitResult(res, opts.json, () => {
+      const state = res.data;
+      if (!state) return;
+      process.stdout.write(renderGitState(state));
+    });
+  });
+
 function renderMessage(m: {
   from_agent: string;
   to_agent?: string | null;
@@ -433,6 +459,20 @@ function renderMessage(m: {
 }): string {
   const to = m.to_agent ? `→${m.to_agent}` : "→(all)";
   return `[${m.kind}] ${m.from_agent}${to} (${m.thread}) ${m.created_at}\n  ${m.body}\n`;
+}
+
+function renderGitState(state: GitState): string {
+  const branch = state.branch ?? `(detached${state.head ? ` at ${state.head}` : ""})`;
+  return [
+    `branch:    ${branch}`,
+    `worktree:  ${state.worktree}`,
+    `root:      ${state.root}`,
+    `changed:   ${state.status.changed}`,
+    `staged:    ${state.status.staged}`,
+    `unstaged:  ${state.status.unstaged}`,
+    `untracked: ${state.status.untracked}`,
+    "",
+  ].join("\n");
 }
 
 /** Emit a CommandResult: JSON envelope with --json, else human text + any

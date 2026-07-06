@@ -1,0 +1,31 @@
+{
+  "id": "task-git-state-core",
+  "title": "Detect current git branch, root, worktree, and status in core",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/",
+    "src/cli/index.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-phase6-worktree-message-scope-decision"
+  ],
+  "created_at": "2026-07-06T22:01:00+03:00",
+  "updated_at": "2026-07-06T21:30:54+03:00",
+  "closed_at": "2026-07-06T21:30:54+03:00",
+  "description": "Add shared core git-state detection for Phase 6. V1 should read local git state only: current branch, git root, worktree path, and a small status summary. This becomes the foundation for claim mapping and dashboard display without turning Waystation into a git automation tool.\n",
+  "acceptance": [
+    "A core module exposes a structured git state result with branch, git root, worktree path, detached-head handling, and status counts.",
+    "All git subprocess failures become coded CommandResult diagnostics rather than raw throws.",
+    "A CLI read command exposes the git state with text and --json output.",
+    "The implementation does not create branches, create worktrees, push, pull, or touch remotes.",
+    "Tests cover a normal repository, a non-git directory, and detached/unknown branch behavior where feasible.",
+    "bun test, typecheck, biome check, and waystation validate are clean."
+  ],
+  "notes": "Spec §17: detect branch and worktree path. Keep the API reusable by CLI, MCP, and dashboard.\n"
+}

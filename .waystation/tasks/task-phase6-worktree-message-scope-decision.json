@@ -1,0 +1,31 @@
+{
+  "id": "task-phase6-worktree-message-scope-decision",
+  "title": "Phase 6 decision: worktree messaging scope",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-git",
+  "path_hints": [
+    "docs/roadmap.md",
+    "adr/",
+    "agentledger-spec.md",
+    "src/core/messages.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-dashboard-frontend"
+  ],
+  "created_at": "2026-07-06T22:00:00+03:00",
+  "updated_at": "2026-07-06T21:23:12+03:00",
+  "closed_at": "2026-07-06T21:23:12+03:00",
+  "description": "Resolve the Phase 6 open boundary: messages are currently scoped to the project folder/checkout, so agents working in separate git worktrees do not see each other's messages until records are merged. Decide whether V1 accepts checkout-local messaging or needs a shared ledger/message location for worktree-per-agent workflows.\n",
+  "acceptance": [
+    "An ADR records the decision, rationale, consequences, and deferred alternatives.",
+    "docs/roadmap.md Phase 6 no longer has an unresolved messaging-scope boundary.",
+    "The decision explicitly covers separate worktrees, normal branches in one checkout, merge behavior, and whether any shared message location is introduced.",
+    "If behavior changes, follow-up tasks are added for implementation; if checkout-local messaging remains, docs explain the limitation.",
+    "bun test, typecheck, biome check, and waystation validate are clean."
+  ],
+  "notes": "Do this before implementing worktree-aware messaging or inbox behavior. This is a design decision, not a code-heavy task.\n"
+}
