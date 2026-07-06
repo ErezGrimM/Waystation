@@ -1,0 +1,23 @@
+{
+  "id": "issue-timestamp-iso-cursor",
+  "title": "Timestamps are unvalidated strings and the inbox --since cursor is lossy at second granularity",
+  "status": "open",
+  "severity": "medium",
+  "priority": 2,
+  "type": "bug",
+  "task": null,
+  "scope": "scope-core",
+  "file_hints": ["src/core/schema.ts", "src/core/messages.ts", "src/index/ledgerIndex.ts"],
+  "opened_by": "claude-code",
+  "assigned_to": null,
+  "created_at": "2026-07-06T08:00:00+03:00",
+  "updated_at": "2026-07-06T08:00:00+03:00",
+  "closed_at": null,
+  "description": "Audit finding (MED). created_at/claimed_at etc. are z.string() with no ISO-8601 constraint, yet ordering and the inbox --since cursor rely on lexical order equaling chronological order (ORDER BY created_at; m.created_at <= since). A non-ISO or non-uniform-offset timestamp sorts/paginates wrongly. Separately, because created_at is second-resolution, using a message's created_at as --since silently drops other messages from that same second (cursor by timestamp alone is lossy).\n",
+  "expected": "Timestamps validate as ISO-8601; cursoring never skips unseen messages.\n",
+  "actual": "Any string passes; same-second messages can be skipped by --since.\n",
+  "next_steps": [
+    "Constrain timestamp fields to ISO-8601 in zod (datetime with offset).",
+    "Make the inbox cursor compound (created_at + id) so same-second messages are not lost."
+  ]
+}

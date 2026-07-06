@@ -10,7 +10,7 @@ import {
   withLedgerLock,
   writeJsonAtomic,
 } from "./store.ts";
-import { nowIso } from "./time.ts";
+import { nowIso, safeIdPart } from "./time.ts";
 
 /** Reserved thread id for the folder-wide channel (spec §6.10). */
 export const PROJECT_THREAD = "project";
@@ -83,7 +83,7 @@ export async function postMessage(
   return withLedgerLock(root, () => {
     const ts = nowIso(now);
     const message: MessageRecord = {
-      id: `message-${input.thread}-${input.from}-${messageStamp(now, suffix)}`,
+      id: `message-${safeIdPart(input.thread)}-${safeIdPart(input.from)}-${messageStamp(now, suffix)}`,
       thread: input.thread,
       from_agent: input.from,
       to_agent: input.to ?? null,

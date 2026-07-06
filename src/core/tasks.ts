@@ -9,6 +9,7 @@ export function isActionable(task: TaskRecord, byId: Map<string, TaskRecord>): b
   if (task.status === "done" || task.status === "wont_do") return false;
   if (task.status === "blocked") return false;
   if (task.status === "in_progress") return false; // already being worked
+  if (task.status === "review") return false; // work complete, awaiting review
   for (const dep of task.dependencies) {
     const target = byId.get(dep);
     if (target?.status !== "done") return false;

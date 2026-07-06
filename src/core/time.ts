@@ -19,10 +19,19 @@ export function nowIso(d: Date = new Date()): string {
   return `${date}T${time}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
 
-/** Compact local stamp for ids, e.g. 20260706-1224. */
+/** Compact local stamp for ids, e.g. 20260706-122433 (second resolution). */
 export function idStamp(d: Date = new Date()): string {
   return (
     `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
-    `-${pad(d.getHours())}${pad(d.getMinutes())}`
+    `-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
   );
+}
+
+/**
+ * Sanitize a string for safe use as an id / filename component: only
+ * [A-Za-z0-9._-] survive, preventing path separators and traversal
+ * (e.g. an agent named "../../foo" cannot escape the messages dir).
+ */
+export function safeIdPart(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[-.]+|-+$/g, "") || "x";
 }

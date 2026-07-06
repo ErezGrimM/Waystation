@@ -9,7 +9,7 @@ import {
   writeClaim,
   writeJsonAtomic,
 } from "./store.ts";
-import { idStamp, nowIso } from "./time.ts";
+import { idStamp, nowIso, safeIdPart } from "./time.ts";
 
 export class MutationError extends Error {
   readonly code: string;
@@ -53,7 +53,7 @@ export async function claimTask(
     }
     const ts = nowIso(now);
     const claim: ClaimRecord = {
-      id: `claim-${id}-${agent}-${idStamp(now)}`,
+      id: `claim-${safeIdPart(id)}-${safeIdPart(agent)}-${idStamp(now)}`,
       task: id,
       agent,
       status: "active",

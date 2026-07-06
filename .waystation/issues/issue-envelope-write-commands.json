@@ -1,0 +1,25 @@
+{
+  "id": "issue-envelope-write-commands",
+  "title": "Write commands and some errors bypass the CommandResult envelope",
+  "status": "open",
+  "severity": "medium",
+  "priority": 2,
+  "type": "quality",
+  "task": null,
+  "scope": "scope-cli",
+  "file_hints": ["src/cli/index.ts"],
+  "opened_by": "claude-code",
+  "assigned_to": null,
+  "created_at": "2026-07-06T08:00:00+03:00",
+  "updated_at": "2026-07-06T08:00:00+03:00",
+  "closed_at": null,
+  "description": "Audit finding (MED). task claim/release/finish and report do not emit the CommandResult envelope and accept no --json. validate --json prints the validator's own {ok,errors,warnings} shape (no data field), inconsistent with emitResult. brief's catch labels EVERY failure as no_such_task, masking real record-corruption/IO errors. Non-Record/Mutation throws re-throw past the top-level handler and dump a raw stack instead of an envelope. message post/list/inbox use three different error-reporting styles.\n",
+  "expected": "Every command returns the {ok,data,errors,warnings} envelope in --json; all errors are coded diagnostics.\n",
+  "actual": "Write commands print bare text; brief mislabels errors; some throws escape unstructured.\n",
+  "next_steps": [
+    "Return CommandResult from claim/release/finish/report; add --json to them.",
+    "Normalize validate --json to the envelope (wrap in data or reuse the shape).",
+    "brief: only map genuine not-found to no_such_task; surface other errors with their real code.",
+    "Top-level catch: convert any Error to a generic coded diagnostic instead of re-throwing."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "issue-validate-robustness-gaps",
+  "title": "Validation/generation gaps: issues unvalidated, stale views not pruned, unwrapped JSON.parse, cross-type id collisions",
+  "status": "open",
+  "severity": "medium",
+  "priority": 3,
+  "type": "bug",
+  "task": null,
+  "scope": "scope-core",
+  "file_hints": ["src/core/validate.ts", "src/core/generate.ts", "src/core/store.ts", "src/core/paths.ts"],
+  "opened_by": "claude-code",
+  "assigned_to": null,
+  "created_at": "2026-07-06T08:00:00+03:00",
+  "updated_at": "2026-07-06T08:00:00+03:00",
+  "closed_at": null,
+  "description": "Audit findings (MED/LOW), grouped. (1) validate never schema-checks issue records (IssueRecord unused by validate); a corrupt/duplicate issue is never reported, yet orphan_thread resolution trusts issue filenames. (2) generateTaskViews never prunes stale view files (deleting a task leaves an orphan view forever) — non-idempotent output. (3) loadClaims/loadIssues call JSON.parse without try/catch, throwing a raw SyntaxError (not RecordError) that crashes activeClaimForTask during claim/release/finish. (4) duplicate ids are detected per-record-type only; cross-type id collisions (task vs issue) are accepted and can mis-resolve thread references. (5) findProjectRoot treats a FILE named .waystation as the root. (6) recordExists accepts YAML files that loaders never read, so validate can say 'fine' while the index omits the record.\n",
+  "expected": "All record types validate on read with coded errors; generation is idempotent; id uniqueness is global where it matters.\n",
+  "actual": "Issues unvalidated; orphan views accumulate; raw parse crashes; cross-type id collisions unhandled.\n",
+  "next_steps": [
+    "Validate issues (schema + duplicate id) in validateLedger.",
+    "Prune view files not backed by a current record.",
+    "Wrap loadClaims/loadIssues parse in RecordError like records.ts readJson.",
+    "Detect cross-type id collisions; make findProjectRoot require a directory."
+  ]
+}

@@ -51,7 +51,7 @@ export async function buildLedgerIndex(path: string, data: LedgerData): Promise<
 
   for (const t of data.tasks) {
     db.run(
-      "INSERT INTO tasks VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO tasks VALUES (?, ?, ?, ?, ?, ?)",
       t.id,
       t.title,
       t.status,
@@ -62,7 +62,7 @@ export async function buildLedgerIndex(path: string, data: LedgerData): Promise<
   }
   for (const i of data.issues) {
     db.run(
-      "INSERT INTO issues VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO issues VALUES (?, ?, ?, ?, ?, ?, ?)",
       i.id,
       i.title,
       i.status,
@@ -74,7 +74,7 @@ export async function buildLedgerIndex(path: string, data: LedgerData): Promise<
   }
   for (const c of data.claims) {
     db.run(
-      "INSERT INTO claims VALUES (?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO claims VALUES (?, ?, ?, ?, ?)",
       c.id,
       c.task,
       c.agent,
@@ -84,7 +84,7 @@ export async function buildLedgerIndex(path: string, data: LedgerData): Promise<
   }
   for (const m of data.messages) {
     db.run(
-      "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       m.id,
       m.thread,
       m.from_agent,

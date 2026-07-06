@@ -21,7 +21,7 @@ export async function buildTaskIndex(path: string, tasks: TaskRecord[]): Promise
   `);
   for (const t of tasks) {
     db.run(
-      "INSERT INTO tasks (id, title, status, priority, scope, dependencies) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO tasks (id, title, status, priority, scope, dependencies) VALUES (?, ?, ?, ?, ?, ?)",
       t.id,
       t.title,
       t.status,
@@ -55,7 +55,7 @@ export function readyFromIndex(db: Db): IndexedTask[] {
   const doneIds = new Set(rows.filter((r) => r.status === "done").map((r) => r.id));
 
   return rows
-    .filter((r) => !["done", "wont_do", "blocked", "in_progress"].includes(r.status))
+    .filter((r) => !["done", "wont_do", "blocked", "in_progress", "review"].includes(r.status))
     .filter((r) => (JSON.parse(r.dependencies) as string[]).every((d) => doneIds.has(d)))
     .sort((a, b) =>
       a.priority !== b.priority ? a.priority - b.priority : a.id.localeCompare(b.id),

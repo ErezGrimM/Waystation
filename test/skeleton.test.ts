@@ -9,6 +9,7 @@ import { generateBlocked, generateStatus, reindex } from "../src/core/generate.t
 import { inbox, loadMessages, PROJECT_THREAD, postMessage, threadMessages } from "../src/core/messages.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
+import { safeIdPart } from "../src/core/time.ts";
 import { backendWarnings, buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
@@ -40,6 +41,41 @@ const A = { id: "task-a", title: "A", status: "done", priority: 1, dependencies:
 const B = { id: "task-b", title: "B", status: "ready", priority: 2, dependencies: ["task-a"] };
 const C = { id: "task-c", title: "C", status: "todo", priority: 1, dependencies: ["task-b"] };
 const D = { id: "task-d", title: "D", status: "ready", priority: 1, dependencies: [] };
+
+describe("audit fixes", () => {
+  test("a review task is not ready (awaiting review, not actionable)", () => {
+    const r = { id: "task-rev", title: "R", status: "review", priority: 1, dependencies: [] };
+    expect(readyTasks(loadTasks(fixtureRoot([r]))).map((t) => t.id)).toEqual([]);
+  });
+
+  test("duplicate task ids do not crash the index build", async () => {
+    const root = fixtureRoot([{ ...A }]);
+    writeFileSync(
+      join(root, ".waystation", "tasks", "task-a-copy.json"),
+      JSON.stringify({ ...A, title: "A2" }),
+    );
+    const res = await reindex(root); // must not throw on the PK conflict
+    expect(res.ok).toBe(true);
+  });
+
+  test("safeIdPart strips path separators and traversal", () => {
+    expect(safeIdPart("../../foo")).toBe("foo");
+    expect(safeIdPart("a b/c")).toBe("a-b-c");
+    expect(safeIdPart("")).toBe("x");
+  });
+
+  test("a path-y agent name yields a filesystem-safe message id", async () => {
+    const root = fixtureRoot([D]);
+    const m = await postMessage(
+      root,
+      { thread: "task-d", from: "../../evil", body: "x" },
+      new Date("2026-07-06T10:00:00Z"),
+      "sfx1",
+    );
+    expect(m.id.includes("/")).toBe(false);
+    expect(m.id.includes("..")).toBe(false);
+  });
+});
 
 describe("init", () => {
   test("creates a fresh ledger that validates clean", () => {

@@ -94,3 +94,7 @@
 {"type":"task.created","task":"task-prompt-render","actor":"claude-code","ts":"2026-07-06T07:45:00+03:00","message":"Finish-V1 phase."}
 {"type":"task.status_changed","task":"task-init","from":"in_progress","to":"done","actor":"claude-code","ts":"2026-07-06T07:44:42+03:00"}
 {"type":"claim.completed","task":"task-init","claim":"claim-task-init-claude-code-20260706-0742","actor":"claude-code","ts":"2026-07-06T07:44:42+03:00"}
+{"type":"issue.created","issue":"issue-event-log-atomicity","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
+{"type":"issue.created","issue":"issue-envelope-write-commands","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
+{"type":"issue.created","issue":"issue-timestamp-iso-cursor","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
+{"type":"issue.created","issue":"issue-validate-robustness-gaps","actor":"claude-code","ts":"2026-07-06T08:00:00+03:00","message":"From codebase audit."}
