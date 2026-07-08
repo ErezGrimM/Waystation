@@ -80,9 +80,9 @@ export async function claimTask(
       released_at: null,
       completed_at: null,
     };
-    writeClaim(root, claim);
     const from = task.status;
-    writeTask(root, { ...task, status: "in_progress", updated_at: ts });
+    // Write-ahead: append events before record writes so the event log is
+    // always a superset of applied record changes (see H4 in the audit).
     appendEventUnlocked(root, {
       type: "task.claimed",
       task: id,
@@ -100,6 +100,8 @@ export async function claimTask(
       actor: agent,
       ts,
     });
+    writeClaim(root, claim);
+    writeTask(root, { ...task, status: "in_progress", updated_at: ts });
     return claim;
   });
 }
@@ -122,9 +124,8 @@ export async function releaseTask(
       );
     }
     const ts = nowIso(now);
-    writeClaim(root, { ...claim, status: "released", released_at: ts });
     const from = task.status;
-    writeTask(root, { ...task, status: "ready", updated_at: ts });
+    // Write-ahead: events first, then records (see H4 in the audit).
     appendEventUnlocked(root, {
       type: "claim.released",
       task: id,
@@ -140,6 +141,8 @@ export async function releaseTask(
       actor: agent,
       ts,
     });
+    writeClaim(root, { ...claim, status: "released", released_at: ts });
+    writeTask(root, { ...task, status: "ready", updated_at: ts });
   });
 }
 
@@ -155,17 +158,14 @@ export async function finishTask(
     if (task.status === "done") throw new MutationError(`task ${id} is already done`, "task_done");
     const ts = nowIso(now);
     const claim = activeClaimForTask(root, id);
-    if (claim) {
-      if (claim.agent !== agent) {
-        throw new MutationError(
-          `task ${id} is claimed by ${claim.agent}, not ${agent}`,
-          "claim_owner_mismatch",
-        );
-      }
-      writeClaim(root, { ...claim, status: "completed", completed_at: ts });
+    if (claim && claim.agent !== agent) {
+      throw new MutationError(
+        `task ${id} is claimed by ${claim.agent}, not ${agent}`,
+        "claim_owner_mismatch",
+      );
     }
     const from = task.status;
-    writeTask(root, { ...task, status: "done", updated_at: ts, closed_at: ts });
+    // Write-ahead: events first, then records (see H4 in the audit).
     appendEventUnlocked(root, {
       type: "task.status_changed",
       task: id,
@@ -183,5 +183,9 @@ export async function finishTask(
         ts,
       });
     }
+    if (claim) {
+      writeClaim(root, { ...claim, status: "completed", completed_at: ts });
+    }
+    writeTask(root, { ...task, status: "done", updated_at: ts, closed_at: ts });
   });
 }

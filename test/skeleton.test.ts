@@ -11,7 +11,7 @@ import {
   generateTaskViews,
   reindex,
 } from "../src/core/generate.ts";
-import { importGitHubIssues } from "../src/core/gh.ts";
+import { exportGitHubIssues, importGitHubIssues } from "../src/core/gh.ts";
 import { getGitState } from "../src/core/git.ts";
 import { loadGraphData } from "../src/core/graph.ts";
 import { createHandoff, getHandoff } from "../src/core/handoff.ts";
@@ -342,6 +342,58 @@ describe("bun:sqlite index", () => {
     const second = readyFromIndex(db2).map((t) => t.id);
     db2.close();
     expect(second).toEqual(first);
+  });
+
+  // H6: a wont_do dependency must satisfy readiness, not block it forever.
+  test("a wont_do dependency satisfies readiness (in-memory and index agree)", async () => {
+    const dep = { id: "dep-x", title: "X", status: "wont_do", priority: 1, dependencies: [] };
+    const dependent = {
+      id: "task-y",
+      title: "Y",
+      status: "ready",
+      priority: 1,
+      dependencies: ["dep-x"],
+    };
+    const root = fixtureRoot([dep, dependent]);
+    const tasks = loadTasks(root);
+    expect(readyTasks(tasks).map((t) => t.id)).toContain("task-y");
+
+    const db = await buildTaskIndex(join(root, ".waystation", "index.sqlite"), tasks);
+    const fromIndex = readyFromIndex(db).map((t) => t.id);
+    db.close();
+    expect(fromIndex).toContain("task-y");
+  });
+
+  // H7: the single write lock must serialize concurrent claims on one task.
+  test("concurrent claims on one task: exactly one wins", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const agents = ["a1", "a2", "a3", "a4", "a5"];
+    const settled = await Promise.allSettled(agents.map((a) => claimTask(root, "task-d", a)));
+
+    const fulfilled = settled.filter((r) => r.status === "fulfilled");
+    const rejected = settled.filter((r) => r.status === "rejected");
+    expect(fulfilled.length).toBe(1);
+    expect(rejected.length).toBe(agents.length - 1);
+    for (const r of rejected) {
+      const reason = (r as PromiseRejectedResult).reason;
+      expect(reason).toBeInstanceOf(MutationError);
+      expect((reason as MutationError).code).toBe("task_already_claimed");
+    }
+    // The ledger ends with exactly one active claim on disk.
+    expect(loadClaims(root).filter((c) => c.status === "active").length).toBe(1);
+  });
+
+  // H3: gh import/export reject a malformed/injecting repo before any network call.
+  test("gh import/export reject an invalid repo name", async () => {
+    const root = fixtureRoot([]);
+    for (const bad of ["not-a-repo", "owner/name/../../user", "owner/name?x=1"]) {
+      const imp = await importGitHubIssues(root, bad, "fake-token");
+      expect(imp.ok).toBe(false);
+      expect(imp.errors[0]?.code).toBe("invalid_github_repo");
+      const exp = await exportGitHubIssues(root, bad, "fake-token");
+      expect(exp.ok).toBe(false);
+      expect(exp.errors[0]?.code).toBe("invalid_github_repo");
+    }
   });
 });
 

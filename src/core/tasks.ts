@@ -1,9 +1,19 @@
 import type { TaskRecord } from "./schema.ts";
 
 /**
+ * A dependency is satisfied when its target is `done` OR `wont_do`. `wont_do`
+ * is a legitimate terminal state ("decided not to do it"); treating it as
+ * unsatisfied would permanently, silently block every dependent (audit H6).
+ */
+function dependencySatisfied(target: TaskRecord | undefined): boolean {
+  return target?.status === "done" || target?.status === "wont_do";
+}
+
+/**
  * A task is "actionable" (a candidate for `next`) when it is not yet done and
- * every one of its dependencies exists and is done. A missing dependency
- * target means the task is NOT ready (surfaced by validation elsewhere).
+ * every one of its dependencies exists and is resolved (done or wont_do). A
+ * missing dependency target means the task is NOT ready (surfaced by
+ * validation elsewhere).
  */
 export function isActionable(task: TaskRecord, byId: Map<string, TaskRecord>): boolean {
   if (task.status === "done" || task.status === "wont_do") return false;
@@ -11,8 +21,7 @@ export function isActionable(task: TaskRecord, byId: Map<string, TaskRecord>): b
   if (task.status === "in_progress") return false; // already being worked
   if (task.status === "review") return false; // work complete, awaiting review
   for (const dep of task.dependencies) {
-    const target = byId.get(dep);
-    if (target?.status !== "done") return false;
+    if (!dependencySatisfied(byId.get(dep))) return false;
   }
   return true;
 }

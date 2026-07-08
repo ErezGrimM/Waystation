@@ -165,6 +165,24 @@ export const CODES = {
     hint: "Another process holds it; retry shortly.",
     retryable: true,
   },
+  claim_status_divergence: {
+    severity: "warning",
+    message: "An active claim exists on a task that is not in progress.",
+    hint: "Likely a mutation interrupted mid-write; release/reclaim the task or fix its status.",
+    retryable: false,
+  },
+  forbidden_origin: {
+    severity: "error",
+    message: "Request rejected: non-loopback host or cross-origin request.",
+    hint: "The dashboard only accepts same-origin requests from localhost.",
+    retryable: false,
+  },
+  invalid_github_repo: {
+    severity: "error",
+    message: "Invalid GitHub repository name.",
+    hint: 'Use the "owner/name" form with only letters, digits, ".", "_", and "-".',
+    retryable: false,
+  },
   unexpected_error: {
     severity: "error",
     message: "An unexpected error occurred.",

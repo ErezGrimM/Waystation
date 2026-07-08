@@ -9,7 +9,10 @@ interface IssueItem {
   type?: string;
   task?: string | null;
   description?: string;
+  created_at?: string;
 }
+
+const ISSUE_FILTERS = ["all", "open", "triaged", "in_progress", "fixed", "verified", "closed"];
 
 const SEVERITY_META: Record<string, { bg: string; fg: string }> = {
   low: { bg: "var(--bg-hover)", fg: "var(--text-muted)" },
@@ -18,17 +21,22 @@ const SEVERITY_META: Record<string, { bg: string; fg: string }> = {
   critical: { bg: "rgba(239,83,80,0.14)", fg: "var(--red)" },
 };
 
-const STATUS_META: Record<string, { bg: string; fg: string }> = {
-  open: { bg: "rgba(239,83,80,0.14)", fg: "var(--red)" },
-  triaged: { bg: "rgba(245,166,35,0.14)", fg: "var(--orange)" },
-  in_progress: { bg: "rgba(245,166,35,0.14)", fg: "var(--orange)" },
-  fixed: { bg: "rgba(52,199,123,0.14)", fg: "var(--green)" },
-  verified: { bg: "rgba(52,199,123,0.14)", fg: "var(--green)" },
-  closed: { bg: "var(--bg-hover)", fg: "var(--text-dim)" },
+const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
+  open: { label: "Open", bg: "rgba(239,83,80,0.14)", fg: "var(--red)" },
+  triaged: { label: "Triaged", bg: "rgba(245,166,35,0.14)", fg: "var(--orange)" },
+  in_progress: { label: "In Progress", bg: "rgba(245,166,35,0.14)", fg: "var(--orange)" },
+  fixed: { label: "Fixed", bg: "rgba(52,199,123,0.14)", fg: "var(--green)" },
+  verified: { label: "Verified", bg: "rgba(52,199,123,0.14)", fg: "var(--green)" },
+  closed: { label: "Closed", bg: "var(--bg-hover)", fg: "var(--text-dim)" },
 };
+
+type SortKey = "created_at" | "title" | "severity";
 
 export function Issues() {
   const [issues, setIssues] = useState<IssueItem[]>([]);
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState<SortKey>("created_at");
+  const [order, setOrder] = useState<"desc" | "asc">("desc");
   const [title, setTitle] = useState("");
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
@@ -45,6 +53,29 @@ export function Issues() {
   };
 
   useEffect(load, []);
+
+  let filtered = issues;
+  if (filter !== "all") filtered = issues.filter((i) => i.status === filter);
+  filtered = [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sort) {
+      case "title":
+        cmp = a.title.localeCompare(b.title);
+        break;
+      case "severity":
+        cmp = (a.severity ?? "").localeCompare(b.severity ?? "");
+        break;
+      default:
+        cmp = (a.created_at ?? "").localeCompare(b.created_at ?? "");
+    }
+    if (cmp === 0) cmp = a.id.localeCompare(b.id);
+    return order === "asc" ? cmp : -cmp;
+  });
+
+  const toggleSort = (key: SortKey) => {
+    if (sort === key) setOrder((o) => (o === "desc" ? "asc" : "desc"));
+    else { setSort(key); setOrder("desc"); }
+  };
 
   const create = async () => {
     if (!title) return;
@@ -158,6 +189,21 @@ export function Issues() {
         </div>
       )}
 
+      <div className="filter-chips">
+        {ISSUE_FILTERS.map((f) => {
+          const meta = STATUS_META[f];
+          return (
+            <button
+              key={f}
+              className={`chip${filter === f ? " active" : ""}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === "all" ? "All" : (meta?.label ?? f)}
+            </button>
+          );
+        })}
+      </div>
+
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="title" style={{ flex: 1 }} />
         <input className="input" value={type} onChange={(e) => setType(e.target.value)} placeholder="type" style={{ width: 100 }} />
@@ -166,12 +212,36 @@ export function Issues() {
           Create
         </button>
       </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {(
+          [
+            ["created_at", "Created"],
+            ["severity", "Severity"],
+            ["title", "Title"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            className="chip"
+            onClick={() => toggleSort(key)}
+            style={{
+              background: sort === key ? "var(--accent)" : undefined,
+              color: sort === key ? "#0a0e13" : undefined,
+              borderColor: sort === key ? "var(--accent)" : undefined,
+            }}
+          >
+            {label} {sort === key ? (order === "desc" ? "↓" : "↑") : ""}
+          </button>
+        ))}
+      </div>
+
       {msg && <div style={{ color: msg === "created" || msg.includes("Imported") || msg.includes("Exported") ? "var(--green)" : "var(--red)", marginBottom: 12 }}>{msg}</div>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {issues.map((i) => {
+        {filtered.map((i) => {
           const sm = SEVERITY_META[i.severity ?? ""] ?? { bg: "var(--bg-hover)", fg: "var(--text-muted)" };
-          const st = STATUS_META[i.status] ?? { bg: "var(--bg-hover)", fg: "var(--text-muted)" };
+          const st = STATUS_META[i.status] ?? { label: i.status, bg: "var(--bg-hover)", fg: "var(--text-muted)" };
           return (
             <div key={i.id} className="issue-card">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -181,7 +251,7 @@ export function Issues() {
                     {i.severity ?? "-"}
                   </span>
                   <span className="badge" style={{ background: st.bg, color: st.fg }}>
-                    {i.status}
+                    {st.label ?? i.status}
                   </span>
                 </div>
               </div>
@@ -196,8 +266,8 @@ export function Issues() {
             </div>
           );
         })}
-        {issues.length === 0 && (
-          <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>No issues.</div>
+        {filtered.length === 0 && (
+          <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>No issues match this filter.</div>
         )}
       </div>
     </div>

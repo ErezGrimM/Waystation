@@ -1,6 +1,6 @@
 {
   "name": "waystation",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Local-first task, issue, prompt, and handoff ledger for coordinating humans and AI coding agents.",
   "type": "module",
   "bin": {

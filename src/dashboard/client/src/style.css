@@ -265,6 +265,10 @@ a:hover {
 .board-card:hover {
   border-color: var(--border-active);
 }
+.board-card-expanded {
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
 
 .board-card-id {
   font-size: 11.5px;
@@ -554,6 +558,31 @@ select.input {
   border-radius: 50%;
   background: var(--green);
   animation: pulse 1.6s ease-in-out infinite;
+}
+
+/* action buttons on kanban cards */
+.btn-action {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0a0e13;
+  background: var(--accent);
+  padding: 4px 9px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  line-height: 1.3;
+}
+.btn-action:hover {
+  opacity: 0.85;
+}
+.btn-action-warn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-input);
+}
+.btn-action-warn:hover {
+  border-color: var(--red);
+  color: var(--red);
 }
 
 /* verification results */

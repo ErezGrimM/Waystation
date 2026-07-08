@@ -52,7 +52,11 @@ export function readyFromIndex(db: Db): IndexedTask[] {
     dependencies: string;
   }>("SELECT id, title, status, priority, scope, dependencies FROM tasks");
 
-  const doneIds = new Set(rows.filter((r) => r.status === "done").map((r) => r.id));
+  // A dependency counts as satisfied when done OR wont_do — mirrors
+  // dependencySatisfied() in tasks.ts so the SQL and in-memory paths agree (H6).
+  const doneIds = new Set(
+    rows.filter((r) => r.status === "done" || r.status === "wont_do").map((r) => r.id),
+  );
 
   return rows
     .filter((r) => !["done", "wont_do", "blocked", "in_progress", "review"].includes(r.status))

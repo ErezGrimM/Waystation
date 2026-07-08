@@ -186,6 +186,7 @@ export function validateLedger(root?: string): CommandResult<null> {
   }
 
   // --- claims: schema, task existence, single active claim per task ---
+  const taskStatusById = new Map(tasks.map((t) => [t.id, t.status]));
   const activeByTask = new Map<string, number>();
   const seenClaimIds = new Set<string>();
   for (const name of listJson(paths.claims)) {
@@ -231,6 +232,18 @@ export function validateLedger(root?: string): CommandResult<null> {
     }
     if (parsed.data.status === "active") {
       activeByTask.set(parsed.data.task, (activeByTask.get(parsed.data.task) ?? 0) + 1);
+      // An active claim should sit on an in_progress task. Any other status
+      // (e.g. still `ready`) signals a mutation interrupted mid-write — the
+      // detectable residue of the non-atomic multi-file write path (H4).
+      const status = taskStatusById.get(parsed.data.task);
+      if (status !== undefined && status !== "in_progress") {
+        diags.push(
+          diag("claim_status_divergence", {
+            message: `task ${parsed.data.task} has an active claim but status is ${status}`,
+            details: { task: parsed.data.task, claim: parsed.data.id, status },
+          }),
+        );
+      }
     }
   }
   for (const [taskId, count] of activeByTask) {

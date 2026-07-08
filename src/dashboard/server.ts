@@ -14,7 +14,7 @@ import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutat
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, diag, okResult, toResult } from "../core/result.ts";
-import { loadIssues } from "../core/store.ts";
+import { loadClaims, loadIssues } from "../core/store.ts";
 import { nextTask } from "../core/tasks.ts";
 import { nowIso } from "../core/time.ts";
 import { validateLedger } from "../core/validate.ts";
@@ -42,8 +42,55 @@ function gitStatusFiles(root: string): string[] {
   return state.data?.status.files.map((file) => file.file) ?? [];
 }
 
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** Extract the hostname (no port) from a URL or Origin header value; null if unparseable. */
+function hostOf(value: string): string | null {
+  try {
+    return new URL(value.includes("://") ? value : `http://${value}`).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function forbidden(): Response {
+  return new Response(JSON.stringify(toResult(null, [diag("forbidden_origin")])), {
+    status: 403,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/**
+ * Guard against DNS-rebinding and cross-site (CSRF) requests. The dashboard
+ * binds to loopback, but that is not a browser boundary: any page the user
+ * visits can issue "simple" cross-origin POSTs whose side effects execute, and
+ * a rebound DNS name can turn a remote page into an apparent same-origin
+ * caller. We therefore (a) require the request host itself to be loopback on
+ * every request — the request URL host reflects the Host header and defeats DNS
+ * rebinding for reads and writes; and (b) on mutating methods, require any
+ * Origin to also be loopback — defeats cross-site simple-request CSRF.
+ * Non-browser clients (CLI, tests) send loopback URLs and no Origin, so they
+ * are unaffected.
+ */
+function originGuard(url: string, method: string, origin: string | undefined): Response | null {
+  const reqHost = hostOf(url);
+  if (!reqHost || !LOOPBACK_HOSTS.has(reqHost)) return forbidden();
+  if (MUTATING_METHODS.has(method) && origin) {
+    const originHost = hostOf(origin);
+    if (!originHost || !LOOPBACK_HOSTS.has(originHost)) return forbidden();
+  }
+  return null;
+}
+
 export function createApp(root: string, distDir?: string): Hono {
   const app = new Hono();
+
+  app.use("*", async (c, next) => {
+    const blocked = originGuard(c.req.url, c.req.method, c.req.header("origin"));
+    if (blocked) return blocked;
+    await next();
+  });
 
   // ── status ──
 
@@ -285,6 +332,16 @@ export function createApp(root: string, distDir?: string): Hono {
     } catch (e) {
       return json(catchDiag(e));
     }
+  });
+
+  // ── claims ──
+
+  app.get("/api/claims", (c) => {
+    let claims = loadClaims(root);
+    const status = c.req.query("status");
+    if (status) claims = claims.filter((cl) => cl.status === status);
+    claims.sort((a, b) => b.claimed_at.localeCompare(a.claimed_at));
+    return json(okResult(claims));
   });
 
   // ── validate ──

@@ -26,7 +26,7 @@ const program = new Command();
 program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
-  .version("0.0.2");
+  .version("0.0.3");
 
 program
   .command("init")
@@ -611,10 +611,11 @@ program
 
     if (opts.dev) {
       const vitePort = 5173;
+      const vDir = join(root, "src", "dashboard", "client");
       const _viteProc = Bun.spawn(
         ["bun", "x", "vite", "--port", String(vitePort), "--strictPort"],
         {
-          cwd: root,
+          cwd: vDir,
           stdio: ["ignore", "inherit", "inherit"],
         },
       );

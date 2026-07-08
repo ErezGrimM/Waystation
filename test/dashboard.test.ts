@@ -292,4 +292,35 @@ describe("dashboard API server", () => {
     expect(body.ok).toBe(false);
     expect(body.errors[0].code).toBe("no_github_token");
   });
+
+  // H2: DNS-rebinding guard — a non-loopback request host is rejected.
+  test("rejects requests whose host is not loopback (DNS-rebinding guard)", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request(new Request("http://evil.example.com/api/status"));
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.errors[0].code).toBe("forbidden_origin");
+  });
+
+  // H2: CSRF guard — a cross-origin mutating request is rejected before it runs.
+  test("rejects cross-origin mutating requests (CSRF guard)", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/tasks/test-task/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://evil.example.com" },
+      body: JSON.stringify({ agent: "attacker" }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  // H2: a same-origin loopback mutating request still passes the guard.
+  test("allows same-origin loopback mutating requests", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/tasks/test-task/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://localhost" },
+      body: JSON.stringify({ agent: "local-agent" }),
+    });
+    expect(res.status).not.toBe(403); // guard passed (200 claim, or 422 if already claimed)
+  });
 });

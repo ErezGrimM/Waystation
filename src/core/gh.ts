@@ -18,6 +18,19 @@ const LABEL_TO_SEVERITY = new Map<string, string>([
   ["low", "low"],
 ]);
 
+/** GitHub "owner/name" — letters, digits, ".", "_", "-", a single slash. */
+const REPO_RE = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
+
+/**
+ * Reject a repo that is not a strict `owner/name`. This both prevents
+ * request-path/query injection into api.github.com URLs (e.g.
+ * `owner/name/../../user`, `owner/name?…`) and forces callers to name a real
+ * repository rather than steering the token-authenticated request elsewhere.
+ */
+function isValidRepo(repo: string): boolean {
+  return REPO_RE.test(repo);
+}
+
 function ghHeaders(token: string): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
@@ -89,6 +102,11 @@ export async function importGitHubIssues(
   if (!token) {
     return toResult<{ imported: number; ids: string[] }>(null, [diag("no_github_token")]);
   }
+  if (!isValidRepo(repo)) {
+    return toResult<{ imported: number; ids: string[] }>(null, [
+      diag("invalid_github_repo", { details: { repo } }),
+    ]);
+  }
 
   const existing = new Set(loadIssues(root).map((i) => i.id));
 
@@ -141,6 +159,11 @@ export async function exportGitHubIssues(
 ): Promise<CommandResult<{ exported: number; ids: string[] }>> {
   if (!token) {
     return toResult<{ exported: number; ids: string[] }>(null, [diag("no_github_token")]);
+  }
+  if (!isValidRepo(repo)) {
+    return toResult<{ exported: number; ids: string[] }>(null, [
+      diag("invalid_github_repo", { details: { repo } }),
+    ]);
   }
 
   try {

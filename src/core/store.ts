@@ -53,8 +53,33 @@ export function writeJsonAtomic(file: string, value: unknown): void {
   } finally {
     closeSync(fd);
   }
-  renameSync(tmp, file);
+  renameWithRetry(tmp, file);
 }
+
+/**
+ * Rename over the target, retrying briefly on Windows sharing violations.
+ * On Windows, `rename` fails with EPERM/EACCES/EBUSY when another process
+ * (a polling dashboard read, antivirus, a file indexer) has the destination
+ * open. A short bounded backoff turns those transient collisions into success
+ * instead of a half-applied mutation.
+ */
+function renameWithRetry(tmp: string, file: string): void {
+  const delaysMs = [1, 2, 5, 10, 25, 50, 100];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      renameSync(tmp, file);
+      return;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      const transient = code === "EPERM" || code === "EACCES" || code === "EBUSY";
+      if (!transient || attempt >= delaysMs.length) throw err;
+      Atomics.wait(sleepBuffer, 0, 0, delaysMs[attempt]);
+    }
+  }
+}
+
+/** A private buffer used to perform a synchronous sleep via Atomics.wait. */
+const sleepBuffer = new Int32Array(new SharedArrayBuffer(4));
 
 /**
  * Append one event line to events.jsonl. Uses a single O_APPEND write + fsync

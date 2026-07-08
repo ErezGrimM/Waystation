@@ -9,6 +9,8 @@ interface ClaimItem {
   branch?: string | null;
   worktree?: string | null;
   claimed_at: string;
+  released_at?: string | null;
+  completed_at?: string | null;
 }
 
 interface TaskItem {
@@ -21,11 +23,21 @@ interface GitContext {
   overlaps: Array<{ task: string; otherTask: string; reason: string }>;
 }
 
+const CLAIM_STATUS_FILTERS = ["all", "active", "released", "completed", "stale"];
+
+const CLAIM_STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
+  active: { label: "Active", bg: "rgba(79,140,255,0.14)", fg: "var(--accent)" },
+  released: { label: "Released", bg: "var(--bg-hover)", fg: "var(--text-dim)" },
+  completed: { label: "Completed", bg: "rgba(52,199,123,0.14)", fg: "var(--green)" },
+  stale: { label: "Stale", bg: "rgba(239,83,80,0.14)", fg: "var(--red)" },
+};
+
 export function Claims() {
   const [claims, setClaims] = useState<ClaimItem[]>([]);
   const [tasks, setTasks] = useState<Map<string, TaskItem>>(new Map());
   const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
   const [msg, setMsg] = useState("");
+  const [filter, setFilter] = useState("all");
 
   const load = () => {
     api<TaskItem[]>("/api/tasks").then((r) => {
@@ -35,9 +47,11 @@ export function Claims() {
         setTasks(map);
       }
     });
+    api<ClaimItem[]>(`/api/claims${filter !== "all" ? `?status=${filter}` : ""}`).then((r) => {
+      if (r.ok && r.data) setClaims(r.data);
+    });
     api<GitContext>("/api/git/context").then((r) => {
       if (r.ok && r.data) {
-        setClaims(r.data.activeClaims);
         setOverlaps(r.data.overlaps);
       }
     });
@@ -45,7 +59,7 @@ export function Claims() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [filter]);
 
   const releaseTask = async (taskId: string, agent: string) => {
     const r = await api(`/api/tasks/${taskId}/release`, {
@@ -86,10 +100,26 @@ export function Claims() {
         </div>
       )}
 
+      <div className="filter-chips">
+        {CLAIM_STATUS_FILTERS.map((f) => {
+          const meta = CLAIM_STATUS_META[f];
+          return (
+            <button
+              key={f}
+              className={`chip${filter === f ? " active" : ""}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === "all" ? "All" : (meta?.label ?? f)}
+            </button>
+          );
+        })}
+      </div>
+
       {claims.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {claims.map((c) => {
             const t = tasks.get(c.task);
+            const sm = CLAIM_STATUS_META[c.status] ?? { label: c.status, bg: "var(--bg-hover)", fg: "var(--text-muted)" };
             return (
               <div key={c.id} className="issue-card" style={{ display: "flex", alignItems: "center", gap: 18 }}>
                 <div
@@ -119,19 +149,24 @@ export function Claims() {
                       marginTop: 2,
                     }}
                   >
-                    {c.agent} · {c.branch ?? "-"} · {c.worktree ?? "-"} · {c.claimed_at}
+                    {c.agent} · {c.branch ?? "-"} · {c.claimed_at}
                   </div>
                 </div>
-                <button className="btn-secondary" onClick={() => releaseTask(c.task, c.agent)}>
-                  Release
-                </button>
+                <span className="badge" style={{ background: sm.bg, color: sm.fg, width: 70 }}>
+                  {sm.label}
+                </span>
+                {c.status === "active" && (
+                  <button className="btn-action btn-action-warn" onClick={() => releaseTask(c.task, c.agent)}>
+                    Release
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
       ) : (
         <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>
-          No active claims right now.
+          No claims match this filter.
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.ts";
 
@@ -10,6 +10,9 @@ interface TaskItem {
   scope?: string | null;
   created_at?: string;
   updated_at?: string;
+  description?: string;
+  acceptance?: string[];
+  dependencies?: string[];
 }
 
 const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
@@ -32,6 +35,15 @@ export function Tasks() {
   const status = searchParams.get("status") ?? "all";
   const [sort, setSort] = useState<SortKey>("created_at");
   const [order, setOrder] = useState<"desc" | "asc">("desc");
+  const [agent, setAgent] = useState("opencode");
+  const [msg, setMsg] = useState("");
+  const msgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const flashMsg = (text: string) => {
+    setMsg(text);
+    if (msgTimer.current) clearTimeout(msgTimer.current);
+    msgTimer.current = setTimeout(() => setMsg(""), 3000);
+  };
 
   const load = useCallback(() => {
     const params = new URLSearchParams();
@@ -56,9 +68,31 @@ export function Tasks() {
     }
   };
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const doAction = async (action: string, taskId: string) => {
+    const r = await api(`/api/tasks/${taskId}/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent }),
+    });
+    if (r.ok) {
+      flashMsg(`${action}d ${taskId}`);
+      load();
+    } else {
+      flashMsg(r.errors?.[0]?.message ?? `${action} failed`);
+    }
+  };
+
   return (
     <div>
       <h1>Tasks</h1>
+
+      {msg && (
+        <div style={{ color: "var(--green)", marginBottom: 12, fontSize: 12, fontFamily: "var(--mono)" }}>
+          {msg}
+        </div>
+      )}
 
       <div className="filter-chips">
         {FILTERS.map((f) => {
@@ -75,7 +109,7 @@ export function Tasks() {
         })}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
         {(
           [
             ["created_at", "Created"],
@@ -97,14 +131,26 @@ export function Tasks() {
             {label} {sort === key ? (order === "desc" ? "↓" : "↑") : ""}
           </button>
         ))}
+        <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-dim)" }}>Agent:</span>
+        <input
+          className="input"
+          value={agent}
+          onChange={(e) => setAgent(e.target.value)}
+          style={{ width: 120, padding: "6px 10px", fontSize: 12 }}
+        />
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {tasks.map((t) => {
           const meta = STATUS_META[t.status] ?? { label: t.status, bg: "#1c2430", fg: "#8b98a9" };
+          const isExpanded = expandedId === t.id;
           return (
-            <Link key={t.id} to={`/tasks/${t.id}`} style={{ textDecoration: "none" }}>
-              <div className="task-row">
+            <div key={t.id}>
+              <div
+                className={`task-row${isExpanded ? " selected" : ""}`}
+                onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}
+              >
                 <span className="badge" style={{ background: meta!.bg, color: meta!.fg, width: 78 }}>
                   {meta!.label}
                 </span>
@@ -119,8 +165,70 @@ export function Tasks() {
                 <span className="badge" style={{ background: "var(--bg-hover)", color: "var(--text-muted)" }}>
                   P{t.priority}
                 </span>
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  {(t.status === "ready" || t.status === "todo") && (
+                    <button className="btn-action" onClick={(e) => { e.stopPropagation(); doAction("claim", t.id); }}>Claim</button>
+                  )}
+                  {t.status === "in_progress" && (
+                    <>
+                      <button className="btn-action" onClick={(e) => { e.stopPropagation(); doAction("finish", t.id); }}>Finish</button>
+                      <button className="btn-action btn-action-warn" onClick={(e) => { e.stopPropagation(); doAction("release", t.id); }}>Release</button>
+                    </>
+                  )}
+                </div>
               </div>
-            </Link>
+              {isExpanded && (
+                <div style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-active)",
+                  borderRadius: 10,
+                  padding: 16,
+                  marginBottom: 8,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                    <div>
+                      <Link to={`/tasks/${t.id}`} style={{ fontSize: 13, fontWeight: 700 }}>
+                        View full detail →
+                      </Link>
+                      <div style={{ fontSize: "11.5px", color: "var(--text-dim)", marginTop: 2 }}>
+                        P{t.priority}{t.scope ? ` · ${t.scope}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                  {t.description && (
+                    <div style={{ fontSize: "12.5px", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 12 }}>
+                      {t.description}
+                    </div>
+                  )}
+                  {t.acceptance && t.acceptance.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 5 }}>
+                        Acceptance
+                      </div>
+                      {t.acceptance.map((a) => (
+                        <div key={a} style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: 8, marginBottom: 2 }}>
+                          ✓ {a}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {t.dependencies && t.dependencies.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 5 }}>
+                        Dependencies
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {t.dependencies.map((d) => (
+                          <span key={d} style={{ fontSize: 11, fontFamily: "var(--mono)", background: "var(--bg-hover)", color: "var(--text-muted)", padding: "2px 6px", borderRadius: 4 }}>
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
         {tasks.length === 0 && (
