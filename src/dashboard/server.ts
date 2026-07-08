@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { Hono } from "hono";
 import type { BriefBudget } from "../core/brief.ts";
 import { buildBrief } from "../core/brief.ts";
@@ -27,10 +27,30 @@ function json(result: CommandResult): Response {
 }
 
 function catchDiag(e: unknown, fallbackCode: string = "unexpected_error") {
-  if (e instanceof MutationError || e instanceof RecordError) {
+  // MutationError messages are domain-level and safe to surface. RecordError and
+  // unknown errors embed absolute paths / raw internals, so we log those server
+  // side and return only the catalog's generic message (audit M2).
+  if (e instanceof MutationError) {
     return toResult(null, [diag(e.code as never, { message: e.message })]);
   }
-  return toResult(null, [diag(fallbackCode as never, { message: (e as Error).message })]);
+  if (e instanceof RecordError) {
+    console.error("[waystation] record error:", e.message);
+    return toResult(null, [diag(e.code as never)]);
+  }
+  console.error("[waystation] unexpected error:", e);
+  return toResult(null, [diag(fallbackCode as never)]);
+}
+
+/**
+ * Resolve `fullPath` and confirm it stays within `baseDir`; returns the
+ * resolved path or null if it escapes (path-traversal guard, audit M1). This is
+ * defense in depth — it does not rely on the runtime normalizing the URL first.
+ */
+function fileWithin(baseDir: string, fullPath: string): string | null {
+  const base = resolve(baseDir);
+  const target = resolve(fullPath);
+  if (target !== base && !target.startsWith(base + sep)) return null;
+  return target;
 }
 
 function emit(type: string, data: Record<string, unknown>) {
@@ -95,43 +115,51 @@ export function createApp(root: string, distDir?: string): Hono {
   // ── status ──
 
   app.get("/api/status", (_c) => {
-    const tasks = loadTasks(root);
-    const counts: Record<string, number> = {};
-    for (const t of tasks) {
-      counts[t.status] = (counts[t.status] ?? 0) + 1;
+    try {
+      const tasks = loadTasks(root);
+      const counts: Record<string, number> = {};
+      for (const t of tasks) {
+        counts[t.status] = (counts[t.status] ?? 0) + 1;
+      }
+      const next = nextTask(tasks);
+      return json(okResult({ total: tasks.length, counts, next }));
+    } catch (e) {
+      return json(catchDiag(e));
     }
-    const next = nextTask(tasks);
-    return json(okResult({ total: tasks.length, counts, next }));
   });
 
   // ── tasks ──
 
   app.get("/api/tasks", (c) => {
-    const tasks = loadTasks(root);
-    const status = c.req.query("status");
-    const sort = c.req.query("sort") ?? "created_at";
-    const order = c.req.query("order") ?? "desc";
-    let filtered = tasks;
-    if (status) filtered = tasks.filter((t) => t.status === status);
-    filtered.sort((a, b) => {
-      let cmp = 0;
-      switch (sort) {
-        case "priority":
-          cmp = a.priority - b.priority;
-          break;
-        case "title":
-          cmp = a.title.localeCompare(b.title);
-          break;
-        case "updated_at":
-          cmp = (a.updated_at ?? "").localeCompare(b.updated_at ?? "");
-          break;
-        default:
-          cmp = (a.created_at ?? "").localeCompare(b.created_at ?? "");
-      }
-      if (cmp === 0) cmp = a.id.localeCompare(b.id);
-      return order === "asc" ? cmp : -cmp;
-    });
-    return json(okResult(filtered));
+    try {
+      const tasks = loadTasks(root);
+      const status = c.req.query("status");
+      const sort = c.req.query("sort") ?? "created_at";
+      const order = c.req.query("order") ?? "desc";
+      let filtered = tasks;
+      if (status) filtered = tasks.filter((t) => t.status === status);
+      filtered.sort((a, b) => {
+        let cmp = 0;
+        switch (sort) {
+          case "priority":
+            cmp = a.priority - b.priority;
+            break;
+          case "title":
+            cmp = a.title.localeCompare(b.title);
+            break;
+          case "updated_at":
+            cmp = (a.updated_at ?? "").localeCompare(b.updated_at ?? "");
+            break;
+          default:
+            cmp = (a.created_at ?? "").localeCompare(b.created_at ?? "");
+        }
+        if (cmp === 0) cmp = a.id.localeCompare(b.id);
+        return order === "asc" ? cmp : -cmp;
+      });
+      return json(okResult(filtered));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
   });
 
   app.get("/api/tasks/:id", (c) => {
@@ -194,7 +222,11 @@ export function createApp(root: string, distDir?: string): Hono {
   // ── issues ──
 
   app.get("/api/issues", (_c) => {
-    return json(okResult(loadIssues(root)));
+    try {
+      return json(okResult(loadIssues(root)));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
   });
 
   app.post("/api/issues", async (c) => {
@@ -337,11 +369,15 @@ export function createApp(root: string, distDir?: string): Hono {
   // ── claims ──
 
   app.get("/api/claims", (c) => {
-    let claims = loadClaims(root);
-    const status = c.req.query("status");
-    if (status) claims = claims.filter((cl) => cl.status === status);
-    claims.sort((a, b) => b.claimed_at.localeCompare(a.claimed_at));
-    return json(okResult(claims));
+    try {
+      let claims = loadClaims(root);
+      const status = c.req.query("status");
+      if (status) claims = claims.filter((cl) => cl.status === status);
+      claims.sort((a, b) => b.claimed_at.localeCompare(a.claimed_at));
+      return json(okResult(claims));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
   });
 
   // ── validate ──
@@ -499,14 +535,18 @@ export function createApp(root: string, distDir?: string): Hono {
   // ── static SPA (production) ──
 
   app.get("/graphify-out/*", async (c) => {
-    const file = Bun.file(join(root, c.req.path));
+    const target = fileWithin(join(root, "graphify-out"), join(root, c.req.path));
+    if (!target) return c.notFound();
+    const file = Bun.file(target);
     if (await file.exists()) return new Response(file);
     return c.notFound();
   });
 
   if (distDir) {
     app.get("/assets/*", async (c) => {
-      const file = Bun.file(join(distDir, c.req.path));
+      const target = fileWithin(join(distDir, "assets"), join(distDir, c.req.path));
+      if (!target) return c.notFound();
+      const file = Bun.file(target);
       if (await file.exists()) return new Response(file);
       return c.notFound();
     });

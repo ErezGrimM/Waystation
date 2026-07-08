@@ -345,4 +345,40 @@ describe("dashboard API server", () => {
     });
     expect(res.status).not.toBe(403); // guard passed (200 claim, or 422 if already claimed)
   });
+
+  // M1: static routes serve legit files but never escape their base directory.
+  test("static route serves a file under graphify-out but not a traversal", async () => {
+    const app = createApp(testRoot);
+    const graphDir = join(testRoot, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(join(graphDir, "graph.json"), JSON.stringify({ nodes: [], edges: [] }));
+    writeFileSync(join(testRoot, "secret-marker.txt"), "TOP-SECRET-CONTENTS");
+
+    const ok = await app.request("/graphify-out/graph.json");
+    expect(ok.status).toBe(200);
+
+    // A percent-encoded ../ traversal must not reach the sibling secret file.
+    const evil = await app.request("/graphify-out/%2e%2e%2fsecret-marker.txt");
+    const text = await evil.text();
+    expect(text).not.toContain("TOP-SECRET-CONTENTS");
+
+    rmSync(join(testRoot, "secret-marker.txt"), { force: true });
+  });
+
+  // M2: a malformed record surfaces a coded envelope without leaking the path.
+  test("a malformed record does not leak the absolute file path", async () => {
+    const app = createApp(testRoot);
+    const badFile = join(testRoot, ".waystation", "tasks", "bad.json");
+    writeFileSync(badFile, "{ this is not valid json");
+    try {
+      const res = await app.request("/api/tasks");
+      const body = await res.json();
+      expect(body.ok).toBe(false);
+      expect(["invalid_json", "schema_invalid"]).toContain(body.errors[0].code);
+      expect(body.errors[0].message).not.toContain(testRoot);
+      expect(body.errors[0].message).not.toMatch(/[A-Za-z]:[\\/]/);
+    } finally {
+      rmSync(badFile, { force: true });
+    }
+  });
 });
