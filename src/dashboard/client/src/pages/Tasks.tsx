@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
 
 interface TaskItem {
@@ -32,6 +33,8 @@ type SortKey = "created_at" | "priority" | "title" | "updated_at";
 
 export function Tasks() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") ?? "all";
   const [sort, setSort] = useState<SortKey>("created_at");
@@ -53,7 +56,13 @@ export function Tasks() {
     params.set("sort", sort);
     params.set("order", order);
     api<TaskItem[]>(`/api/tasks?${params}`).then((r) => {
-      if (r.ok && r.data) setTasks(r.data);
+      if (r.ok && r.data) {
+        setTasks(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load tasks");
+      }
+      setLoaded(true);
     });
   }, [status, sort, order]);
 
@@ -89,6 +98,8 @@ export function Tasks() {
   return (
     <div>
       <h1>Tasks</h1>
+
+      <ErrorBanner message={error} onRetry={load} />
 
       {msg && (
         <div style={{ color: "var(--green)", marginBottom: 12, fontSize: 12, fontFamily: "var(--mono)" }}>
@@ -233,7 +244,7 @@ export function Tasks() {
             </div>
           );
         })}
-        {tasks.length === 0 && (
+        {loaded && !error && tasks.length === 0 && (
           <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>
             No tasks match this filter.
           </div>

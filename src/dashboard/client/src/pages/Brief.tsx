@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 
 interface TaskItem {
   id: string;
@@ -34,23 +35,38 @@ export function Brief() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [brief, setBrief] = useState<BriefData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadTasks = () => {
     api<TaskItem[]>("/api/tasks").then((r) => {
-      if (r.ok && r.data) setTasks(r.data);
+      if (r.ok && r.data) {
+        setTasks(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load tasks");
+      }
     });
-  }, []);
+  };
+
+  useEffect(loadTasks, []);
 
   const select = (id: string) => {
     setSelected(id);
     api<BriefData>(`/api/tasks/${id}/brief`).then((r) => {
-      if (r.ok && r.data) setBrief(r.data);
+      if (r.ok && r.data) {
+        setBrief(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load brief");
+      }
     });
   };
 
   return (
     <div>
       <h1>Brief</h1>
+
+      <ErrorBanner message={error} onRetry={selected ? () => select(selected) : loadTasks} />
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <div style={{ width: 280, flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>

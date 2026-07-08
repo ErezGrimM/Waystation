@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
 
 interface ClaimItem {
@@ -39,6 +40,8 @@ export function Claims() {
   const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
   const [msg, setMsg] = useState("");
   const [filter, setFilter] = useState("all");
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const { revision } = useLedgerEvents();
 
   const load = () => {
@@ -50,7 +53,13 @@ export function Claims() {
       }
     });
     api<ClaimItem[]>(`/api/claims${filter !== "all" ? `?status=${filter}` : ""}`).then((r) => {
-      if (r.ok && r.data) setClaims(r.data);
+      if (r.ok && r.data) {
+        setClaims(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load claims");
+      }
+      setLoaded(true);
     });
     api<GitContext>("/api/git/context").then((r) => {
       if (r.ok && r.data) {
@@ -76,6 +85,7 @@ export function Claims() {
   return (
     <div>
       <h1>Claims</h1>
+      <ErrorBanner message={error} onRetry={load} />
       {msg && (
         <div style={{ color: msg === "released" ? "var(--green)" : "var(--red)", marginBottom: 12 }}>
           {msg}
@@ -167,9 +177,12 @@ export function Claims() {
           })}
         </div>
       ) : (
-        <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>
-          No claims match this filter.
-        </div>
+        loaded &&
+        !error && (
+          <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>
+            No claims match this filter.
+          </div>
+        )
       )}
     </div>
   );

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api.ts";
+import { ErrorBanner, Placeholder } from "../components.tsx";
 
 interface TaskData {
   id: string;
@@ -37,16 +38,28 @@ export function TaskDetail() {
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [agent, setAgent] = useState("opencode");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!id) return;
+    setLoading(true);
+    setError(null);
+    // The task fetch gates the view; the brief is supplementary and its failure
+    // must not blank the page.
     api<TaskData>(`/api/tasks/${id}`).then((r) => {
       if (r.ok && r.data) setTask(r.data);
+      else setError(r.errors?.[0]?.message ?? "Failed to load task");
+      setLoading(false);
     });
     api<BriefData>(`/api/tasks/${id}/brief`).then((r) => {
       if (r.ok && r.data) setBrief(r.data);
     });
   }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const action = async (verb: "claim" | "release" | "finish") => {
     if (!id) return;
@@ -65,7 +78,15 @@ export function TaskDetail() {
 
   const [copied, setCopied] = useState(false);
 
-  if (!task) return <div>Loading...</div>;
+  if (loading) return <Placeholder>Loading…</Placeholder>;
+  if (error) {
+    return (
+      <div>
+        <ErrorBanner message={error} onRetry={load} />
+      </div>
+    );
+  }
+  if (!task) return <Placeholder>Task not found.</Placeholder>;
 
   const copyPrompt = () => {
     const text = [

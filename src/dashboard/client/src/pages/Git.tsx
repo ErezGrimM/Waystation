@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { ErrorBanner, Placeholder } from "../components.tsx";
 
 interface GitFile {
   status: string;
@@ -31,10 +32,18 @@ export function Git() {
   const [message, setMessage] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [result, setResult] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const load = () => {
     api<GitStatus>("/api/git/status").then((r) => {
-      if (r.ok && r.data) setStatus(r.data);
+      if (r.ok && r.data) {
+        setStatus(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load git status");
+      }
+      setLoaded(true);
     });
     api<{ diff: string | null; staged: string | null }>("/api/git/diff").then((r) => {
       if (r.ok && r.data) {
@@ -103,7 +112,9 @@ export function Git() {
     <div>
       <h1>Git</h1>
 
-      {!status && <div>Loading...</div>}
+      <ErrorBanner message={error} onRetry={load} />
+      {!loaded && !error && <Placeholder>Loading…</Placeholder>}
+      {loaded && !status && !error && <Placeholder>Not a git repository.</Placeholder>}
 
       {status && (
         <>

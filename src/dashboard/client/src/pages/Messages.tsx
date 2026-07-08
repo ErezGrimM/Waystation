@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
 
 interface MessageItem {
@@ -27,12 +28,18 @@ export function Messages() {
   const [body, setBody] = useState("");
   const [kind, setKind] = useState("update");
   const [to, setTo] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const { connected, revision } = useLedgerEvents();
 
   const loadThread = (t: string) => {
     setThread(t);
-    api<MessageItem[]>(`/api/messages?thread=${t}`).then((r) => {
-      if (r.ok && r.data) setMessages(r.data);
+    api<MessageItem[]>(`/api/messages?thread=${encodeURIComponent(t)}`).then((r) => {
+      if (r.ok && r.data) {
+        setMessages(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load messages");
+      }
     });
   };
 
@@ -83,6 +90,8 @@ export function Messages() {
   return (
     <div>
       <h1>Messages</h1>
+
+      <ErrorBanner message={error} onRetry={() => loadThread(thread)} />
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <div className="msg-thread-list">

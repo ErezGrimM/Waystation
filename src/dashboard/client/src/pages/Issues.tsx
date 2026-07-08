@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
 
 interface IssueItem {
@@ -46,11 +47,19 @@ export function Issues() {
   const [showExport, setShowExport] = useState(false);
   const [repo, setRepo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const { revision } = useLedgerEvents();
 
   const load = () => {
     api<IssueItem[]>("/api/issues").then((r) => {
-      if (r.ok && r.data) setIssues(r.data);
+      if (r.ok && r.data) {
+        setIssues(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load issues");
+      }
+      setLoaded(true);
     });
   };
 
@@ -135,6 +144,8 @@ export function Issues() {
   return (
     <div>
       <h1>Issues</h1>
+
+      <ErrorBanner message={error} onRetry={load} />
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <button className="btn-secondary" onClick={() => setShowImport(true)}>
@@ -268,7 +279,7 @@ export function Issues() {
             </div>
           );
         })}
-        {filtered.length === 0 && (
+        {loaded && !error && filtered.length === 0 && (
           <div style={{ color: "var(--text-dim)", padding: 40, textAlign: "center" }}>No issues match this filter.</div>
         )}
       </div>

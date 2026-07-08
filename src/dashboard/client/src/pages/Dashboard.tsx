@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.ts";
+import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
 
 interface TaskBrief {
@@ -130,15 +131,22 @@ export function Dashboard() {
   const [agent, setAgent] = useState("opencode");
   const [msg, setMsg] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const msgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { revision } = useLedgerEvents();
 
   const load = useCallback(() => {
     api<StatusData>("/api/status").then((r) => {
-      if (r.ok) setData(r.data);
+      if (r.ok) {
+        setData(r.data);
+        setError(null);
+      } else {
+        setError(r.errors?.[0]?.message ?? "Failed to load status");
+      }
     });
     api<TaskBrief[]>("/api/tasks").then((r) => {
       if (r.ok && r.data) setTasks(r.data);
+      else setError(r.errors?.[0]?.message ?? "Failed to load tasks");
     });
   }, []);
 
@@ -182,6 +190,8 @@ export function Dashboard() {
 
   return (
     <div>
+      <ErrorBanner message={error} onRetry={load} />
+
       <div className="stat-grid">
         {statCards.map((s) => (
           <div key={s.label} className="stat-card">
