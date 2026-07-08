@@ -195,6 +195,28 @@ describe("dashboard API server", () => {
     expect(res.headers.get("content-type")).toBe("text/event-stream");
   });
 
+  // M5: the SSE stream must forward mutation events to connected clients — this
+  // is the contract the dashboard's live refresh (EventSource) depends on.
+  test("GET /api/events forwards a mutation event to the stream", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/events");
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+
+    // The stream subscribed on construction; emit a mutation event onto the bus.
+    emitMutationEvent({ type: "task.claimed", task: "test-task", actor: "sse-test" });
+
+    let text = "";
+    for (let i = 0; i < 10 && !text.includes("data:"); i++) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      text += typeof value === "string" ? value : decoder.decode(value);
+    }
+    await reader.cancel();
+    expect(text).toContain("data:");
+    expect(text).toContain("task.claimed");
+  });
+
   test("POST /api/git/commit rejects files outside the current status selection", async () => {
     const app = createApp(testRoot);
     const res = await app.request("/api/git/commit", {

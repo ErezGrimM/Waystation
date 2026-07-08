@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.ts";
+import { useLedgerEvents } from "../events.tsx";
 
 interface TaskBrief {
   id: string;
@@ -130,6 +131,7 @@ export function Dashboard() {
   const [msg, setMsg] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const msgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { revision } = useLedgerEvents();
 
   const load = useCallback(() => {
     api<StatusData>("/api/status").then((r) => {
@@ -142,7 +144,7 @@ export function Dashboard() {
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, revision]);
 
   const flashMsg = (text: string) => {
     setMsg(text);

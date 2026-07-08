@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { useLedgerEvents } from "../events.tsx";
 
 interface MessageItem {
   id: string;
@@ -26,6 +27,7 @@ export function Messages() {
   const [body, setBody] = useState("");
   const [kind, setKind] = useState("update");
   const [to, setTo] = useState("");
+  const { connected, revision } = useLedgerEvents();
 
   const loadThread = (t: string) => {
     setThread(t);
@@ -54,10 +56,12 @@ export function Messages() {
     });
   };
 
+  // Load on mount (thread starts at "project") and refetch the current thread
+  // whenever a live mutation event arrives.
   useEffect(() => {
-    loadThread("project");
+    loadThread(thread);
     loadAllThreads();
-  }, []);
+  }, [revision]);
 
   const post = async () => {
     if (!body) return;
@@ -130,8 +134,12 @@ export function Messages() {
             <span style={{ fontSize: "13.5px", fontWeight: 700 }}>
               {thread === "project" ? "Project channel" : thread}
             </span>
-            <span className="live-dot" style={{ marginLeft: "auto" }}>
-              Live
+            <span
+              className="live-dot"
+              style={{ marginLeft: "auto", opacity: connected ? 1 : 0.4 }}
+              title={connected ? "Live updates connected" : "Reconnecting…"}
+            >
+              {connected ? "Live" : "Offline"}
             </span>
           </div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { useLedgerEvents } from "../events.tsx";
 
 interface IssueItem {
   id: string;
@@ -45,6 +46,7 @@ export function Issues() {
   const [showExport, setShowExport] = useState(false);
   const [repo, setRepo] = useState("");
   const [loading, setLoading] = useState(false);
+  const { revision } = useLedgerEvents();
 
   const load = () => {
     api<IssueItem[]>("/api/issues").then((r) => {
@@ -52,7 +54,7 @@ export function Issues() {
     });
   };
 
-  useEffect(load, []);
+  useEffect(load, [revision]);
 
   let filtered = issues;
   if (filter !== "all") filtered = issues.filter((i) => i.status === filter);

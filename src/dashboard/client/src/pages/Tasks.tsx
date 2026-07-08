@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.ts";
+import { useLedgerEvents } from "../events.tsx";
 
 interface TaskItem {
   id: string;
@@ -38,6 +39,7 @@ export function Tasks() {
   const [agent, setAgent] = useState("opencode");
   const [msg, setMsg] = useState("");
   const msgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { revision } = useLedgerEvents();
 
   const flashMsg = (text: string) => {
     setMsg(text);
@@ -57,7 +59,7 @@ export function Tasks() {
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, revision]);
 
   const toggleSort = (key: SortKey) => {
     if (sort === key) {

@@ -2,12 +2,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App.tsx";
+import { LedgerEventsProvider } from "./events.tsx";
 import "./style.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <LedgerEventsProvider>
+        <App />
+      </LedgerEventsProvider>
     </BrowserRouter>
   </StrictMode>,
 );

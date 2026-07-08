@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.ts";
+import { useLedgerEvents } from "../events.tsx";
 
 interface ClaimItem {
   id: string;
@@ -38,6 +39,7 @@ export function Claims() {
   const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
   const [msg, setMsg] = useState("");
   const [filter, setFilter] = useState("all");
+  const { revision } = useLedgerEvents();
 
   const load = () => {
     api<TaskItem[]>("/api/tasks").then((r) => {
@@ -59,7 +61,7 @@ export function Claims() {
 
   useEffect(() => {
     load();
-  }, [filter]);
+  }, [filter, revision]);
 
   const releaseTask = async (taskId: string, agent: string) => {
     const r = await api(`/api/tasks/${taskId}/release`, {
