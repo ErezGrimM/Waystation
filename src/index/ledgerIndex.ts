@@ -1,5 +1,6 @@
 import { type Diagnostic, diag } from "../core/result.ts";
 import type { ClaimRecord, IssueRecord, MessageRecord, TaskRecord } from "../core/schema.ts";
+import { byCreatedAtThenId } from "../core/time.ts";
 import { type Db, openDb, type SqliteBackend } from "./db.ts";
 
 /** A warning if the fallback SQLite backend (node:sqlite) served the query. */
@@ -118,10 +119,15 @@ export interface IndexedMessage {
 }
 
 function selectMessages(db: Db, where: string, ...params: unknown[]): IndexedMessage[] {
-  return db.all<IndexedMessage>(
-    `SELECT id, thread, from_agent, to_agent, kind, body, created_at FROM messages ${where} ORDER BY created_at, id`,
-    ...params,
-  );
+  // Sort in JS with offset-aware parsing rather than SQL's lexical ORDER BY,
+  // so ordering matches the in-memory path and is correct across timezone
+  // offsets (audit M8).
+  return db
+    .all<IndexedMessage>(
+      `SELECT id, thread, from_agent, to_agent, kind, body, created_at FROM messages ${where}`,
+      ...params,
+    )
+    .sort(byCreatedAtThenId);
 }
 
 /** A thread's messages, oldest first — served from the index. */

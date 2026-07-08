@@ -16,11 +16,19 @@ export class RecordError extends Error {
   }
 }
 
+/** A validated task record together with the absolute file it was loaded from. */
+export interface LoadedTask {
+  task: TaskRecord;
+  file: string;
+}
+
 /**
- * Load and validate all JSON task records under `.waystation/tasks/`.
- * zod is the schema authority: every record is validated on read.
+ * Load and validate all JSON task records under `.waystation/tasks/`, keeping
+ * the source file path for each. zod is the schema authority: every record is
+ * validated on read. Mutations use the file path to write a record back to the
+ * exact file it came from, rather than assuming filename === id (audit M7).
  */
-export function loadTasks(root?: string): TaskRecord[] {
+export function loadTaskFiles(root?: string): LoadedTask[] {
   const paths = ledgerPaths(root);
   let entries: string[];
   try {
@@ -29,7 +37,7 @@ export function loadTasks(root?: string): TaskRecord[] {
     return [];
   }
 
-  const tasks: TaskRecord[] = [];
+  const loaded: LoadedTask[] = [];
   for (const name of entries) {
     if (!name.endsWith(".json")) continue; // canonical records are JSON
     const file = join(paths.tasks, name);
@@ -44,7 +52,15 @@ export function loadTasks(root?: string): TaskRecord[] {
         "schema_invalid",
       );
     }
-    tasks.push(parsed.data);
+    loaded.push({ task: parsed.data, file });
   }
-  return tasks;
+  return loaded;
+}
+
+/**
+ * Load and validate all JSON task records under `.waystation/tasks/`.
+ * zod is the schema authority: every record is validated on read.
+ */
+export function loadTasks(root?: string): TaskRecord[] {
+  return loadTaskFiles(root).map((t) => t.task);
 }

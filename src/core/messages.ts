@@ -10,7 +10,7 @@ import {
   withLedgerLock,
   writeJsonAtomic,
 } from "./store.ts";
-import { nowIso, safeIdPart } from "./time.ts";
+import { byCreatedAtThenId, nowIso, safeIdPart } from "./time.ts";
 
 /** Reserved thread id for the folder-wide channel (spec §6.10). */
 export const PROJECT_THREAD = "project";
@@ -55,14 +55,6 @@ export function loadMessages(root?: string): MessageRecord[] {
     messages.push(parsed.data);
   }
   return messages;
-}
-
-function byCreatedAt(a: MessageRecord, b: MessageRecord): number {
-  return a.created_at < b.created_at
-    ? -1
-    : a.created_at > b.created_at
-      ? 1
-      : a.id.localeCompare(b.id);
 }
 
 export interface PostMessageInput {
@@ -112,7 +104,7 @@ export async function postMessage(
 export function threadMessages(root: string, thread: string): MessageRecord[] {
   return loadMessages(root)
     .filter((m) => m.thread === thread)
-    .sort(byCreatedAt);
+    .sort(byCreatedAtThenId);
 }
 
 /**
@@ -138,5 +130,5 @@ export function inbox(root: string, agent: string, since?: string): MessageRecor
       }
       return false;
     })
-    .sort(byCreatedAt);
+    .sort(byCreatedAtThenId);
 }

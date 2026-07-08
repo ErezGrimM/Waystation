@@ -35,3 +35,20 @@ export function idStamp(d: Date = new Date()): string {
 export function safeIdPart(s: string): string {
   return s.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[-.]+|-+$/g, "") || "x";
 }
+
+/**
+ * Order records by their `created_at` using OFFSET-AWARE parsing, then by id
+ * for stability. Timestamps are local ISO with a numeric offset, so a lexical
+ * string compare mis-orders across differing offsets (e.g. `+00:00` vs
+ * `+03:00`); `Date.parse` compares the real instants. Falls back to id when
+ * either timestamp is unparseable or the instants are equal (audit M8).
+ */
+export function byCreatedAtThenId(
+  a: { created_at: string; id: string },
+  b: { created_at: string; id: string },
+): number {
+  const ta = Date.parse(a.created_at);
+  const tb = Date.parse(b.created_at);
+  if (!Number.isNaN(ta) && !Number.isNaN(tb) && ta !== tb) return ta - tb;
+  return a.id.localeCompare(b.id);
+}

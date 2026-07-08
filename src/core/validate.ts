@@ -182,6 +182,14 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    if (parsed.data.task && !taskExists(parsed.data.task)) {
+      diags.push(
+        diag("issue_orphan", {
+          message: `issue ${parsed.data.id} references missing task: ${parsed.data.task}`,
+          details: { issue: parsed.data.id, task: parsed.data.task },
+        }),
+      );
+    }
     seenIssueIds.add(parsed.data.id);
   }
 

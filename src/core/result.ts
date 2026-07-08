@@ -159,6 +159,18 @@ export const CODES = {
     hint: "No action needed.",
     retryable: false,
   },
+  invalid_transition: {
+    severity: "error",
+    message: "The task's current status does not allow this transition.",
+    hint: "Only todo/ready tasks can be claimed; terminal tasks cannot be finished.",
+    retryable: false,
+  },
+  issue_orphan: {
+    severity: "warning",
+    message: "Issue references a task that does not exist.",
+    hint: "The referenced task may have been removed; clear or fix issue.task.",
+    retryable: false,
+  },
   lock_contended: {
     severity: "error",
     message: "Could not acquire the ledger write lock.",

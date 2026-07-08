@@ -34,7 +34,12 @@ import { activeClaimForTask, loadClaims, loadIssues } from "../src/core/store.ts
 import { nextTask, readyTasks } from "../src/core/tasks.ts";
 import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
-import { backendWarnings, buildLedgerIndex, inboxFromIndex } from "../src/index/ledgerIndex.ts";
+import {
+  backendWarnings,
+  buildLedgerIndex,
+  inboxFromIndex,
+  threadFromIndex,
+} from "../src/index/ledgerIndex.ts";
 import { buildTaskIndex, readyFromIndex } from "../src/index/taskIndex.ts";
 
 const tmpRoots: string[] = [];
@@ -394,6 +399,112 @@ describe("bun:sqlite index", () => {
       expect(exp.ok).toBe(false);
       expect(exp.errors[0]?.code).toBe("invalid_github_repo");
     }
+  });
+
+  // M7: a mutation writes back to the file the record lives in, not `${id}.json`.
+  test("mutating a task in a mismatched filename does not duplicate the record", async () => {
+    const root = fixtureRoot([]);
+    const dir = join(root, ".waystation", "tasks");
+    writeFileSync(
+      join(dir, "foo.json"),
+      JSON.stringify({ id: "task-x", title: "X", status: "ready", priority: 1, dependencies: [] }),
+    );
+    await claimTask(root, "task-x", "a");
+    expect(existsSync(join(dir, "task-x.json"))).toBe(false); // no duplicate created
+    expect(JSON.parse(readFileSync(join(dir, "foo.json"), "utf8")).status).toBe("in_progress");
+    expect(loadTasks(root).filter((t) => t.id === "task-x").length).toBe(1);
+  });
+
+  // M8: messages sort by real instant (offset-aware), not lexically.
+  test("messages order by parsed timestamp across offsets (in-memory and index)", async () => {
+    const root = fixtureRoot([]);
+    const mdir = join(root, ".waystation", "messages");
+    mkdirSync(mdir, { recursive: true });
+    // m1 is lexically smaller but a LATER instant (10:00Z); m2 is 09:00Z (earlier).
+    writeFileSync(
+      join(mdir, "m1.json"),
+      JSON.stringify({
+        id: "m1",
+        thread: "project",
+        from_agent: "x",
+        body: "later",
+        created_at: "2026-07-06T10:00:00+00:00",
+      }),
+    );
+    writeFileSync(
+      join(mdir, "m2.json"),
+      JSON.stringify({
+        id: "m2",
+        thread: "project",
+        from_agent: "x",
+        body: "earlier",
+        created_at: "2026-07-06T12:00:00+03:00",
+      }),
+    );
+    expect(threadMessages(root, "project").map((m) => m.id)).toEqual(["m2", "m1"]);
+
+    const db = await buildLedgerIndex(join(root, ".waystation", "index.sqlite"), {
+      tasks: [],
+      issues: [],
+      claims: [],
+      messages: loadMessages(root),
+    });
+    expect(threadFromIndex(db, "project").map((m) => m.id)).toEqual(["m2", "m1"]);
+    db.close();
+  });
+
+  // M9: creating an issue never silently overwrites an existing one.
+  test("createIssue rejects a colliding explicit id and preserves the original", async () => {
+    const root = fixtureRoot([]);
+    const first = await createIssue(root, { id: "issue-x", title: "First" });
+    expect(first.id).toBe("issue-x");
+    let code = "";
+    try {
+      await createIssue(root, { id: "issue-x", title: "Second" });
+    } catch (e) {
+      code = (e as MutationError).code;
+    }
+    expect(code).toBe("duplicate_id");
+    expect(loadIssues(root).find((i) => i.id === "issue-x")?.title).toBe("First");
+  });
+
+  // M10: only todo/ready tasks are claimable; terminal tasks cannot be finished.
+  test("claiming a blocked task and finishing a wont_do task are invalid transitions", async () => {
+    const blocked = fixtureRoot([
+      { id: "task-bl", title: "B", status: "blocked", priority: 1, dependencies: [] },
+    ]);
+    let claimCode = "";
+    try {
+      await claimTask(blocked, "task-bl", "a");
+    } catch (e) {
+      claimCode = (e as MutationError).code;
+    }
+    expect(claimCode).toBe("invalid_transition");
+
+    const wont = fixtureRoot([
+      { id: "task-wd", title: "W", status: "wont_do", priority: 1, dependencies: [] },
+    ]);
+    let finishCode = "";
+    try {
+      await finishTask(wont, "task-wd", "a");
+    } catch (e) {
+      finishCode = (e as MutationError).code;
+    }
+    expect(finishCode).toBe("invalid_transition");
+  });
+
+  // M11: validation flags an issue that points at a missing task.
+  test("validate flags an issue referencing a missing task (issue_orphan)", () => {
+    const root = fixtureRoot([]);
+    const idir = join(root, ".waystation", "issues");
+    mkdirSync(idir, { recursive: true });
+    writeFileSync(
+      join(idir, "issue-o.json"),
+      JSON.stringify({ id: "issue-o", title: "O", status: "open", task: "task-missing" }),
+    );
+    const res = validateLedger(root);
+    const codes = [...res.errors, ...res.warnings].map((d) => d.code);
+    expect(codes).toContain("issue_orphan");
   });
 });
 

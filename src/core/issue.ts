@@ -1,4 +1,6 @@
+import { existsSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
+import { MutationError } from "./mutate.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type IssueRecord, IssueRecord as IssueSchema } from "./schema.ts";
 import { appendEventUnlocked, withLedgerLock, writeJsonAtomic } from "./store.ts";
@@ -36,11 +38,22 @@ export async function createIssue(
   root: string,
   input: CreateIssueInput,
   now: Date = new Date(),
+  suffix: string = Math.random().toString(36).slice(2, 6),
 ): Promise<IssueRecord> {
   return withLedgerLock(root, () => {
     const ts = nowIso(now);
+    // Auto-generated ids get a random suffix so two issues created in the same
+    // second (or with the same title) don't collide (audit M9).
     const id =
-      input.id ?? `issue-${safeIdPart(input.title.toLowerCase().slice(0, 40))}-${safeIdPart(ts)}`;
+      input.id ??
+      `issue-${safeIdPart(input.title.toLowerCase().slice(0, 40))}-${safeIdPart(ts)}-${suffix}`;
+
+    const file = issueFile(root, id);
+    // Never silently overwrite an existing issue. Under the ledger lock this is
+    // race-free against other writers (audit M9).
+    if (existsSync(file)) {
+      throw new MutationError(`issue already exists: ${id}`, "duplicate_id");
+    }
 
     const record: Record<string, unknown> = {
       id,
@@ -58,7 +71,7 @@ export async function createIssue(
     if (input.description !== undefined) record.description = input.description;
 
     const parsed = IssueSchema.parse(record);
-    writeJsonAtomic(issueFile(root, id), record);
+    writeJsonAtomic(file, record);
     appendEventUnlocked(root, {
       type: "issue.created",
       issue: id,
