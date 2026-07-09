@@ -19,7 +19,4 @@ waystation.exe
 *.bun-build
 stderr.txt
 stdout.txt
-graphify-out/cache/
-graphify-out/cost.json
-graphify-out/.graphify_python
-graphify-out/.graphify_*
+graphify-out/
