@@ -45,12 +45,21 @@ let tempFileCounter = 0;
  * any file matching `*.pid.counter.tmp` in a ledger subdirectory. This runs
  * once per process on first lock acquisition (audit M4).
  */
-let tmpSwept = false;
-export function sweepOrphanTmp(root: string): void {
-  if (tmpSwept) return;
-  tmpSwept = true;
+/**
+ * Delete every `*.tmp` file in the ledger's record directories. Callers MUST
+ * hold the ledger lock: because all writes funnel through the lock, any `*.tmp`
+ * present while it is held is genuinely orphaned, never a live writer's
+ * in-flight temp.
+ */
+export function sweepTmpDirs(root: string): void {
   const paths = ledgerPaths(root);
-  const dirs = [paths.tasks, paths.claims, paths.messages, join(paths.ledger, "handoffs")];
+  const dirs = [
+    paths.tasks,
+    paths.claims,
+    paths.messages,
+    join(paths.ledger, "issues"),
+    join(paths.ledger, "handoffs"),
+  ];
   for (const dir of dirs) {
     let entries: string[];
     try {
@@ -59,7 +68,7 @@ export function sweepOrphanTmp(root: string): void {
       continue;
     }
     for (const name of entries) {
-      if (/\.tmp$/.test(name)) {
+      if (name.endsWith(".tmp")) {
         try {
           unlinkSync(join(dir, name));
         } catch {
@@ -68,6 +77,13 @@ export function sweepOrphanTmp(root: string): void {
       }
     }
   }
+}
+
+let tmpSwept = false;
+export function sweepOrphanTmp(root: string): void {
+  if (tmpSwept) return;
+  tmpSwept = true;
+  sweepTmpDirs(root);
 }
 
 /** Parse a JSON file, raising a coded RecordError on malformed JSON. */
@@ -166,13 +182,16 @@ export async function appendEvent(root: string, event: Record<string, unknown>):
 export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
   const paths = ledgerPaths(root);
   mkdirSync(paths.ledger, { recursive: true });
-  sweepOrphanTmp(root);
   const release = await lockfile.lock(paths.ledger, {
     realpath: false,
     retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },
     stale: 60_000,
   });
   try {
+    // Sweep under the lock: all writes funnel through here, so any *.tmp
+    // present now is genuinely orphaned (a concurrent writer's live temp can
+    // never be visible while we hold the lock).
+    sweepOrphanTmp(root);
     return await fn();
   } finally {
     await release();

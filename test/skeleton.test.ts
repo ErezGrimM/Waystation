@@ -30,7 +30,7 @@ import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
-import { activeClaimForTask, loadClaims, loadIssues } from "../src/core/store.ts";
+import { activeClaimForTask, loadClaims, loadIssues, sweepTmpDirs } from "../src/core/store.ts";
 import { nextTask, readyTasks } from "../src/core/tasks.ts";
 import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
@@ -367,6 +367,18 @@ describe("bun:sqlite index", () => {
     const fromIndex = readyFromIndex(db).map((t) => t.id);
     db.close();
     expect(fromIndex).toContain("task-y");
+  });
+
+  // M4: the orphan-tmp sweep removes stray *.tmp but never a real record.
+  test("sweepTmpDirs removes orphan temp files and preserves records", () => {
+    const root = fixtureRoot([D]); // writes task-d.json
+    const tasksDir = join(root, ".waystation", "tasks");
+    writeFileSync(join(tasksDir, "task-d.json.9999.1.tmp"), "orphan");
+    writeFileSync(join(tasksDir, "stray.tmp"), "orphan");
+    sweepTmpDirs(root);
+    expect(existsSync(join(tasksDir, "task-d.json.9999.1.tmp"))).toBe(false);
+    expect(existsSync(join(tasksDir, "stray.tmp"))).toBe(false);
+    expect(existsSync(join(tasksDir, "task-d.json"))).toBe(true);
   });
 
   // H7: the single write lock must serialize concurrent claims on one task.
