@@ -1,5 +1,6 @@
 import {
   closeSync,
+  existsSync,
   fsyncSync,
   mkdirSync,
   openSync,
@@ -158,6 +159,10 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   const paths = ledgerPaths(root);
   mkdirSync(paths.ledger, { recursive: true });
   const line = `${JSON.stringify(event)}\n`;
+  // Appending to an existing file doesn't change the directory entry, so the
+  // parent dir only needs an fsync when events.jsonl is first created (audit
+  // M3). Avoids a redundant directory fsync on every event append.
+  const isNew = !existsSync(paths.events);
   const fd = openSync(paths.events, "a");
   try {
     writeSync(fd, line);
@@ -165,9 +170,7 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   } finally {
     closeSync(fd);
   }
-  // fsync the parent directory so the new file creation is durable on POSIX
-  // (audit M3). On Windows this is a no-op.
-  fsyncDir(paths.ledger);
+  if (isNew) fsyncDir(paths.ledger);
 }
 
 /** Append an event while holding the ledger lock (for standalone callers). */
