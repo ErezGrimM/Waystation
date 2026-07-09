@@ -1090,6 +1090,136 @@ describe("github import/export", () => {
     expect(result.ok).toBe(false);
     expect(result.errors.map((d) => d.code)).toContain("github_api_error");
   });
+
+  test("exportGitHubIssues returns no_github_token when token is empty", async () => {
+    const root = fixtureRoot([D]);
+    const result = await exportGitHubIssues(root, "owner/repo", "");
+    expect(result.ok).toBe(false);
+    expect(result.errors.map((d) => d.code)).toContain("no_github_token");
+  });
+
+  test("exportGitHubIssues returns invalid_github_repo for bad repo names", async () => {
+    const root = fixtureRoot([D]);
+    for (const bad of ["notarepo", "../escape", "a/b/c", ""])
+      expect((await exportGitHubIssues(root, bad, "tok")).ok).toBe(false);
+  });
+
+  test("exportGitHubIssues PATCHes issues with gh-NNN ids", async () => {
+    const root = fixtureRoot([]);
+    const issuesDir = join(root, ".waystation", "issues");
+    mkdirSync(issuesDir, { recursive: true });
+    writeFileSync(
+      join(issuesDir, "gh-42.json"),
+      JSON.stringify({ id: "gh-42", title: "Bug report", status: "open" }),
+    );
+
+    const requests: { url: string; method: string; body: string }[] = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = ((url: string | URL | Request, init?: RequestInit) => {
+      requests.push({
+        url: String(url),
+        method: init?.method ?? "GET",
+        body: String(init?.body ?? ""),
+      });
+      return new Response(JSON.stringify({}), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      const result = await exportGitHubIssues(root, "owner/repo", "tok");
+      expect(result.ok).toBe(true);
+      expect(result.data?.exported).toBe(1);
+      expect(requests).toHaveLength(1);
+      expect(requests[0]!.method).toBe("PATCH");
+      expect(requests[0]!.url).toContain("/issues/42");
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  test("exportGitHubIssues POSTs issues without gh- prefix (creates new)", async () => {
+    const root = fixtureRoot([]);
+    const issuesDir = join(root, ".waystation", "issues");
+    mkdirSync(issuesDir, { recursive: true });
+    writeFileSync(
+      join(issuesDir, "local-1.json"),
+      JSON.stringify({ id: "local-1", title: "Local issue", status: "open" }),
+    );
+
+    const requests: { url: string; method: string }[] = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = ((url: string | URL | Request, init?: RequestInit) => {
+      requests.push({ url: String(url), method: init?.method ?? "GET" });
+      return new Response(JSON.stringify({ number: 99 }), { status: 201 });
+    }) as unknown as typeof fetch;
+    try {
+      const result = await exportGitHubIssues(root, "owner/repo", "tok");
+      expect(result.ok).toBe(true);
+      expect(requests).toHaveLength(1);
+      expect(requests[0]!.method).toBe("POST");
+      expect(requests[0]!.url).toContain("/issues");
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  test("exportGitHubIssues maps closed/done/fixed status to state: closed", async () => {
+    const root = fixtureRoot([]);
+    const issuesDir = join(root, ".waystation", "issues");
+    mkdirSync(issuesDir, { recursive: true });
+    for (const status of ["closed", "done", "fixed"]) {
+      writeFileSync(
+        join(issuesDir, `gh-${status}.json`),
+        JSON.stringify({ id: `gh-${status}`, title: `Issue ${status}`, status }),
+      );
+    }
+
+    const bodies: string[] = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) => {
+      bodies.push(String(init?.body ?? ""));
+      return new Response(JSON.stringify({}), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      const result = await exportGitHubIssues(root, "owner/repo", "tok");
+      expect(result.ok).toBe(true);
+      expect(result.data?.exported).toBe(3);
+      for (const body of bodies) {
+        expect(JSON.parse(body).state).toBe("closed");
+      }
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  test("exportGitHubIssues includes type and severity as labels", async () => {
+    const root = fixtureRoot([]);
+    const issuesDir = join(root, ".waystation", "issues");
+    mkdirSync(issuesDir, { recursive: true });
+    writeFileSync(
+      join(issuesDir, "typed.json"),
+      JSON.stringify({
+        id: "typed",
+        title: "Typed",
+        status: "open",
+        type: "bug",
+        severity: "high",
+      }),
+    );
+
+    let sentBody = "";
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) => {
+      sentBody = String(init?.body ?? "");
+      return new Response(JSON.stringify({}), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      await exportGitHubIssues(root, "owner/repo", "tok");
+      const payload = JSON.parse(sentBody);
+      expect(payload.labels).toContain("bug");
+      expect(payload.labels).toContain("high");
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
 });
 
 describe("graph enrichment", () => {

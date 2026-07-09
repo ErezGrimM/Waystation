@@ -6,6 +6,7 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  unlinkSync,
   writeSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -19,7 +20,55 @@ import {
   IssueRecord as IssueSchema,
 } from "./schema.ts";
 
+/**
+ * Fsync a directory to ensure renamed entries are durable. On POSIX, a rename
+ * only updates the directory entry; without an fsync, a crash can lose the
+ * mapping. On Windows NTFS this is a no-op (NTFS journals metadata) but the
+ * call is harmless.
+ */
+function fsyncDir(dir: string): void {
+  // On Windows NTFS, directory fsync is not supported (NTFS journals metadata
+  // automatically). The call throws EPERM, so we skip it on Windows (audit M3).
+  if (process.platform === "win32") return;
+  const fd = openSync(dir, "r");
+  try {
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
 let tempFileCounter = 0;
+
+/**
+ * Sweep orphaned *.tmp files left behind by crashed processes. A temp file is
+ * any file matching `*.pid.counter.tmp` in a ledger subdirectory. This runs
+ * once per process on first lock acquisition (audit M4).
+ */
+let tmpSwept = false;
+export function sweepOrphanTmp(root: string): void {
+  if (tmpSwept) return;
+  tmpSwept = true;
+  const paths = ledgerPaths(root);
+  const dirs = [paths.tasks, paths.claims, paths.messages, join(paths.ledger, "handoffs")];
+  for (const dir of dirs) {
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const name of entries) {
+      if (/\.tmp$/.test(name)) {
+        try {
+          unlinkSync(join(dir, name));
+        } catch {
+          // ignore — file may still be open by another process
+        }
+      }
+    }
+  }
+}
 
 /** Parse a JSON file, raising a coded RecordError on malformed JSON. */
 export function readJsonFile(file: string): unknown {
@@ -54,6 +103,8 @@ export function writeJsonAtomic(file: string, value: unknown): void {
     closeSync(fd);
   }
   renameWithRetry(tmp, file);
+  // fsync the parent directory so the rename is durable (audit M3).
+  fsyncDir(join(file, ".."));
 }
 
 /**
@@ -98,6 +149,9 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   } finally {
     closeSync(fd);
   }
+  // fsync the parent directory so the new file creation is durable on POSIX
+  // (audit M3). On Windows this is a no-op.
+  fsyncDir(paths.ledger);
 }
 
 /** Append an event while holding the ledger lock (for standalone callers). */
@@ -112,6 +166,7 @@ export async function appendEvent(root: string, event: Record<string, unknown>):
 export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
   const paths = ledgerPaths(root);
   mkdirSync(paths.ledger, { recursive: true });
+  sweepOrphanTmp(root);
   const release = await lockfile.lock(paths.ledger, {
     realpath: false,
     retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },

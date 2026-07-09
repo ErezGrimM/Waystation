@@ -300,3 +300,394 @@ describe("mcp server integration", () => {
     await server.close();
   });
 });
+
+describe("mcp tools: remaining coverage (M13)", () => {
+  const root = join(process.cwd(), ".waystation-test-mcp-m13");
+
+  beforeAll(() => {
+    rmSync(root, { recursive: true, force: true });
+    mkdirSync(root, { recursive: true });
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    for (const d of ["tasks", "claims", "messages", "issues", "handoffs", "prompts", "scopes"]) {
+      mkdirSync(join(root, ".waystation", d), { recursive: true });
+    }
+    writeFileSync(join(root, ".waystation", "events.jsonl"), "");
+    writeFileSync(
+      join(root, ".waystation", "tasks", "ready-task.json"),
+      JSON.stringify({
+        id: "ready-task",
+        title: "Ready Task",
+        status: "ready",
+        priority: 2,
+        dependencies: [],
+        prompts: ["test-prompt"],
+        path_hints: ["src/core/"],
+        acceptance: ["works correctly"],
+        description: "A task for testing MCP tools.",
+        created_at: "2026-07-08T10:00:00+03:00",
+        updated_at: "2026-07-08T10:00:00+03:00",
+      }),
+    );
+    writeFileSync(
+      join(root, ".waystation", "prompts", "test-prompt.json"),
+      JSON.stringify({
+        id: "test-prompt",
+        title: "Test Prompt",
+        version: 1,
+        status: "active",
+        applies_to: { agents: [], roles: [], scopes: [], tasks: [] },
+        priority: 50,
+        instructions: "You are testing agent {{agent}} on task {{task_id}}.",
+        must_do: [],
+        must_not: [],
+      }),
+    );
+  });
+
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  test("list_prompts returns all prompt records", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({ name: "list_prompts", arguments: {} });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe("test-prompt");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("render_prompt returns rendered prompt for a task/agent", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "render_prompt",
+      arguments: { task: "ready-task", agent: "coder" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.prompts).toContain("test-prompt");
+    expect(result.data.rendered).toContain("coder");
+    expect(result.data.rendered).toContain("ready-task");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("render_prompt returns error for unknown task", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "render_prompt",
+      arguments: { task: "no-such", agent: "coder" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("no_such_task");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("list_issues returns empty when no issues exist", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({ name: "list_issues", arguments: {} });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data).toHaveLength(0);
+
+    await client.close();
+    await server.close();
+  });
+
+  test("create_issue creates an issue and it appears in list_issues", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const createRes = await client.callTool({
+      name: "create_issue",
+      arguments: { title: "Test Bug", severity: "high", type: "bug" },
+    });
+    const createText = (createRes.content as Array<{ type: string; text: string }>)[0]!.text;
+    const created: any = JSON.parse(createText);
+    expect(created.ok).toBe(true);
+    expect(created.data.title).toBe("Test Bug");
+    expect(created.data.severity).toBe("high");
+    expect(created.data.type).toBe("bug");
+    expect(created.data.id).toMatch(/^issue-/);
+
+    const listRes = await client.callTool({ name: "list_issues", arguments: {} });
+    const listText = (listRes.content as Array<{ type: string; text: string }>)[0]!.text;
+    const listed: any = JSON.parse(listText);
+    expect(listed.data.length).toBeGreaterThanOrEqual(1);
+    expect(listed.data.some((i: any) => i.id === created.data.id)).toBe(true);
+
+    await client.close();
+    await server.close();
+  });
+
+  test("create_issue rejects duplicate id", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "create_issue",
+      arguments: { id: "dup-issue", title: "First" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+
+    const res2 = await client.callTool({
+      name: "create_issue",
+      arguments: { id: "dup-issue", title: "Second" },
+    });
+    const text2 = (res2.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result2: any = JSON.parse(text2);
+    expect(result2.ok).toBe(false);
+    expect(result2.errors[0].code).toBe("duplicate_id");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("post_message creates a message on a thread", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "post_message",
+      arguments: {
+        thread: "project",
+        from: "agent-a",
+        body: "Hello from the test",
+        kind: "note",
+      },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.thread).toBe("project");
+    expect(result.data.from_agent).toBe("agent-a");
+    expect(result.data.body).toBe("Hello from the test");
+    expect(result.data.kind).toBe("note");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("post_message creates a message on a task thread", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "post_message",
+      arguments: {
+        thread: "ready-task",
+        from: "agent-b",
+        body: "Working on this",
+      },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.thread).toBe("ready-task");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("get_inbox returns messages for an agent", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // Post a direct message to agent-c
+    await client.callTool({
+      name: "post_message",
+      arguments: { thread: "project", from: "agent-x", to: "agent-c", body: "For you" },
+    });
+
+    const res = await client.callTool({
+      name: "get_inbox",
+      arguments: { agent: "agent-c" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.length).toBeGreaterThanOrEqual(1);
+    expect(result.data.some((m: any) => m.body === "For you")).toBe(true);
+
+    await client.close();
+    await server.close();
+  });
+
+  test("get_inbox excludes own messages", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // Post a message FROM agent-d
+    await client.callTool({
+      name: "post_message",
+      arguments: { thread: "project", from: "agent-d", body: "My own message" },
+    });
+
+    // Inbox for agent-d should NOT include its own message
+    const res = await client.callTool({
+      name: "get_inbox",
+      arguments: { agent: "agent-d" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.every((m: any) => m.from_agent !== "agent-d")).toBe(true);
+
+    await client.close();
+    await server.close();
+  });
+
+  test("finish_task marks task done and completes claim", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // Claim first
+    await client.callTool({
+      name: "claim_task",
+      arguments: { id: "ready-task", agent: "finisher" },
+    });
+
+    // Finish
+    const res = await client.callTool({
+      name: "finish_task",
+      arguments: { id: "ready-task", agent: "finisher" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.finished).toBe("ready-task");
+
+    // Verify task is done
+    const taskRes = await client.callTool({
+      name: "get_task",
+      arguments: { id: "ready-task" },
+    });
+    const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0]!.text;
+    const taskResult: any = JSON.parse(taskText);
+    expect(taskResult.data.status).toBe("done");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("finish_task rejects when task already done", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // ready-task was finished in the previous test; try again
+    const res = await client.callTool({
+      name: "finish_task",
+      arguments: { id: "ready-task", agent: "finisher" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("task_done");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("create_handoff creates a handoff record", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "create_handoff",
+      arguments: {
+        task: "ready-task",
+        from: "agent-a",
+        to: "agent-b",
+        summary: "Handing off mid-progress",
+      },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(true);
+    expect(result.data.task).toBe("ready-task");
+    expect(result.data.from_agent).toBe("agent-a");
+    expect(result.data.to_agent).toBe("agent-b");
+    expect(result.data.summary).toBe("Handing off mid-progress");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("create_handoff rejects for unknown task", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const res = await client.callTool({
+      name: "create_handoff",
+      arguments: { task: "no-such", from: "agent-a" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("no_such_task");
+
+    await client.close();
+    await server.close();
+  });
+});

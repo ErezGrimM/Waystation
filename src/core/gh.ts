@@ -18,8 +18,8 @@ const LABEL_TO_SEVERITY = new Map<string, string>([
   ["low", "low"],
 ]);
 
-/** GitHub "owner/name" — letters, digits, ".", "_", "-", a single slash. */
-const REPO_RE = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
+/** GitHub "owner/name" — letters, digits, ".", "_", "-", a single slash. No leading dots. */
+const REPO_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 /**
  * Reject a repo that is not a strict `owner/name`. This both prevents
