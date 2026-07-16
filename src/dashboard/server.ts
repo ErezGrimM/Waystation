@@ -9,7 +9,13 @@ import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
-import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
+import {
+  addTaskCommits,
+  claimTask,
+  finishTask,
+  MutationError,
+  releaseTask,
+} from "../core/mutate.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, diag, okResult, toResult } from "../core/result.ts";
@@ -207,8 +213,11 @@ export function createApp(root: string, distDir?: string): Hono {
 
   app.post("/api/tasks/:id/finish", async (c) => {
     try {
-      const body = await c.req.json<{ agent: string }>();
-      await finishTask(root, c.req.param("id"), body.agent);
+      const body = await c.req.json<{ agent: string; commits?: string[]; commitHead?: boolean }>();
+      await finishTask(root, c.req.param("id"), body.agent, new Date(), {
+        commits: body.commits ?? [],
+        commitHead: body.commitHead,
+      });
       emit("task.finished", { task: c.req.param("id"), agent: body.agent });
       return json(okResult({ finished: c.req.param("id") }));
     } catch (e) {
@@ -418,7 +427,7 @@ export function createApp(root: string, distDir?: string): Hono {
 
   app.post("/api/git/commit", async (c) => {
     try {
-      const body = await c.req.json<{ message: string; files?: string[] }>();
+      const body = await c.req.json<{ message: string; files?: string[]; task?: string }>();
       if (!body.message) {
         return json(
           toResult(null, [
@@ -468,7 +477,12 @@ export function createApp(root: string, distDir?: string): Hono {
           toResult(null, [diag("unexpected_error" as never, { message: err || "commit failed" })]),
         );
       }
-      return json(okResult({ output: out || "committed" }));
+      const head = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"], { cwd: root });
+      const commit = head.exitCode === 0 ? head.stdout.toString().trim() : null;
+      if (body.task && commit) {
+        await addTaskCommits(root, body.task, [commit], "dashboard");
+      }
+      return json(okResult({ output: out || "committed", commit, task: body.task ?? null }));
     } catch (e) {
       return json(catchDiag(e));
     }

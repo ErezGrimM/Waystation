@@ -246,6 +246,31 @@ describe("dashboard API server", () => {
     expect(body.errors[0].message).toContain("invalid file selection");
   });
 
+  test("POST /api/git/commit can link the created commit to a task", async () => {
+    Bun.spawnSync(["git", "config", "user.email", "test@example.com"], { cwd: testRoot });
+    Bun.spawnSync(["git", "config", "user.name", "Test User"], { cwd: testRoot });
+    writeFileSync(join(testRoot, "commit-link.txt"), "hello");
+
+    const app = createApp(testRoot);
+    const res = await app.request("/api/git/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "link commit to task",
+        files: ["commit-link.txt"],
+        task: "test-task",
+      }),
+    });
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.data.commit).toBeTruthy();
+    expect(body.data.task).toBe("test-task");
+
+    const taskRes = await app.request("/api/tasks/test-task");
+    const taskBody = await taskRes.json();
+    expect(taskBody.data.commits).toContain(body.data.commit);
+  });
+
   test("event bus emits and receives mutation events", () => {
     const events: Array<Record<string, unknown>> = [];
     const unsub = onMutationEvent((event) => events.push(event));

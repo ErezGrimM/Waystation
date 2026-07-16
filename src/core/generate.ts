@@ -197,6 +197,7 @@ export function generateTaskViews(root?: string): number {
       "",
       `# ${markdownText(t.id)} — ${markdownText(t.title)}`,
       `status: ${t.status}  priority: ${t.priority}  scope: ${t.scope ?? "-"}`,
+      ...(t.commits.length ? [`commits: ${t.commits.map(markdownText).join(", ")}`] : []),
       "",
       markdownBlock(t.description),
       "",

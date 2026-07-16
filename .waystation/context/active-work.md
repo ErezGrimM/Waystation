@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
+_none_
 
 ## Coordination warnings
 _none_

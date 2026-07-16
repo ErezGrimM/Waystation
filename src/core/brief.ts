@@ -27,6 +27,7 @@ export interface Brief {
     status: string;
     priority: number;
     scope: string | null;
+    commits: string[];
   };
   goal: string;
   acceptance: string[];
@@ -114,6 +115,7 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
       status: task.status,
       priority: task.priority,
       scope: task.scope ?? null,
+      commits: task.commits ?? [],
     },
     goal: (task.description ?? task.title).trim(),
     acceptance: task.acceptance,
@@ -197,6 +199,11 @@ export function renderBrief(b: Brief): string {
     lines.push("");
     lines.push("## Dependencies");
     for (const d of b.dependencies) lines.push(`- ${d.id} [${d.status}]`);
+  }
+  if (b.task.commits.length) {
+    lines.push("");
+    lines.push("## Commits");
+    for (const commit of b.task.commits) lines.push(`- ${commit}`);
   }
   if (b.scopeRules.length) {
     lines.push("");

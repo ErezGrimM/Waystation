@@ -24,8 +24,16 @@ interface GitContext {
   overlaps: Array<{ task: string; otherTask: string; reason: string }>;
 }
 
+interface TaskItem {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export function Git() {
   const [status, setStatus] = useState<GitStatus | null>(null);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [selectedTask, setSelectedTask] = useState("");
   const [diff, setDiff] = useState<string | null>(null);
   const [staged, setStaged] = useState<string | null>(null);
   const [overlaps, setOverlaps] = useState<GitContext["overlaps"]>([]);
@@ -54,6 +62,13 @@ export function Git() {
     api<GitContext>("/api/git/context").then((r) => {
       if (r.ok && r.data) setOverlaps(r.data.overlaps);
     });
+    api<TaskItem[]>("/api/tasks").then((r) => {
+      if (r.ok && r.data) {
+        setTasks(r.data);
+        const active = r.data.find((task) => task.status === "in_progress");
+        setSelectedTask((current) => current || active?.id || "");
+      }
+    });
   };
 
   useEffect(load, []);
@@ -74,15 +89,20 @@ export function Git() {
 
   const commit = async () => {
     if (!message) return;
-    const body: { message: string; files?: string[] } = { message };
+    const body: { message: string; files?: string[]; task?: string } = { message };
     if (selectedFiles.size > 0) body.files = Array.from(selectedFiles);
-    const r = await api<{ output: string }>("/api/git/commit", {
+    if (selectedTask) body.task = selectedTask;
+    const r = await api<{ output: string; commit: string | null; task: string | null }>(
+      "/api/git/commit",
+      {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    });
+      },
+    );
     if (r.ok) {
-      setResult(`Committed: ${r.data?.output ?? "ok"}`);
+      const linked = r.data?.task ? ` linked to ${r.data.task}` : "";
+      setResult(`Committed: ${r.data?.commit ?? r.data?.output ?? "ok"}${linked}`);
       setMessage("");
       setSelectedFiles(new Set());
       load();
@@ -266,7 +286,7 @@ export function Git() {
           )}
 
           {status.files.length > 0 && (
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <input
                 className="input"
                 value={message}
@@ -274,6 +294,20 @@ export function Git() {
                 placeholder="Commit message"
                 style={{ flex: 1 }}
               />
+              <select
+                className="input"
+                value={selectedTask}
+                onChange={(e) => setSelectedTask(e.target.value)}
+                style={{ width: 260 }}
+                title="Attach commit to task"
+              >
+                <option value="">No task link</option>
+                {tasks.map((task) => (
+                  <option key={task.id} value={task.id}>
+                    {task.id}
+                  </option>
+                ))}
+              </select>
               <button className="btn-primary" onClick={commit}>
                 Commit
               </button>

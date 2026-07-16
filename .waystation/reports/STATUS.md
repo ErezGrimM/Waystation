@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
+_none_
 
 ## In progress
 _none_
@@ -46,6 +46,7 @@ _none_
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
 - `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
+- `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
 - `task-phase6-docs-and-exit` [p3] — Document Phase 6 behavior and mark exit criteria
 - `task-phase6-worktree-message-scope-decision` [p1] — Phase 6 decision: worktree messaging scope
 - `task-phase8-brief-budget-tiers` [p2] — Implement real brief budget tiers

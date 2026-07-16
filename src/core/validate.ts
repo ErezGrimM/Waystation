@@ -7,6 +7,7 @@ import {
   ClaimRecord,
   HandoffRecord,
   IssueRecord,
+  isCommitRef,
   MessageRecord,
   PromptRecord,
   TaskRecord,
@@ -149,6 +150,16 @@ export function validateLedger(root?: string): CommandResult<null> {
           diag("missing_prompt", {
             message: `${t.id} references missing prompt: ${p}`,
             details: { task: t.id, prompt: p },
+          }),
+        );
+      }
+    }
+    for (const commit of t.commits) {
+      if (!isCommitRef(commit)) {
+        diags.push(
+          diag("invalid_commit_ref", {
+            message: `${t.id} has invalid commit reference: ${commit}`,
+            details: { task: t.id, commit },
           }),
         );
       }

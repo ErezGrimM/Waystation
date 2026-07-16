@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-task-commit-awareness-codex-a-20260716-125600-tldu",
+  "thread": "task-phase10-task-commit-awareness",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implemented commit reference tracking across core, CLI, MCP, dashboard, briefs, generated views, and tests. Checks are green; preparing commit.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T12:56:00+03:00"
+}

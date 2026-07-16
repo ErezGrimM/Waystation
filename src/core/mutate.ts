@@ -1,6 +1,6 @@
 import { getGitState } from "./git.ts";
 import { loadTaskFiles } from "./records.ts";
-import type { ClaimRecord, TaskRecord } from "./schema.ts";
+import { type ClaimRecord, isCommitRef, type TaskRecord } from "./schema.ts";
 import {
   activeClaimForTask,
   appendEventUnlocked,
@@ -25,6 +25,11 @@ export interface ClaimGitContext {
   worktree?: string | null;
 }
 
+export interface FinishTaskOptions {
+  commits?: string[];
+  commitHead?: boolean;
+}
+
 /**
  * Find a JSON task record by id, returning the record and the file it lives in
  * so the mutation writes back to that exact file (not an assumed `${id}.json`).
@@ -46,6 +51,56 @@ function claimGitContext(root: string, override: ClaimGitContext = {}): Required
     branch: override.branch !== undefined ? override.branch : (derived?.branch ?? null),
     worktree: override.worktree !== undefined ? override.worktree : (derived?.worktree ?? null),
   };
+}
+
+function headCommit(root: string): string | null {
+  const state = getGitState(root);
+  return state.data?.head ?? null;
+}
+
+function normalizeCommits(commits: string[]): string[] {
+  const normalized: string[] = [];
+  for (const commit of commits.map((c) => c.trim()).filter(Boolean)) {
+    if (!isCommitRef(commit)) {
+      throw new MutationError(`invalid commit reference: ${commit}`, "invalid_commit_ref");
+    }
+    if (!normalized.includes(commit)) normalized.push(commit);
+  }
+  return normalized;
+}
+
+function taskWithCommits(task: TaskRecord, commits: string[]): TaskRecord {
+  const existing = task.commits ?? [];
+  const merged = [...existing];
+  for (const commit of commits) {
+    if (!merged.includes(commit)) merged.push(commit);
+  }
+  return { ...task, commits: merged };
+}
+
+export async function addTaskCommits(
+  root: string,
+  id: string,
+  commits: string[],
+  agent: string = "system",
+  now: Date = new Date(),
+): Promise<TaskRecord> {
+  return withLedgerLock(root, () => {
+    const { task, file } = requireTask(root, id);
+    const refs = normalizeCommits(commits);
+    if (refs.length === 0) return task;
+    const ts = nowIso(now);
+    const updated = { ...taskWithCommits(task, refs), updated_at: ts };
+    appendEventUnlocked(root, {
+      type: "task.commits_attached",
+      task: id,
+      commits: refs,
+      actor: agent,
+      ts,
+    });
+    writeTask(file, updated);
+    return updated;
+  });
 }
 
 /** Claim a task: create an active claim and move the task to in_progress. */
@@ -160,6 +215,7 @@ export async function finishTask(
   id: string,
   agent: string,
   now: Date = new Date(),
+  options: FinishTaskOptions = {},
 ): Promise<void> {
   return withLedgerLock(root, () => {
     const { task, file } = requireTask(root, id);
@@ -175,6 +231,10 @@ export async function finishTask(
         "claim_owner_mismatch",
       );
     }
+    const refs = normalizeCommits([
+      ...(options.commits ?? []),
+      ...(options.commitHead ? [headCommit(root) ?? ""] : []),
+    ]);
     const from = task.status;
     // Write-ahead: events first, then records (see H4 in the audit).
     appendEventUnlocked(root, {
@@ -194,9 +254,23 @@ export async function finishTask(
         ts,
       });
     }
+    if (refs.length > 0) {
+      appendEventUnlocked(root, {
+        type: "task.commits_attached",
+        task: id,
+        commits: refs,
+        actor: agent,
+        ts,
+      });
+    }
     if (claim) {
       writeClaim(root, { ...claim, status: "completed", completed_at: ts });
     }
-    writeTask(file, { ...task, status: "done", updated_at: ts, closed_at: ts });
+    writeTask(file, {
+      ...taskWithCommits(task, refs),
+      status: "done",
+      updated_at: ts,
+      closed_at: ts,
+    });
   });
 }

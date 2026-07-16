@@ -5,7 +5,13 @@ import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
 import { inbox, postMessage } from "../core/messages.ts";
-import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
+import {
+  addTaskCommits,
+  claimTask,
+  finishTask,
+  MutationError,
+  releaseTask,
+} from "../core/mutate.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, type Diagnostic, diag, okResult, toResult } from "../core/result.ts";
@@ -216,12 +222,37 @@ export function buildServer(root: string): McpServer {
       inputSchema: {
         id: z.string().describe("task id"),
         agent: z.string().describe("finishing agent"),
+        commits: z.array(z.string()).optional().describe("commit hashes to attach"),
+        commitHead: z.boolean().optional().describe("attach current git HEAD"),
       },
     },
-    async ({ id, agent }) => {
+    async ({ id, agent, commits, commitHead }) => {
       try {
-        await finishTask(root, id, agent);
+        await finishTask(root, id, agent, new Date(), {
+          commits: commits ?? [],
+          commitHead,
+        });
         return toContent(okResult({ finished: id }));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "add_task_commit",
+    {
+      description: "Attach commit reference(s) to a task without changing status",
+      inputSchema: {
+        id: z.string().describe("task id"),
+        commits: z.array(z.string()).describe("commit hashes to attach"),
+        agent: z.string().optional().describe("agent adding the reference"),
+      },
+    },
+    async ({ id, commits, agent }) => {
+      try {
+        const task = await addTaskCommits(root, id, commits, agent ?? "mcp");
+        return toContent(okResult(task));
       } catch (e) {
         return toContent(toResult(null, [catchDiag(e)]));
       }

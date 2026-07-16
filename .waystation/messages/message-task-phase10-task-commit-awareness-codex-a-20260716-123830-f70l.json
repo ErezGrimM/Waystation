@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-task-commit-awareness-codex-a-20260716-123830-f70l",
+  "thread": "task-phase10-task-commit-awareness",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting Phase 10 commit-awareness. I will add task commit refs in core/schema first, then wire finish/task show/brief/generated views/MCP/dashboard surfaces with tests.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T12:38:30+03:00"
+}

@@ -566,6 +566,31 @@ describe("CLI: task list / show", () => {
     expect(res.ok).toBe(false);
     expect(res.errors[0]?.code).toBe("invalid_brief_budget");
   });
+
+  test("finish --commit attaches commit references", () => {
+    const localRoot = fixtureRoot([D]);
+    Bun.spawnSync({
+      cmd: [process.execPath, "run", cli, "task", "claim", "task-d", "--agent", "cli"],
+      cwd: localRoot,
+    });
+    const r = Bun.spawnSync({
+      cmd: [
+        process.execPath,
+        "run",
+        cli,
+        "task",
+        "finish",
+        "task-d",
+        "--agent",
+        "cli",
+        "--commit",
+        "abc1234",
+      ],
+      cwd: localRoot,
+    });
+    expect(r.exitCode).toBe(0);
+    expect(loadTasks(localRoot).find((t) => t.id === "task-d")?.commits).toEqual(["abc1234"]);
+  });
 });
 
 describe("mutations: claim / release / finish", () => {
@@ -637,6 +662,26 @@ describe("mutations: claim / release / finish", () => {
     await finishTask(root, "task-d", "a", fixedNow);
     expect(loadTasks(root).find((t) => t.id === "task-d")?.status).toBe("done");
     expect(loadClaims(root).find((c) => c.id === claim.id)?.status).toBe("completed");
+  });
+
+  test("finish can attach commit references to the task", async () => {
+    const root = fixtureRoot([D]);
+    await claimTask(root, "task-d", "a", fixedNow);
+    await finishTask(root, "task-d", "a", fixedNow, {
+      commits: ["abc1234", "abcdef1234567890"],
+    });
+    expect(loadTasks(root).find((t) => t.id === "task-d")?.commits).toEqual([
+      "abc1234",
+      "abcdef1234567890",
+    ]);
+  });
+
+  test("finish rejects invalid commit references", async () => {
+    const root = fixtureRoot([D]);
+    await claimTask(root, "task-d", "a", fixedNow);
+    await expect(
+      finishTask(root, "task-d", "a", fixedNow, { commits: ["not-a-sha"] }),
+    ).rejects.toThrow(MutationError);
   });
 
   test("finish rejects an agent that does not own the active claim", async () => {
@@ -778,6 +823,11 @@ describe("validate", () => {
     expect(codes(root)).toContain("schema_invalid");
   });
 
+  test("flags invalid task commit references", () => {
+    const root = fixtureRoot([{ ...D, commits: ["abc1234", "not-a-sha"] }]);
+    expect(codes(root)).toContain("invalid_commit_ref");
+  });
+
   const t0 = new Date("2026-07-06T10:00:00Z");
 
   test("flags a dangling in_reply_to", async () => {
@@ -853,11 +903,13 @@ describe("error envelope", () => {
 
 describe("brief", () => {
   test("includes the target task's goal, acceptance, and dependency statuses", () => {
-    const root = fixtureRoot([A, B, C, D]);
+    const root = fixtureRoot([A, { ...B, commits: ["abc1234"] }, C, D]);
     const brief = buildBrief(root, "task-b");
     expect(brief.task.id).toBe("task-b");
+    expect(brief.task.commits).toEqual(["abc1234"]);
     expect(brief.dependencies).toEqual([{ id: "task-a", status: "done" }]);
     expect(brief.blockedBy).toEqual([]); // task-a is done
+    expect(renderBrief(brief)).toContain("## Commits");
   });
 
   test("reports blockers when a dependency is not done", () => {
@@ -1102,6 +1154,13 @@ describe("generate", () => {
     expect(view).toContain(
       "Do not render \\[acceptance\\]\\(https://example\\.test\\) as a link\\.",
     );
+  });
+
+  test("generated task views include commit references", () => {
+    const root = fixtureRoot([{ ...D, commits: ["abc1234"] }]);
+    generateTaskViews(root);
+    const view = readFileSync(join(root, ".waystation", "views", "tasks", "task-d.md"), "utf8");
+    expect(view).toContain("commits: abc1234");
   });
 
   test("reindex returns a CommandResult with per-type counts", async () => {

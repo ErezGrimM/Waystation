@@ -98,6 +98,7 @@ describe("mcp server integration", () => {
     expect(names).toContain("claim_task");
     expect(names).toContain("release_task");
     expect(names).toContain("finish_task");
+    expect(names).toContain("add_task_commit");
     expect(names).toContain("create_handoff");
     expect(names).toContain("post_message");
     expect(names).toContain("create_issue");
@@ -511,6 +512,26 @@ describe("mcp tools: remaining coverage (M13)", () => {
     const result2: any = JSON.parse(text2);
     expect(result2.ok).toBe(false);
     expect(result2.errors[0].code).toBe("duplicate_id");
+
+    await client.close();
+    await server.close();
+  });
+
+  test("add_task_commit attaches commit references", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    const addRes = await client.callTool({
+      name: "add_task_commit",
+      arguments: { id: "ready-task", commits: ["abc1234"], agent: "mcp-test" },
+    });
+    const addText = (addRes.content as Array<{ type: string; text: string }>)[0]!.text;
+    const added: any = JSON.parse(addText);
+    expect(added.ok).toBe(true);
+    expect(added.data.commits).toContain("abc1234");
 
     await client.close();
     await server.close();

@@ -123,6 +123,9 @@ task
       if (found.dependencies.length) {
         process.stdout.write(`  dependencies: ${found.dependencies.join(", ")}\n`);
       }
+      if (found.commits.length) {
+        process.stdout.write(`  commits:      ${found.commits.join(", ")}\n`);
+      }
       if (found.description) process.stdout.write(`\n${found.description.trimEnd()}\n`);
     });
   });
@@ -167,14 +170,24 @@ task
   .command("finish")
   .argument("<id>", "task id")
   .requiredOption("--agent <agent>", "finishing agent")
+  .option("--commit <sha...>", "commit hash(es) to attach to the task")
+  .option("--commit-head", "attach the current git HEAD commit")
   .option("--json", "output JSON")
   .description("Finish a task (marks it done and completes any active claim)")
-  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
-    await runMutation(opts.json, async () => {
-      await finishTask(findProjectRoot(), id, opts.agent);
-      return `finished ${id}`;
-    });
-  });
+  .action(
+    async (
+      id: string,
+      opts: { agent: string; commit?: string[]; commitHead?: boolean; json?: boolean },
+    ) => {
+      await runMutation(opts.json, async () => {
+        await finishTask(findProjectRoot(), id, opts.agent, new Date(), {
+          commits: opts.commit ?? [],
+          commitHead: opts.commitHead,
+        });
+        return `finished ${id}`;
+      });
+    },
+  );
 
 program
   .command("brief")

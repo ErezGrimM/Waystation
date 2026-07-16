@@ -19,6 +19,12 @@ export type RecordId = z.infer<typeof RecordId>;
 
 const ProjectOrRecordId = z.union([z.literal("project"), RecordId]);
 
+const COMMIT_REF_RE = /^[A-Fa-f0-9]{7,64}$/;
+
+export function isCommitRef(value: string): boolean {
+  return COMMIT_REF_RE.test(value);
+}
+
 /**
  * Task status values (spec §6.2). `claimed` is intentionally NOT a status;
  * claim state is tracked separately.
@@ -53,6 +59,7 @@ export const TaskRecord = z.object({
   closed_at: isoTs.nullable().optional(),
   description: z.string().optional(),
   acceptance: z.array(z.string()).default([]),
+  commits: z.array(z.string()).default([]),
   notes: z.string().optional(),
 });
 export type TaskRecord = z.infer<typeof TaskRecord>;

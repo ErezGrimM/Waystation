@@ -253,6 +253,12 @@ export const CODES = {
     hint: "Use one of: small, medium, large, full.",
     retryable: false,
   },
+  invalid_commit_ref: {
+    severity: "error",
+    message: "Invalid commit reference.",
+    hint: "Use a git commit hash, usually 7 to 64 hexadecimal characters.",
+    retryable: false,
+  },
   // github
   no_github_token: {
     severity: "error",

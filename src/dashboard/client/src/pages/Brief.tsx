@@ -12,7 +12,14 @@ interface TaskItem {
 
 interface BriefData {
   budget: BriefBudget;
-  task: { id: string; title: string; status: string; priority: number; scope: string | null };
+  task: {
+    id: string;
+    title: string;
+    status: string;
+    priority: number;
+    scope: string | null;
+    commits: string[];
+  };
   goal: string;
   acceptance: string[];
   blockedBy: string[];
@@ -176,6 +183,22 @@ export function Brief() {
                 <div className="section-label">Blocked by</div>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                   {brief.blockedBy.join(", ")}
+                </div>
+              </div>
+            )}
+
+            {brief.task.commits.length > 0 && (
+              <div style={{ borderLeft: "2px solid #2a3340", paddingLeft: 16, marginBottom: 22 }}>
+                <div className="section-label">Commits</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {brief.task.commits.map((commit) => (
+                    <div
+                      key={commit}
+                      style={{ fontSize: 12, fontFamily: "var(--mono)", color: "var(--text-secondary)" }}
+                    >
+                      {commit}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
