@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-mutation-recovery-codex-20260717-000322-sd4h",
+  "thread": "task-audit-mutation-recovery",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Recovery journal and tests landed in 7bb4ad5; task is finished. Full checks passed.",
+  "in_reply_to": null,
+  "created_at": "2026-07-17T00:03:22+03:00"
+}
