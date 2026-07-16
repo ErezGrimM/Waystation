@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
+_none_
 
 ## In progress
-_none_
+- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
 
 ## Review
 _none_

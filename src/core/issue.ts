@@ -3,7 +3,12 @@ import { join, resolve, sep } from "node:path";
 import { MutationError } from "./mutate.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type IssueRecord, IssueRecord as IssueSchema, isSafeRecordId } from "./schema.ts";
-import { applyMutationIntentUnlocked, mutationWrite, withLedgerLock } from "./store.ts";
+import {
+  applyMutationIntentUnlocked,
+  mutationWrite,
+  readJsonFile,
+  withLedgerLock,
+} from "./store.ts";
 import { nowIso, safeIdPart } from "./time.ts";
 
 export interface CreateIssueInput {
@@ -16,10 +21,79 @@ export interface CreateIssueInput {
   task?: string | null;
   scope?: string | null;
   description?: string;
+  evidence?: string;
+  expected?: string;
+  actual?: string;
+  acceptance?: string[];
+  resolution?: string;
+  notes?: string;
+  source?: unknown;
 }
+export type UpdateIssueInput = Partial<Omit<CreateIssueInput, "id">>;
 
 function issueDir(root: string): string {
   return join(ledgerPaths(root).ledger, "issues");
+}
+
+export async function updateIssue(
+  root: string,
+  id: string,
+  patch: UpdateIssueInput,
+  actor = "system",
+  now: Date = new Date(),
+): Promise<IssueRecord> {
+  return withLedgerLock(root, () => {
+    const file = issueFile(root, id);
+    if (!existsSync(file)) throw new MutationError(`no such issue: ${id}`, "not_found");
+    const current = IssueSchema.parse(readJsonFile(file));
+    const ts = nowIso(now);
+    const updated = IssueSchema.parse({
+      ...current,
+      ...patch,
+      id: current.id,
+      created_at: current.created_at,
+      closed_at: current.closed_at,
+      updated_at: ts,
+    });
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-issue-update-${id}-${safeIdPart(ts)}`,
+      kind: "issue.update",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "issue.updated", issue: id, actor, ts }],
+    });
+    return updated;
+  });
+}
+
+export async function closeIssue(
+  root: string,
+  id: string,
+  resolution: string,
+  actor = "system",
+  now: Date = new Date(),
+): Promise<IssueRecord> {
+  return withLedgerLock(root, () => {
+    const file = issueFile(root, id);
+    if (!existsSync(file)) throw new MutationError(`no such issue: ${id}`, "not_found");
+    const current = IssueSchema.parse(readJsonFile(file));
+    const ts = nowIso(now);
+    const updated = IssueSchema.parse({
+      ...current,
+      status: "closed",
+      resolution,
+      updated_at: ts,
+      closed_at: ts,
+    });
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-issue-close-${id}-${safeIdPart(ts)}`,
+      kind: "issue.close",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "issue.closed", issue: id, actor, ts }],
+    });
+    return updated;
+  });
 }
 
 function issueFile(root: string, id: string): string {
@@ -69,6 +143,13 @@ export async function createIssue(
     if (input.task !== undefined) record.task = input.task;
     if (input.scope !== undefined) record.scope = input.scope;
     if (input.description !== undefined) record.description = input.description;
+    if (input.evidence !== undefined) record.evidence = input.evidence;
+    if (input.expected !== undefined) record.expected = input.expected;
+    if (input.actual !== undefined) record.actual = input.actual;
+    if (input.acceptance !== undefined) record.acceptance = input.acceptance;
+    if (input.resolution !== undefined) record.resolution = input.resolution;
+    if (input.notes !== undefined) record.notes = input.notes;
+    if (input.source !== undefined) record.source = input.source;
 
     const parsed = IssueSchema.parse(record);
     applyMutationIntentUnlocked(root, {

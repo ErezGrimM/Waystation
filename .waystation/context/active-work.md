@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
 
 ## Ready
-- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
+_none_
 
 ## Coordination warnings
 _none_

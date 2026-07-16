@@ -1,6 +1,13 @@
 import { getGitState } from "./git.ts";
+import { ledgerPaths } from "./paths.ts";
 import { type LoadedTask, loadTaskFiles } from "./records.ts";
-import { type ClaimRecord, isCommitRef, type TaskRecord } from "./schema.ts";
+import {
+  type ClaimRecord,
+  isCommitRef,
+  type TaskRecord,
+  TaskRecord as TaskSchema,
+  type TaskStatus,
+} from "./schema.ts";
 import {
   activeClaimForTask,
   applyMutationIntentUnlocked,
@@ -31,6 +38,151 @@ export interface ClaimGitContext {
 export interface FinishTaskOptions {
   commits?: string[];
   commitHead?: boolean;
+}
+export type TaskPatch = Partial<
+  Pick<
+    TaskRecord,
+    | "title"
+    | "priority"
+    | "scope"
+    | "path_hints"
+    | "prompts"
+    | "dependencies"
+    | "description"
+    | "acceptance"
+    | "notes"
+  >
+>;
+export interface CreateTaskInput
+  extends Omit<TaskRecord, "created_at" | "updated_at" | "closed_at" | "commits"> {
+  id: string;
+}
+
+export async function createTask(
+  root: string,
+  input: CreateTaskInput,
+  actor = "system",
+  now: Date = new Date(),
+): Promise<TaskRecord> {
+  return withLedgerLock(root, () => {
+    const ts = nowIso(now);
+    const task = TaskSchema.parse({
+      ...input,
+      status: input.status ?? "todo",
+      created_at: ts,
+      updated_at: ts,
+      closed_at: null,
+      commits: [],
+    });
+    const file = `${ledgerPaths(root).tasks}/${task.id}.json`;
+    if (loadTaskFiles(root).some((x) => x.task.id === task.id))
+      throw new MutationError(`task already exists: ${task.id}`, "duplicate_id");
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-task-create-${task.id}-${idStamp(now)}`,
+      kind: "task.create",
+      writes: [mutationWrite(root, file, task)],
+      events: [{ type: "task.created", task: task.id, actor, ts }],
+    });
+    return task;
+  });
+}
+
+export async function updateTask(
+  root: string,
+  id: string,
+  patch: TaskPatch,
+  actor = "system",
+  now: Date = new Date(),
+): Promise<TaskRecord> {
+  return withLedgerLock(root, () => {
+    const { task, file } = requireTask(root, id);
+    const ts = nowIso(now);
+    const updated = TaskSchema.parse({
+      ...task,
+      ...patch,
+      id: task.id,
+      status: task.status,
+      created_at: task.created_at,
+      closed_at: task.closed_at,
+      commits: task.commits,
+      updated_at: ts,
+    });
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-task-update-${id}-${idStamp(now)}`,
+      kind: "task.update",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "task.updated", task: id, actor, ts }],
+    });
+    return updated;
+  });
+}
+
+export async function setTaskStatus(
+  root: string,
+  id: string,
+  to: TaskStatus,
+  actor = "system",
+  now: Date = new Date(),
+): Promise<TaskRecord> {
+  return withLedgerLock(root, () => {
+    const { task, file } = requireTask(root, id);
+    if (to === "in_progress" || task.status === "done" || task.status === "wont_do")
+      throw new MutationError("use claim or reopen for this transition", "invalid_transition");
+    const allowed: Record<TaskStatus, TaskStatus[]> = {
+      todo: ["ready", "wont_do"],
+      ready: ["todo", "blocked", "wont_do"],
+      in_progress: ["review"],
+      blocked: ["todo", "ready", "wont_do"],
+      review: ["ready", "done"],
+      done: [],
+      wont_do: [],
+    };
+    if (!allowed[task.status].includes(to))
+      throw new MutationError("invalid task status transition", "invalid_transition");
+    if (activeClaimForTask(root, id))
+      throw new MutationError("active claim requires release or finish", "invalid_transition");
+    const ts = nowIso(now);
+    const updated = TaskSchema.parse({
+      ...task,
+      status: to,
+      updated_at: ts,
+      closed_at: to === "wont_do" ? ts : task.closed_at,
+    });
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-task-status-${id}-${idStamp(now)}`,
+      kind: "task.status",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "task.status_changed", task: id, from: task.status, to, actor, ts }],
+    });
+    return updated;
+  });
+}
+
+export async function reopenTask(
+  root: string,
+  id: string,
+  to: "todo" | "ready",
+  actor = "system",
+  now: Date = new Date(),
+): Promise<TaskRecord> {
+  return withLedgerLock(root, () => {
+    const { task, file } = requireTask(root, id);
+    if (task.status !== "done" && task.status !== "wont_do")
+      throw new MutationError("only terminal tasks can be reopened", "invalid_transition");
+    const ts = nowIso(now);
+    const updated = TaskSchema.parse({ ...task, status: to, closed_at: null, updated_at: ts });
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-task-reopen-${id}-${idStamp(now)}`,
+      kind: "task.reopen",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "task.reopened", task: id, from: task.status, to, actor, ts }],
+    });
+    return updated;
+  });
 }
 
 /**

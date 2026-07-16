@@ -68,15 +68,29 @@ export type TaskRecord = z.infer<typeof TaskRecord>;
  * Issue record schema (spec §6.3), permissive: only the fields the index and
  * reports need are modeled; extra fields are tolerated (stripped on read).
  */
-export const IssueRecord = z.object({
-  id: RecordId,
-  title: z.string().min(1),
-  status: z.string().min(1),
-  severity: z.string().optional(),
-  type: z.string().optional(),
-  task: RecordId.nullable().optional(),
-  scope: RecordId.nullable().optional(),
-});
+export const IssueRecord = z
+  .object({
+    id: RecordId,
+    title: z.string().min(1),
+    status: z.string().min(1),
+    severity: z.string().optional(),
+    type: z.string().optional(),
+    task: RecordId.nullable().optional(),
+    scope: RecordId.nullable().optional(),
+    priority: z.number().int().nonnegative().optional(),
+    description: z.string().optional(),
+    evidence: z.unknown().optional(),
+    expected: z.string().optional(),
+    actual: z.string().optional(),
+    acceptance: z.array(z.string()).optional(),
+    resolution: z.string().optional(),
+    notes: z.string().optional(),
+    source: z.unknown().optional(),
+    created_at: isoTs.optional(),
+    updated_at: isoTs.optional(),
+    closed_at: isoTs.nullable().optional(),
+  })
+  .passthrough();
 export type IssueRecord = z.infer<typeof IssueRecord>;
 
 /** Handoff record schema (spec §6.7): a one-shot baton pass between agents. */

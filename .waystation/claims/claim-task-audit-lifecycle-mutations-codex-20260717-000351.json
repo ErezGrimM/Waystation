@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-lifecycle-mutations-codex-20260717-000351",
+  "task": "task-audit-lifecycle-mutations",
+  "agent": "codex",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-17T00:03:51+03:00",
+  "released_at": null,
+  "completed_at": null
+}
