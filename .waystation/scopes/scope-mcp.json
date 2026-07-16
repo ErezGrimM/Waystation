@@ -1,0 +1,14 @@
+{
+  "id": "scope-mcp",
+  "name": "MCP server",
+  "paths": ["src/mcp/", "src/mcp/server.ts"],
+  "owner": null,
+  "default_prompts": ["prompt-waystation-v1"],
+  "rules": [
+    "MCP tools are thin wrappers over core logic and shared mutation inputs.",
+    "Keep stdio protocol output free of logs and unstructured diagnostics.",
+    "Return the same CommandResult semantics and diagnostic codes as CLI and dashboard surfaces."
+  ],
+  "default_tests": ["bun test test/mcp.test.ts"],
+  "notes": "Separates MCP coordination from CLI and core scopes so bounded surface tasks can proceed independently."
+}

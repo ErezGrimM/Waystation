@@ -1,7 +1,7 @@
 {
   "id": "task-audit-project-validation-sync",
   "title": "Add semantic project validation and deterministic sync",
-  "status": "todo",
+  "status": "ready",
   "priority": 2,
   "scope": "scope-core",
   "path_hints": [
@@ -14,12 +14,11 @@
   ],
   "prompts": ["prompt-waystation-v1"],
   "dependencies": [
-    "task-audit-correct-readiness-claims",
-    "task-audit-shared-ledger-resolution",
-    "task-audit-lifecycle-mutations"
+    "task-audit-lifecycle-surfaces",
+    "task-audit-generated-artifact-policy"
   ],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T16:47:00+03:00",
   "closed_at": null,
   "description": "Extend health checks beyond record shape and make routine regeneration reliable. Default validation should report readiness inconsistencies. Project validation should check safe literal path hints and generated artifact freshness using the caller project root. A sync command should validate canonical records, rebuild the index, regenerate selected reports/views, and verify project health in a deterministic order.",
   "acceptance": [
@@ -29,8 +28,9 @@
     "Every generated Markdown artifact ends with exactly one LF and passes byte-level regression tests plus git diff --check.",
     "Reindex JSON and human output report claims_total and claims_active separately.",
     "waystation sync [--views] stops on canonical errors, then reindexes, regenerates, and runs project validation in order.",
+    "Sync uses a consistent canonical snapshot or detects concurrent canonical changes and refuses to certify mixed derived output.",
     "Two sync runs without canonical changes produce byte-identical derived output and no unexplained drift."
   ],
   "commits": [],
-  "notes": "Keep generated artifacts derived and idempotent. Do not make validation rewrite files. Glob interpretation for path_hints can be deferred; the first version should define and test literal paths clearly."
+  "notes": "The generated-artifact policy decision precedes this task and is an input to freshness and sync behavior. Keep validation read-only, generated artifacts derived and idempotent, and literal-path semantics explicit."
 }

@@ -2,11 +2,19 @@
 
 # Blocked
 
-- `task-audit-corrections-release` — waiting on: task-audit-lifecycle-surfaces, task-audit-project-validation-sync, task-audit-ranking-generated-policy
-- `task-audit-lifecycle-mutations` — waiting on: task-audit-correct-readiness-claims
-- `task-audit-lifecycle-surfaces` — waiting on: task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
-- `task-audit-project-validation-sync` — waiting on: task-audit-correct-readiness-claims, task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
-- `task-audit-ranking-generated-policy` — waiting on: task-audit-project-validation-sync
+- `task-audit-corrections-release` — waiting on: task-phase10-binary-distribution-notes
+- `task-audit-generated-artifact-policy` — waiting on: task-audit-correct-readiness-claims
+- `task-audit-lifecycle-cli-surface` — waiting on: task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
+- `task-audit-lifecycle-dashboard-surface` — waiting on: task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
+- `task-audit-lifecycle-mcp-surface` — waiting on: task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
+- `task-audit-lifecycle-mutations` — waiting on: task-audit-mutation-recovery
+- `task-audit-lifecycle-surfaces` — waiting on: task-audit-lifecycle-cli-surface, task-audit-lifecycle-mcp-surface, task-audit-lifecycle-dashboard-surface
+- `task-audit-mutation-recovery` — waiting on: task-audit-shared-ledger-resolution, task-audit-generated-artifact-policy
+- `task-audit-project-validation-sync` — waiting on: task-audit-lifecycle-surfaces, task-audit-generated-artifact-policy
+- `task-audit-ranking-policy` — waiting on: task-audit-corrections-release
 - `task-audit-shared-ledger-resolution` — waiting on: task-audit-correct-readiness-claims
-- `task-operational-audit-corrections` — waiting on: task-audit-corrections-release
+- `task-operational-audit-corrections` — waiting on: task-audit-ranking-policy
+- `task-phase10-binary-distribution-notes` — waiting on: task-phase10-mcp-launch-examples
+- `task-phase10-mcp-launch-examples` — waiting on: task-phase10-release-checklist
+- `task-phase10-release-checklist` — waiting on: task-audit-project-validation-sync
 

@@ -1,7 +1,7 @@
 {
   "id": "task-audit-shared-ledger-resolution",
   "title": "Make ledger resolution explicit and support shared worktree coordination",
-  "status": "todo",
+  "status": "ready",
   "priority": 1,
   "scope": "scope-git",
   "path_hints": [
@@ -18,7 +18,7 @@
   "prompts": ["prompt-waystation-v1"],
   "dependencies": ["task-audit-correct-readiness-claims"],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
   "closed_at": null,
   "description": "Stop treating an unrelated directory as an empty Waystation project and add an explicit shared-ledger operating mode for agents in separate Git worktrees. Resolve the ledger by explicit root, environment override, then upward discovery. Keep ledger storage/locking separate from the invoking agent's Git branch and worktree context so a shared claim records the real caller.",
   "acceptance": [
@@ -30,5 +30,5 @@
     "ADR-0003 and user documentation distinguish checkout-local default behavior from opt-in shared-ledger coordination."
   ],
   "commits": [],
-  "notes": "Do not automatically discover or mutate the main worktree ledger; that could silently dirty another checkout. Keep shared coordination explicit and local-first, with no daemon or hosted service."
+  "notes": "This task runs before mutation recovery and lifecycle expansion so later core work receives a stable ledger-root/caller-context contract. Do not automatically discover or mutate the main worktree ledger; keep shared coordination explicit and local-first."
 }

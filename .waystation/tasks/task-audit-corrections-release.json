@@ -1,7 +1,7 @@
 {
   "id": "task-audit-corrections-release",
   "title": "Migrate, document, verify, and release operational audit corrections",
-  "status": "todo",
+  "status": "ready",
   "priority": 2,
   "scope": "scope-cli",
   "path_hints": [
@@ -18,23 +18,19 @@
     "graphify-out/"
   ],
   "prompts": ["prompt-waystation-v1"],
-  "dependencies": [
-    "task-audit-lifecycle-surfaces",
-    "task-audit-project-validation-sync",
-    "task-audit-ranking-generated-policy"
-  ],
+  "dependencies": ["task-phase10-binary-distribution-notes"],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
   "closed_at": null,
   "description": "Complete the compatibility and release work for the operational audit corrections. Provide a way to identify dependency-satisfied todo tasks for intentional promotion, reconcile every lifecycle and shared-ledger document, regenerate derived state, run full source and binary verification, update the knowledge graph, and publish the required version bump.",
   "acceptance": [
-    "A migration audit command or documented query lists dependency-satisfied todo tasks without promoting them automatically.",
+    "A migration audit command or documented query lists dependency-satisfied todo tasks without promoting them automatically, and the program's own task DAG reaches this release gate without hand-editing statuses.",
     "AGENTS.md, README, agentledger spec, migration guide, roadmap, ADR-0003, CLI help, MCP descriptions, and dashboard guidance agree on status/readiness and shared-ledger behavior.",
     "Reports/views regenerate cleanly and waystation validate plus project validation report no unexplained errors or warnings.",
     "bun test, bun run typecheck, bun run check, fresh-ledger smoke tests, CLI/MCP/dashboard parity tests, and cross-worktree concurrency tests pass.",
     "graphify update . is run and the resulting graph confirms all surfaces depend on shared core readiness, resolution, and mutation paths.",
     "The version is bumped consistently in package.json, CLI, and MCP according to project policy; waystation.exe is rebuilt and smoke-tested.",
-    "Completion messages, task finish operations, reindexing, report generation, validation, commit, and push follow the dogfooding workflow."
+    "Completion messages, task finish operations, reindexing, report generation, validation, and commit follow the dogfooding workflow; push is required only when an authenticated remote is available."
   ],
   "commits": [],
   "notes": "This is the release gate, not a place to hide unfinished implementation. Do not mark it done until every dependency and complete build/verify checklist is green."

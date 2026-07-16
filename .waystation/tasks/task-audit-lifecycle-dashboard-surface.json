@@ -1,0 +1,30 @@
+{
+  "id": "task-audit-lifecycle-dashboard-surface",
+  "title": "Expose lifecycle mutations through the dashboard",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-dashboard",
+  "path_hints": [
+    "src/dashboard/server.ts",
+    "src/dashboard/client/",
+    "test/dashboard.test.ts"
+  ],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": [
+    "task-audit-shared-ledger-resolution",
+    "task-audit-lifecycle-mutations"
+  ],
+  "created_at": "2026-07-16T16:37:46+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
+  "closed_at": null,
+  "description": "Add dashboard API and UI controls for the finalized task and issue lifecycle operations while displaying declared status, derived readiness, blockers, rich issue context, and the selected ledger root.",
+  "acceptance": [
+    "Dashboard API routes expose task create, update, set-status, and reopen plus issue show, update, and close as thin core wrappers.",
+    "Task and issue detail views display declared status, derived readiness/blockers, lifecycle actions, and preserved issue context.",
+    "Controls disable or explain invalid actions and render coded CommandResult errors safely.",
+    "Dashboard tests cover API mutation effects, client error states, root disclosure, and representative invalid transitions.",
+    "Neither dashboard server routes nor client code writes canonical JSON directly."
+  ],
+  "commits": [],
+  "notes": "Dashboard UX polish unrelated to lifecycle correctness remains Phase 11."
+}

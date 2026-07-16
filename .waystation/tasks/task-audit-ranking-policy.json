@@ -1,0 +1,28 @@
+{
+  "id": "task-audit-ranking-policy",
+  "title": "Decide equal-priority task ranking policy",
+  "status": "ready",
+  "priority": 4,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/tasks.ts",
+    "src/index/taskIndex.ts",
+    "docs/",
+    "adr/"
+  ],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-audit-corrections-release"],
+  "created_at": "2026-07-16T16:37:46+03:00",
+  "updated_at": "2026-07-16T16:47:00+03:00",
+  "closed_at": null,
+  "description": "Resolve the lower-priority question of how equal-priority actionable tasks should be ordered. This task records a product decision only; it does not expand the operational correctness release with a new schema and UI field. If explicit rank is justified, create a separately phased implementation task with migration and surface requirements.",
+  "acceptance": [
+    "An ADR compares priority-plus-id, priority-plus-created_at-plus-id, and optional explicit rank using deterministic behavior, migration cost, and user-control evidence.",
+    "The selected current ordering is documented consistently for in-memory and index-backed queries.",
+    "If explicit rank is accepted, a new implementation task is created with schema, mutation, CLI, MCP, dashboard, migration, and deterministic-test acceptance criteria.",
+    "The decision records why no deferred status is added unless todo-as-backlog proves insufficient after the readiness correction.",
+    "This decision runs after and does not block the correction release; the umbrella milestone waits for the decision record."
+  ],
+  "commits": [],
+  "notes": "Separated from generated-artifact policy because the two decisions govern different systems and critical paths. It follows the correction release so optional product strategy cannot delay correctness."
+}

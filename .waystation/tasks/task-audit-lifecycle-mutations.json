@@ -1,7 +1,7 @@
 {
   "id": "task-audit-lifecycle-mutations",
   "title": "Add safe core task and issue lifecycle mutations",
-  "status": "todo",
+  "status": "ready",
   "priority": 1,
   "scope": "scope-core",
   "path_hints": [
@@ -14,19 +14,21 @@
     "test/"
   ],
   "prompts": ["prompt-waystation-v1"],
-  "dependencies": ["task-audit-correct-readiness-claims"],
+  "dependencies": ["task-audit-mutation-recovery"],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
   "closed_at": null,
-  "description": "Remove the need for routine hand edits of canonical task and issue JSON. Add patch-safe core operations for task creation, metadata updates, explicit status transitions, and terminal reopen, plus issue update and close. Expand IssueRecord so debugging context is typed and survives parsing, indexing, views, and mutation round trips. All mutations must preserve the single locked atomic write path and append audited events.",
+  "description": "Remove the need for routine hand edits of canonical task and issue JSON. Add patch-safe core operations for task creation, metadata updates, explicit status transitions, terminal reopen, issue update, and issue close on top of the recoverable mutation protocol. Expand IssueRecord so debugging context survives parsing, indexing, views, and mutation round trips. Define claim, timestamp, and event effects for every lifecycle transition before exposing the operations through any surface.",
   "acceptance": [
     "Core exposes createTask, updateTask, explicit task transition, and reopenTask operations with Zod input schemas.",
     "Generic task updates cannot change id, status, creation/close timestamps, or claim state.",
-    "A documented transition matrix governs todo, ready, in_progress, blocked, review, done, and wont_do; reopening done/wont_do requires an explicit todo or ready target.",
+    "A documented task transition matrix governs todo, ready, in_progress, blocked, review, done, and wont_do; entering in_progress requires a claim and reopening done/wont_do requires an explicit todo or ready target.",
+    "Every task transition specifies active-claim ownership and disposition, updated_at/closed_at behavior, and emitted events; no successful operation leaves an active claim on a task outside in_progress.",
     "IssueRecord models description, priority, evidence, expected, actual, acceptance, resolution, notes, source, and lifecycle timestamps while preserving additional unknown fields.",
-    "Issue update and close operations atomically update timestamps/resolution and append events.",
+    "A documented issue status/terminal-state matrix consistent with the spec and existing records governs update and close behavior before those operations are implemented.",
+    "Issue update and close operations use the recoverable mutation path, update timestamps/resolution consistently, and append audited events.",
     "Existing issue fixtures and rich unknown fields survive load-update-write round trips without data loss.",
-    "Every accepted or rejected mutation has tests for locking, atomic writes, events, diagnostics, and unchanged-ledger failure behavior."
+    "Every accepted or rejected mutation has tests for locking, recovery, claim coherence, events, diagnostics, and unchanged-ledger failure behavior."
   ],
   "commits": [],
   "notes": "This resolves the contradiction between the single-write-path invariant and instructions that currently require direct JSON edits. Keep surface-specific parsing out of core and raw stack traces out of results."

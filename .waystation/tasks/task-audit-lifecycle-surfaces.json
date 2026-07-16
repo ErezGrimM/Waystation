@@ -1,34 +1,33 @@
 {
   "id": "task-audit-lifecycle-surfaces",
-  "title": "Expose task and issue lifecycle operations through all surfaces",
-  "status": "todo",
+  "title": "Verify lifecycle parity across CLI, MCP, and dashboard",
+  "status": "ready",
   "priority": 2,
   "scope": "scope-cli",
   "path_hints": [
-    "src/cli/index.ts",
-    "src/mcp/server.ts",
-    "src/dashboard/server.ts",
-    "src/dashboard/client/",
+    "src/core/",
+    "src/cli/",
+    "src/mcp/",
+    "src/dashboard/",
     "test/mcp.test.ts",
     "test/"
   ],
   "prompts": ["prompt-waystation-v1"],
   "dependencies": [
-    "task-audit-shared-ledger-resolution",
-    "task-audit-lifecycle-mutations"
+    "task-audit-lifecycle-cli-surface",
+    "task-audit-lifecycle-mcp-surface",
+    "task-audit-lifecycle-dashboard-surface"
   ],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
   "closed_at": null,
-  "description": "Surface the new core mutations without duplicating lifecycle logic. Add scriptable CLI commands for task and issue creation, updates, transitions, reopen, and close; add equivalent MCP tools and dashboard API/UI actions; and ensure every layer returns the same CommandResult semantics and canonical records.",
+  "description": "Integration gate for the independently implemented CLI, MCP, and dashboard lifecycle surfaces. Prove that all three remain thin wrappers over the same core readiness, resolution, recovery, and mutation contracts and that equivalent operations produce equivalent canonical effects.",
   "acceptance": [
-    "CLI provides task create, task update, task set-status, and task reopen with JSON output and coded diagnostics.",
-    "CLI provides issue list, show, create, update, and close with JSON output and coded diagnostics.",
-    "MCP and dashboard expose equivalent operations as thin wrappers over core functions.",
-    "Dashboard task and issue details display declared status, derived readiness/blockers, rich issue context, and actionable lifecycle controls.",
+    "CLI, MCP, and dashboard expose the agreed task and issue lifecycle operations as thin wrappers over core functions.",
     "Parity tests show equivalent canonical JSON, events, timestamps, and diagnostic codes for the same operation through CLI, MCP, and dashboard.",
+    "Parity tests cover claim-dependent transitions, recovery diagnostics, missing ledgers, unmet dependencies, duplicates, reopen, and issue close.",
     "No CLI, MCP, dashboard route, or client writes canonical JSON directly."
   ],
   "commits": [],
-  "notes": "Although this task uses scope-cli as its primary coordination scope, it intentionally spans all thin surfaces. Coordinate dashboard files before claiming if another dashboard task is active."
+  "notes": "This is an integration gate, not the implementation container for all surfaces. Keep fixes in shared core or the owning surface task and use this task for parity gaps only."
 }

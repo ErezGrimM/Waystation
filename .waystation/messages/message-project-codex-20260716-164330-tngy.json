@@ -1,0 +1,10 @@
+{
+  "id": "message-project-codex-20260716-164330-tngy",
+  "thread": "project",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "note",
+  "body": "Revised the operational audit correction plan after comparing the task DAG with docs/operational-audit-corrections-plan.md. The executable graph now predeclares gated work as ready, adds crash-recoverable multi-file mutations, splits CLI/MCP/dashboard surface work, decides generated-artifact policy before sync, moves ranking off the release path, and serializes Phase 10 behind corrected behavior.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T16:43:30+03:00"
+}

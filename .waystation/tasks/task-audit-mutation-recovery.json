@@ -1,0 +1,37 @@
+{
+  "id": "task-audit-mutation-recovery",
+  "title": "Make multi-file mutations crash-recoverable",
+  "status": "ready",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/mutate.ts",
+    "src/core/issue.ts",
+    "src/core/handoff.ts",
+    "src/core/messages.ts",
+    "src/core/validate.ts",
+    "src/core/result.ts",
+    "adr/",
+    "test/"
+  ],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": [
+    "task-audit-shared-ledger-resolution",
+    "task-audit-generated-artifact-policy"
+  ],
+  "created_at": "2026-07-16T16:37:46+03:00",
+  "updated_at": "2026-07-16T16:47:00+03:00",
+  "closed_at": null,
+  "description": "Close the remaining high-priority crash-consistency gap from audit H4 before adding more lifecycle mutations. Design and implement a recoverable protocol for canonical operations that update multiple records and events so interruption at any write boundary is detected and deterministically completed or rolled back before later mutations proceed.",
+  "acceptance": [
+    "An ADR selects a durable journal/replay or staged-manifest protocol and documents failure points, recovery ownership, and event ordering.",
+    "A shared core mutation primitive records durable intent under the ledger lock, applies record/event writes, and clears the intent only after the operation is durable.",
+    "Recovery runs under the same ledger lock, is idempotent, and occurs before a new canonical mutation can proceed.",
+    "Claim, release, finish, issue creation, handoff creation, and message posting use the recoverable primitive or have a documented proof that a single write is sufficient.",
+    "Crash-injection tests interrupt each multi-write operation after every durable boundary and prove recovery leaves coherent records, claims, events, and timestamps.",
+    "Validation reports unrecoverable or malformed mutation intent with coded diagnostics and no raw stack leakage."
+  ],
+  "commits": [],
+  "notes": "This task addresses the explicitly open portion of H4 in docs/audit-2026-07-08.md. Per-file atomic rename alone does not satisfy this acceptance criterion."
+}

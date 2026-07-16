@@ -13,9 +13,9 @@
   "prompts": [
     "prompt-waystation-v1"
   ],
-  "dependencies": [],
+  "dependencies": ["task-phase10-mcp-launch-examples"],
   "created_at": "2026-07-16T14:00:35+03:00",
-  "updated_at": "2026-07-16T14:00:35+03:00",
+  "updated_at": "2026-07-16T16:37:46+03:00",
   "closed_at": null,
   "description": "Clarify how compiled Waystation binaries should be named, stored, copied, and handed to another project or local agent. Capture the current local distribution convention without accidentally committing ignored executable artifacts.",
   "acceptance": [
@@ -26,5 +26,5 @@
     "The guidance includes a simple copy/install example for another local project."
   ],
   "commits": [],
-  "notes": "Earlier local packaging used dist/waystation-latest with the executable and skill, but that folder is intentionally ignored. Keep this generic enough for new projects."
+  "notes": "Final Phase 10 documentation slice before the correction release gate. Earlier local packaging used dist/waystation-latest, but the guidance must remain generic and consistent with the finalized checklist and MCP examples."
 }

@@ -1,0 +1,30 @@
+{
+  "id": "task-operational-audit-plan-document",
+  "title": "Write the operational audit correction implementation plan",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "docs/operational-audit-corrections-plan.md",
+    ".waystation/tasks/task-audit-",
+    ".waystation/tasks/task-operational-audit-corrections.json"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T16:12:05+03:00",
+  "updated_at": "2026-07-16T16:15:15+03:00",
+  "closed_at": "2026-07-16T16:15:15+03:00",
+  "description": "Create a durable, hand-authored Markdown plan for the v0.0.3 operational audit correction program. The document should explain the architecture, behavior changes, implementation sequence, migrations, risks, tests, and release gates while linking to the canonical Waystation task records. Waystation remains the source of truth for dependencies, status, claims, and progress.",
+  "acceptance": [
+    "docs/operational-audit-corrections-plan.md explains the audit findings, goals, non-goals, and governing invariants.",
+    "The plan defines declared status versus derived readiness, dependency satisfaction, claim eligibility, and the intended lifecycle transition model.",
+    "The plan covers shared-ledger resolution, task/issue mutations, issue schema expansion, validation/sync, generated artifacts, ranking policy, migration, and release verification.",
+    "Each implementation phase links to its canonical Waystation task id and accurately reflects the dependency graph.",
+    "The document states that Waystation task records—not the Markdown checklist—are authoritative for progress.",
+    "The ledger is reindexed, reports/views regenerated, and waystation validate remains clean after the documentation task is finished."
+  ],
+  "commits": [],
+  "notes": "Planning-document task only. Do not claim or begin the implementation tasks while completing this document."
+}
