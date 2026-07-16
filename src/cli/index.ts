@@ -12,7 +12,7 @@ import { createHandoff, getHandoff } from "../core/handoff.ts";
 import { initLedger } from "../core/init.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../core/mutate.ts";
-import { findProjectRoot, ledgerPaths } from "../core/paths.ts";
+import { findProjectRoot, LedgerResolutionError, ledgerPaths } from "../core/paths.ts";
 import { getPrompt, loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
@@ -26,7 +26,16 @@ const program = new Command();
 program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
+  .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
   .version("0.0.3");
+
+// Keep root selection in the core resolver, but make the CLI's explicit flag
+// available to every subcommand without duplicating root plumbing.
+program.hook("preAction", (_command, action) => {
+  if (action.name() === "init") return;
+  const root = action.optsWithGlobals().root as string | undefined;
+  if (root) process.env.WAYSTATION_ROOT = root;
+});
 
 program
   .command("init")
@@ -147,6 +156,7 @@ task
         const claim = await claimTask(findProjectRoot(), id, opts.agent, new Date(), {
           branch: opts.branch,
           worktree: opts.worktree,
+          caller: process.cwd(),
         });
         return `claimed ${id} as ${claim.id}`;
       });
@@ -546,7 +556,9 @@ async function runMutation(json: boolean | undefined, fn: () => Promise<string>)
     emitResult(okResult({ message: msg }), json, () => process.stdout.write(`${msg}\n`));
   } catch (e) {
     const code =
-      e instanceof MutationError || e instanceof RecordError ? e.code : "unexpected_error";
+      e instanceof MutationError || e instanceof RecordError || e instanceof LedgerResolutionError
+        ? e.code
+        : "unexpected_error";
     emitResult(
       toResult(null, [diag(code as never, { message: (e as Error).message })]),
       json,
@@ -662,7 +674,11 @@ try {
 } catch (err) {
   // Convert ANY error into a coded diagnostic line (no raw stack dump).
   const code =
-    err instanceof RecordError || err instanceof MutationError ? err.code : "unexpected_error";
+    err instanceof RecordError ||
+    err instanceof MutationError ||
+    err instanceof LedgerResolutionError
+      ? err.code
+      : "unexpected_error";
   const spec = code in CODES ? CODES[code as keyof typeof CODES] : undefined;
   process.stderr.write(`error [${code}]: ${(err as Error).message}\n`);
   if (spec?.hint) process.stderr.write(`  hint: ${spec.hint}\n`);

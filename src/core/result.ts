@@ -141,6 +141,12 @@ export const CODES = {
     hint: "Check the task id (waystation task list).",
     retryable: false,
   },
+  ledger_not_found: {
+    severity: "error",
+    message: "No .waystation ledger was found.",
+    hint: "Run `waystation init`, pass --root <ledger-root>, or set WAYSTATION_ROOT.",
+    retryable: false,
+  },
   not_found: {
     severity: "error",
     message: "Record not found.",

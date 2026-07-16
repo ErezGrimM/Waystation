@@ -31,6 +31,7 @@ import {
 } from "../src/core/messages.ts";
 import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
 import { activeClaimOverlaps } from "../src/core/overlap.ts";
+import { LedgerResolutionError, resolveLedgerRoot } from "../src/core/paths.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
@@ -112,6 +113,70 @@ describe("audit fixes", () => {
   });
 });
 
+describe("ledger root resolution", () => {
+  test("uses explicit root, then WAYSTATION_ROOT, then caller discovery", () => {
+    const parent = mkdtempSync(join(tmpdir(), "waystation-root-resolution-"));
+    tmpRoots.push(parent);
+    const discovered = join(parent, "discovered");
+    const configured = join(parent, "configured");
+    const nested = join(discovered, "nested", "deeper");
+    mkdirSync(join(discovered, ".waystation"), { recursive: true });
+    mkdirSync(join(configured, ".waystation"), { recursive: true });
+    mkdirSync(nested, { recursive: true });
+
+    expect(resolveLedgerRoot({ caller: nested })).toBe(discovered);
+    expect(resolveLedgerRoot({ caller: nested, env: { WAYSTATION_ROOT: configured } })).toBe(
+      configured,
+    );
+    expect(
+      resolveLedgerRoot({
+        caller: nested,
+        explicitRoot: configured,
+        env: { WAYSTATION_ROOT: discovered },
+      }),
+    ).toBe(configured);
+  });
+
+  test("reports ledger_not_found instead of silently using the caller directory", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-no-ledger-"));
+    tmpRoots.push(root);
+    expect(() => resolveLedgerRoot({ caller: root })).toThrow(LedgerResolutionError);
+    try {
+      resolveLedgerRoot({ caller: root });
+    } catch (error) {
+      expect((error as LedgerResolutionError).code).toBe("ledger_not_found");
+    }
+  });
+
+  test("CLI rejects non-init commands without a ledger using ledger_not_found", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-cli-no-ledger-"));
+    tmpRoots.push(root);
+    const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
+    const proc = Bun.spawnSync({ cmd: [process.execPath, "run", cli, "task", "next"], cwd: root });
+    expect(proc.exitCode).not.toBe(0);
+    expect(proc.stderr.toString()).toContain("ledger_not_found");
+  });
+
+  test("shared-ledger claims preserve the caller worktree and permit exactly one winner", async () => {
+    const ledgerRoot = fixtureRoot([{ ...D, id: "task-shared" }]);
+    const caller = mkdtempSync(join(tmpdir(), "waystation-caller-worktree-"));
+    tmpRoots.push(caller);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: caller });
+
+    const results = await Promise.allSettled([
+      claimTask(ledgerRoot, "task-shared", "first", undefined, { caller }),
+      claimTask(ledgerRoot, "task-shared", "second", undefined, { caller }),
+    ]);
+    const claims = results.filter(
+      (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof claimTask>>> =>
+        result.status === "fulfilled",
+    );
+    expect(claims).toHaveLength(1);
+    expect(claims[0]?.value.worktree?.replaceAll("\\", "/")).toBe(caller.replaceAll("\\", "/"));
+    expect(loadClaims(ledgerRoot).filter((claim) => claim.status === "active")).toHaveLength(1);
+  });
+});
+
 describe("git state", () => {
   test("returns a coded error outside a git repository", () => {
     const root = mkdtempSync(join(tmpdir(), "waystation-non-git-"));
@@ -154,6 +219,7 @@ describe("git state", () => {
     const root = mkdtempSync(join(tmpdir(), "waystation-git-cli-"));
     tmpRoots.push(root);
     Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    mkdirSync(join(root, ".waystation"), { recursive: true });
     const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
     const p = Bun.spawnSync({
       cmd: [process.execPath, "run", cli, "git", "status", "--json"],

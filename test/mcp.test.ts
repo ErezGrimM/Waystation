@@ -159,6 +159,7 @@ describe("mcp server integration", () => {
     const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
     const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
+    expect(result.data.ledgerRoot).toBe(testRoot);
     expect(result.data.total).toBe(1);
     expect(result.data.counts.ready).toBe(1);
 

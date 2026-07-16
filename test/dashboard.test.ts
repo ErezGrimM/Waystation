@@ -51,6 +51,7 @@ describe("dashboard API server", () => {
 
     const body = await res.json();
     expect(body.ok).toBe(true);
+    expect(body.data.ledgerRoot).toBe(testRoot);
     expect(body.data.total).toBe(1);
     expect(body.data.counts.ready).toBe(1);
     expect(body.data.next.id).toBe("test-task");

@@ -16,6 +16,7 @@ import {
   MutationError,
   releaseTask,
 } from "../core/mutate.ts";
+import { resolveLedgerRoot } from "../core/paths.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, diag, okResult, toResult } from "../core/result.ts";
@@ -108,7 +109,12 @@ function originGuard(url: string, method: string, origin: string | undefined): R
   return null;
 }
 
-export function createApp(root: string, distDir?: string): Hono {
+/** Create a dashboard bound to one validated ledger root. */
+export function createApp(root?: string, distDir?: string): Hono {
+  return createAppAtRoot(resolveLedgerRoot({ explicitRoot: root }), distDir);
+}
+
+function createAppAtRoot(root: string, distDir?: string): Hono {
   const app = new Hono();
 
   app.use("*", async (c, next) => {
@@ -127,7 +133,7 @@ export function createApp(root: string, distDir?: string): Hono {
         counts[t.status] = (counts[t.status] ?? 0) + 1;
       }
       const next = nextTask(tasks);
-      return json(okResult({ total: tasks.length, counts, next }));
+      return json(okResult({ ledgerRoot: root, total: tasks.length, counts, next }));
     } catch (e) {
       return json(catchDiag(e));
     }

@@ -24,6 +24,8 @@ export class MutationError extends Error {
 export interface ClaimGitContext {
   branch?: string | null;
   worktree?: string | null;
+  /** Invocation worktree; never changes which ledger is locked or written. */
+  caller?: string;
 }
 
 export interface FinishTaskOptions {
@@ -49,8 +51,11 @@ function writeTask(file: string, task: TaskRecord): void {
   writeJsonAtomic(file, task);
 }
 
-function claimGitContext(root: string, override: ClaimGitContext = {}): Required<ClaimGitContext> {
-  const state = getGitState(root);
+function claimGitContext(
+  caller: string,
+  override: ClaimGitContext = {},
+): Required<Omit<ClaimGitContext, "caller">> {
+  const state = getGitState(caller);
   const derived = state.data;
   return {
     branch: override.branch !== undefined ? override.branch : (derived?.branch ?? null),
@@ -142,7 +147,9 @@ export async function claimTask(
       );
     }
     const ts = nowIso(now);
-    const context = claimGitContext(root, gitContext);
+    // The selected ledger may live in a different worktree. Record the caller
+    // context, while the lock and records remain rooted at the selected ledger.
+    const context = claimGitContext(gitContext?.caller ?? root, gitContext);
     const claim: ClaimRecord = {
       id: `claim-${safeIdPart(id)}-${safeIdPart(agent)}-${idStamp(now)}`,
       task: id,

@@ -12,6 +12,7 @@ import {
   MutationError,
   releaseTask,
 } from "../core/mutate.ts";
+import { resolveLedgerRoot } from "../core/paths.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, type Diagnostic, diag, okResult, toResult } from "../core/result.ts";
@@ -30,7 +31,12 @@ function catchDiag(e: unknown, fallbackCode: string = "unexpected_error"): Diagn
   return diag(fallbackCode as never, { message: (e as Error).message });
 }
 
-export function buildServer(root: string): McpServer {
+/** Build an MCP server bound to one validated ledger root. */
+export function buildServer(root?: string): McpServer {
+  return buildServerAtRoot(resolveLedgerRoot({ explicitRoot: root }));
+}
+
+function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer({ name: "waystation", version: "0.0.3" });
 
   // ── read tools ──
@@ -51,7 +57,9 @@ export function buildServer(root: string): McpServer {
         priority: t.priority,
         status: t.status,
       }));
-      return toContent(okResult({ total: tasks.length, counts, ready: readyIds }));
+      return toContent(
+        okResult({ ledgerRoot: root, total: tasks.length, counts, ready: readyIds }),
+      );
     },
   );
 

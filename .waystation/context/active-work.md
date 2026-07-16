@@ -3,10 +3,9 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 
 ## Ready
-- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 - `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 
 ## Coordination warnings

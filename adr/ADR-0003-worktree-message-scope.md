@@ -12,9 +12,9 @@ for the same repository, each checked out at a different filesystem path. In
 Waystation today, the ledger lives inside the checkout as `.waystation/`, and
 messages are one JSON record per file under `.waystation/messages/`.
 
-That means two agents working in separate worktrees each write to that
-worktree's local copy of the ledger. Their messages, claims, and events become
-visible to each other when the branches or worktrees are merged, not instantly.
+That means a normal invocation in a worktree writes to that checkout's local
+copy of the ledger. For coordinated work, an agent may deliberately select one
+other checkout's ledger as the shared coordination point.
 
 The project needed to decide whether V1 should keep this checkout-local model
 or introduce a shared message/ledger location across worktrees.
@@ -48,7 +48,7 @@ Neutral:
 
 - This treats Waystation as an operational ledger, not a chat transport.
 
-### Option B: Shared message store across worktrees
+### Option B: Opt-in shared ledger across worktrees
 
 Good:
 
@@ -57,10 +57,12 @@ Good:
 
 Bad:
 
-- Requires choosing a shared storage location and lifecycle.
-- Introduces cross-worktree locking and failure modes.
-- Makes portability and cleanup harder.
-- Pulls Waystation toward a daemon/chat-server design, which is a V1 non-goal.
+- Requires an explicit root selection and clear disclosure of the selected
+  ledger.
+- Introduces cross-worktree locking and failure modes that the file lock must
+  handle.
+- Must keep the caller's branch/worktree context distinct from the selected
+  ledger location.
 
 Neutral:
 
@@ -68,34 +70,36 @@ Neutral:
 
 ## Decision
 
-V1 keeps messages, claims, handoffs, events, and other ledger records scoped to
-the current checkout/worktree. There is no shared cross-worktree message store
-in Phase 6.
+Waystation defaults to checkout-local coordination: it discovers `.waystation`
+upward from the caller. Shared coordination is opt-in through `--root <path>`
+or `WAYSTATION_ROOT`. Root selection has stable precedence: explicit `--root`,
+then `WAYSTATION_ROOT`, then caller discovery. There is no automatic discovery
+of a main worktree or other sibling checkout.
 
-Phase 6 should read Git branch/worktree state, record branch/worktree context on
-claims where useful, and warn about likely overlap. It should also document that
-cross-worktree messages meet through Git merges, not through live shared inboxes.
+All surfaces disclose the selected ledger root. Mutations lock and write that
+ledger, while claims record Git branch/worktree from the calling checkout. This
+keeps a shared ledger useful without treating it as a daemon or automatic
+cross-worktree transport.
 
 ## Consequences
 
 Positive:
 
-- Phase 6 can proceed without introducing shared storage or a daemon.
-- Existing JSON-record storage and merge behavior remain intact.
-- Worktree integration stays aligned with the V1 non-goal of not becoming chat
-  infrastructure.
+- Checkout-local use remains zero-configuration.
+- Agents that intentionally share a ledger see claims and messages immediately.
+- A single ledger-wide lock prevents two worktrees from claiming the same task.
 
 Negative:
 
-- Separate worktrees can temporarily disagree about messages and claims.
-- Agents may need to merge or inspect another worktree to see its latest ledger
-  records.
+- Shared mode depends on a reachable common filesystem path.
+- Users must opt in deliberately; selecting a missing root is an error rather
+  than a fallback to a different ledger.
 
 Risks:
 
-- Users may expect a global inbox across worktrees.
-- Mitigation: dashboard, CLI, and docs should label the current worktree and
-  make checkout-local behavior explicit.
+- Users may accidentally believe `--root` changes their Git identity.
+- Mitigation: claims preserve and display the caller worktree separately from
+  the ledger root.
 
 ## Implementation Plan
 
@@ -113,8 +117,10 @@ Steps:
 1. Remove the Phase 6 open boundary from the roadmap and link this ADR.
 2. Add Git state detection and worktree path reporting.
 3. Record branch/worktree context on claims when available.
-4. Show checkout/worktree context in CLI, MCP, dashboard, and briefs.
-5. Document that inboxes are checkout-local in V1.
+4. Resolve ledger roots consistently in CLI, MCP, and dashboard, and disclose
+   the selected root.
+5. Record caller branch/worktree context on shared-ledger claims.
+6. Document checkout-local default and opt-in shared coordination.
 
 Patterns to follow:
 
@@ -124,7 +130,7 @@ Patterns to follow:
 
 Patterns to avoid:
 
-- Shared mutable message stores outside `.waystation/`.
+- Automatic discovery of another worktree's ledger or a presumed main checkout.
 - Background daemons.
 - Automatic branch/worktree/PR creation in V1.
 
@@ -132,7 +138,8 @@ Patterns to avoid:
 
 - [ ] `docs/roadmap.md` links this ADR from Phase 6.
 - [ ] Phase 6 git-state surfaces identify the current worktree/checkout.
-- [ ] Tests cover non-git and git-worktree-aware behavior where feasible.
+- [ ] Tests cover resolver precedence, missing-ledger errors, and concurrent
+  shared-ledger claims.
 - [ ] `waystation validate` is clean.
 
 ## Waystation Records
