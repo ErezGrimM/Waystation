@@ -2,6 +2,7 @@
 
 # task\-phase10\-fresh\-clone\-smoke — Add fresh\-clone smoke test checklist
 status: done  priority: 2  scope: scope-cli
+commits: ba2dcfa
 
 Define a repeatable fresh\-clone smoke test for Waystation\. The goal is to prove that a clean checkout can install/run dependencies, validate the ledger, rebuild the executable, and exercise the CLI without hidden local state\.
 

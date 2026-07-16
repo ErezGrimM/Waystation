@@ -16,7 +16,7 @@
   ],
   "dependencies": [],
   "created_at": "2026-07-16T14:00:35+03:00",
-  "updated_at": "2026-07-16T14:07:59+03:00",
+  "updated_at": "2026-07-16T14:08:36+03:00",
   "closed_at": "2026-07-16T14:07:59+03:00",
   "description": "Define a repeatable fresh-clone smoke test for Waystation. The goal is to prove that a clean checkout can install/run dependencies, validate the ledger, rebuild the executable, and exercise the CLI without hidden local state.",
   "acceptance": [
@@ -26,6 +26,8 @@
     "Any assumptions about PATH, ignored artifacts, or local-only files are called out.",
     "The checklist is linked from the release packaging docs or README."
   ],
-  "commits": [],
+  "commits": [
+    "ba2dcfa"
+  ],
   "notes": "Prefer documentation first. Add a script only if it fits existing package scripts and does not require external services."
 }
