@@ -32,5 +32,5 @@
     "Two sync runs without canonical changes produce byte-identical derived output and no unexplained drift."
   ],
   "commits": [],
-  "notes": "The generated-artifact policy decision precedes this task and is an input to freshness and sync behavior. Keep validation read-only, generated artifacts derived and idempotent, and literal-path semantics explicit."
+  "notes": "ADR-0005 is the binding generated-artifact policy: track default reports/context and optional task views; validate views only when --views is requested; never freshness-check canonical JSON, events, or context/summary.md. Keep validation read-only, generated artifacts derived and idempotent, and literal-path semantics explicit."
 }

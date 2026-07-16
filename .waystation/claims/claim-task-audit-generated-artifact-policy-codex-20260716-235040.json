@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-generated-artifact-policy-codex-20260716-235040",
+  "task": "task-audit-generated-artifact-policy",
+  "agent": "codex",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-16T23:50:40+03:00",
+  "released_at": null,
+  "completed_at": null
+}

@@ -198,6 +198,12 @@ views/**/*.md          generated one-way from JSON
 archive/               superseded records, kept for history
 ```
 
+Generated ledger Markdown is tracked so a fresh clone remains inspectable.
+`report` writes `STATUS.md` and active/blocked context; `report --views` also
+writes task views. Regenerate the same set you intend to commit. The SQLite
+index, Graphify output, compiled executable, and other build artifacts remain
+ignored. See [ADR-0005](adr/ADR-0005-generated-artifact-policy.md).
+
 ## Principles
 
 - **JSON is canonical**; SQLite is a disposable index; Markdown is generated

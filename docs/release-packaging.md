@@ -14,8 +14,9 @@ Assumptions:
 - Windows PowerShell is the primary shell.
 - Bun is installed at `C:\bun\bin\bun.exe`; it may not be on `PATH`.
 - Canonical ledger state lives in `.waystation/*.json` and `events.jsonl`.
-- `waystation.exe`, `index.sqlite`, and local distribution bundles are ignored
-  build artifacts.
+- `waystation.exe`, `index.sqlite`, Graphify output, and local distribution
+  bundles are ignored build artifacts. Generated ledger Markdown is tracked;
+  `report --views` refreshes the complete tracked output set.
 - Network access is only needed for dependency install or optional GitHub
   integration checks.
 
@@ -65,7 +66,7 @@ Expected result:
 - `waystation.exe --version` prints the CLI version.
 - `task next` either prints the next ready task or `No ready tasks.`.
 - The final `git status --short` contains only intentional source, docs,
-  ledger, or generated Markdown changes. It should not include
+  ledger, or regenerated Markdown changes. It should not include
   `.waystation/index.sqlite` or `waystation.exe`.
 
 Before committing a completed smoke pass, finish the active task, regenerate the

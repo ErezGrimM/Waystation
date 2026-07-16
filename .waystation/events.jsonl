@@ -313,3 +313,6 @@
 {"type":"task.status_changed","task":"task-audit-shared-ledger-resolution","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-16T23:26:06+03:00"}
 {"type":"claim.completed","task":"task-audit-shared-ledger-resolution","claim":"claim-task-audit-shared-ledger-resolution-codex-20260716-232141","actor":"codex","ts":"2026-07-16T23:26:06+03:00"}
 {"type":"task.commits_attached","task":"task-audit-shared-ledger-resolution","commits":["143d4b1"],"actor":"codex","ts":"2026-07-16T23:26:06+03:00"}
+{"type":"task.claimed","task":"task-audit-generated-artifact-policy","claim":"claim-task-audit-generated-artifact-policy-codex-20260716-235040","actor":"codex","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-16T23:50:40+03:00"}
+{"type":"task.status_changed","task":"task-audit-generated-artifact-policy","from":"ready","to":"in_progress","actor":"codex","ts":"2026-07-16T23:50:40+03:00"}
+{"type":"message.posted","message":"message-task-audit-generated-artifact-policy-codex-20260716-235040-ndz6","thread":"task-audit-generated-artifact-policy","from":"codex","to":null,"actor":"codex","ts":"2026-07-16T23:50:40+03:00"}

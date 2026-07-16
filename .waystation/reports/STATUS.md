@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
+_none_
 
 ## In progress
-_none_
+- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 
 ## Review
 _none_

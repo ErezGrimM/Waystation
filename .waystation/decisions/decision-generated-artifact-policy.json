@@ -1,0 +1,17 @@
+{
+  "id": "decision-generated-artifact-policy",
+  "title": "Track generated ledger Markdown and keep indexes disposable",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": "task-audit-generated-artifact-policy",
+  "created_at": "2026-07-16T23:55:00+03:00",
+  "decided_by": "Erez",
+  "context": "Freshness validation and sync need a stable distinction between canonical ledger records, disposable indexes, generated Markdown, and hand-authored context.",
+  "decision": "Track generated STATUS, active-work, blocked, and optional task-view Markdown. Generate reports and context by default, task views only with --views, and validate freshness using the same selection. Keep canonical JSON and hand-authored summary.md outside output freshness checks; keep SQLite, Graphify, executables, logs, and bundles ignored and disposable.",
+  "consequences": [
+    "Fresh clones retain an inspectable status snapshot and task views.",
+    "Generated Markdown must be deterministic and regenerated alongside related canonical changes.",
+    "The sync implementation must preserve the default-versus---views output boundary and keep validation read-only."
+  ],
+  "adr": "adr/ADR-0005-generated-artifact-policy.md"
+}

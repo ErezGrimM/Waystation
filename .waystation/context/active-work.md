@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 
 ## Ready
-- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
+_none_
 
 ## Coordination warnings
 _none_
