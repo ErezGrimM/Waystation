@@ -84,6 +84,23 @@ export function validateLedger(root?: string): CommandResult<null> {
   const seenTaskIds = new Set<string>();
   const seenIssueIds = new Set<string>();
 
+  const mutationIntent = join(paths.ledger, "mutation-intent.json");
+  if (existsSync(mutationIntent)) {
+    try {
+      const intent = JSON.parse(readFileSync(mutationIntent, "utf8")) as Record<string, unknown>;
+      if (
+        intent.version !== 1 ||
+        typeof intent.id !== "string" ||
+        !Array.isArray(intent.writes) ||
+        !Array.isArray(intent.events)
+      ) {
+        throw new Error("invalid shape");
+      }
+    } catch {
+      diags.push(diag("mutation_intent_invalid", { details: { file: "mutation-intent.json" } }));
+    }
+  }
+
   // --- tasks: JSON validity, schema, duplicate ids ---
   for (const name of listJson(paths.tasks)) {
     const file = join(paths.tasks, name);

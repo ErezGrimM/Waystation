@@ -201,6 +201,12 @@ export const CODES = {
     hint: "Another process holds it; retry shortly.",
     retryable: true,
   },
+  mutation_intent_invalid: {
+    severity: "error",
+    message: "The pending mutation journal is malformed or unsafe.",
+    hint: "Restore or remove mutation-intent.json only after inspecting the ledger backup.",
+    retryable: false,
+  },
   claim_status_divergence: {
     severity: "warning",
     message: "An active claim exists on a task that is not in progress.",

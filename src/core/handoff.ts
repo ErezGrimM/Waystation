@@ -4,7 +4,12 @@ import { MutationError } from "./mutate.ts";
 import { ledgerPaths } from "./paths.ts";
 import { loadTasks, RecordError } from "./records.ts";
 import { type HandoffRecord, HandoffRecord as HandoffSchema } from "./schema.ts";
-import { appendEventUnlocked, readJsonFile, withLedgerLock, writeJsonAtomic } from "./store.ts";
+import {
+  applyMutationIntentUnlocked,
+  mutationWrite,
+  readJsonFile,
+  withLedgerLock,
+} from "./store.ts";
 import { idStamp, nowIso, safeIdPart } from "./time.ts";
 
 function handoffsDir(root?: string): string {
@@ -52,15 +57,22 @@ export async function createHandoff(
       risks: input.risks ?? [],
       next_steps: input.next_steps ?? [],
     });
-    writeJsonAtomic(handoffFile(root, record.id), record);
-    appendEventUnlocked(root, {
-      type: "handoff.created",
-      task: input.task,
-      handoff: record.id,
-      from: input.from,
-      to: input.to ?? null,
-      actor: input.from,
-      ts,
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-handoff-${record.id}`,
+      kind: "handoff.create",
+      writes: [mutationWrite(root, handoffFile(root, record.id), record)],
+      events: [
+        {
+          type: "handoff.created",
+          task: input.task,
+          handoff: record.id,
+          from: input.from,
+          to: input.to ?? null,
+          actor: input.from,
+          ts,
+        },
+      ],
     });
     return record;
   });

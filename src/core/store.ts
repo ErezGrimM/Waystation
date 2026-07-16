@@ -10,7 +10,7 @@ import {
   unlinkSync,
   writeSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import lockfile from "proper-lockfile";
 import { ledgerPaths } from "./paths.ts";
 import { RecordError } from "./records.ts";
@@ -173,6 +173,99 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   if (isNew) fsyncDir(paths.ledger);
 }
 
+export interface MutationIntent {
+  version: 1;
+  id: string;
+  kind: string;
+  writes: Array<{ path: string; value: unknown }>;
+  events: Array<Record<string, unknown>>;
+}
+
+function intentFile(root: string): string {
+  return join(ledgerPaths(root).ledger, "mutation-intent.json");
+}
+
+/** Convert a ledger record filename into a safe journal-relative target. */
+export function mutationWrite(
+  root: string,
+  file: string,
+  value: unknown,
+): MutationIntent["writes"][number] {
+  const ledger = resolve(ledgerPaths(root).ledger);
+  const target = resolve(file);
+  const path = relative(ledger, target);
+  if (
+    !path ||
+    path.startsWith("..") ||
+    path.includes(`..${sep}`) ||
+    resolve(ledger, path) !== target
+  ) {
+    throw new Error(`mutation target is outside the ledger: ${file}`);
+  }
+  return { path, value };
+}
+
+function parseIntent(root: string): MutationIntent | null {
+  const file = intentFile(root);
+  if (!existsSync(file)) return null;
+  const value = readJsonFile(file);
+  if (
+    !value ||
+    typeof value !== "object" ||
+    (value as { version?: unknown }).version !== 1 ||
+    typeof (value as { id?: unknown }).id !== "string" ||
+    !Array.isArray((value as { writes?: unknown }).writes) ||
+    !Array.isArray((value as { events?: unknown }).events)
+  ) {
+    throw new RecordError(file, "malformed mutation intent", "mutation_intent_invalid");
+  }
+  return value as MutationIntent;
+}
+
+function eventAlreadyAppended(root: string, mutation: string): boolean {
+  const events = ledgerPaths(root).events;
+  if (!existsSync(events)) return false;
+  return readFileSync(events, "utf8")
+    .split(/\r?\n/)
+    .some((line) => {
+      if (!line) return false;
+      try {
+        return (JSON.parse(line) as { mutation?: unknown }).mutation === mutation;
+      } catch {
+        return false;
+      }
+    });
+}
+
+/** Replay an intent while the ledger lock is held. Safe to repeat after any crash. */
+export function recoverMutationIntentUnlocked(root: string): void {
+  const intent = parseIntent(root);
+  if (!intent) return;
+  const ledger = resolve(ledgerPaths(root).ledger);
+  for (const write of intent.writes) {
+    const file = resolve(ledger, write.path);
+    if (file === ledger || !file.startsWith(`${ledger}${sep}`)) {
+      throw new RecordError(
+        intentFile(root),
+        "mutation intent has unsafe target",
+        "mutation_intent_invalid",
+      );
+    }
+    writeJsonAtomic(file, write.value);
+  }
+  if (!eventAlreadyAppended(root, intent.id)) {
+    for (const event of intent.events) appendEventUnlocked(root, { ...event, mutation: intent.id });
+  }
+  unlinkSync(intentFile(root));
+  fsyncDir(ledger);
+}
+
+/** Persist a replayable multi-file mutation, then apply it to completion. */
+export function applyMutationIntentUnlocked(root: string, intent: MutationIntent): void {
+  writeJsonAtomic(intentFile(root), intent);
+  recoverMutationIntentUnlocked(root);
+}
+
 /** Append an event while holding the ledger lock (for standalone callers). */
 export async function appendEvent(root: string, event: Record<string, unknown>): Promise<void> {
   await withLedgerLock(root, () => appendEventUnlocked(root, event));
@@ -195,6 +288,7 @@ export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T):
     // present now is genuinely orphaned (a concurrent writer's live temp can
     // never be visible while we hold the lock).
     sweepOrphanTmp(root);
+    recoverMutationIntentUnlocked(root);
     return await fn();
   } finally {
     await release();

@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-mutation-recovery-codex-20260716-235239",
+  "task": "task-audit-mutation-recovery",
+  "agent": "codex",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-07-16T23:52:39+03:00",
+  "released_at": null,
+  "completed_at": null
+}

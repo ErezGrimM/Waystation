@@ -320,3 +320,6 @@
 {"type":"task.status_changed","task":"task-audit-generated-artifact-policy","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-16T23:52:27+03:00"}
 {"type":"claim.completed","task":"task-audit-generated-artifact-policy","claim":"claim-task-audit-generated-artifact-policy-codex-20260716-235040","actor":"codex","ts":"2026-07-16T23:52:27+03:00"}
 {"type":"task.commits_attached","task":"task-audit-generated-artifact-policy","commits":["ea74db7"],"actor":"codex","ts":"2026-07-16T23:52:27+03:00"}
+{"type":"task.claimed","task":"task-audit-mutation-recovery","claim":"claim-task-audit-mutation-recovery-codex-20260716-235239","actor":"codex","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-16T23:52:39+03:00"}
+{"type":"task.status_changed","task":"task-audit-mutation-recovery","from":"ready","to":"in_progress","actor":"codex","ts":"2026-07-16T23:52:39+03:00"}
+{"type":"message.posted","message":"message-task-audit-mutation-recovery-codex-20260716-235239-l6e1","thread":"task-audit-mutation-recovery","from":"codex","to":null,"actor":"codex","ts":"2026-07-16T23:52:39+03:00"}

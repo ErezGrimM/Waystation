@@ -36,7 +36,13 @@ import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
-import { activeClaimForTask, loadClaims, loadIssues, sweepTmpDirs } from "../src/core/store.ts";
+import {
+  activeClaimForTask,
+  loadClaims,
+  loadIssues,
+  sweepTmpDirs,
+  withLedgerLock,
+} from "../src/core/store.ts";
 import { indexById, nextTask, readyTasks, taskReadiness } from "../src/core/tasks.ts";
 import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
@@ -174,6 +180,37 @@ describe("ledger root resolution", () => {
     expect(claims).toHaveLength(1);
     expect(claims[0]?.value.worktree?.replaceAll("\\", "/")).toBe(caller.replaceAll("\\", "/"));
     expect(loadClaims(ledgerRoot).filter((claim) => claim.status === "active")).toHaveLength(1);
+  });
+});
+
+describe("mutation intent recovery", () => {
+  test("replays a durable intent exactly once before the next mutation", async () => {
+    const root = fixtureRoot([{ ...D, id: "task-replay" }]);
+    const taskFile = join(root, ".waystation", "tasks", "task-replay.json");
+    writeFileSync(
+      join(root, ".waystation", "mutation-intent.json"),
+      JSON.stringify({
+        version: 1,
+        id: "replay-once",
+        kind: "test",
+        writes: [
+          { path: "tasks/task-replay.json", value: { ...D, id: "task-replay", status: "done" } },
+        ],
+        events: [{ type: "task.status_changed", task: "task-replay", to: "done" }],
+      }),
+    );
+    await withLedgerLock(root, () => undefined);
+    expect(JSON.parse(readFileSync(taskFile, "utf8")).status).toBe("done");
+    expect(existsSync(join(root, ".waystation", "mutation-intent.json"))).toBe(false);
+    await withLedgerLock(root, () => undefined);
+    const events = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8");
+    expect(events.match(/"mutation":"replay-once"/g)).toHaveLength(1);
+  });
+
+  test("validation reports malformed pending mutation intent", () => {
+    const root = fixtureRoot([{ ...D }]);
+    writeFileSync(join(root, ".waystation", "mutation-intent.json"), "not json");
+    expect(validateLedger(root).errors.map((d) => d.code)).toContain("mutation_intent_invalid");
   });
 });
 

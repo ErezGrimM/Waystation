@@ -3,10 +3,10 @@ import { type LoadedTask, loadTaskFiles } from "./records.ts";
 import { type ClaimRecord, isCommitRef, type TaskRecord } from "./schema.ts";
 import {
   activeClaimForTask,
-  appendEventUnlocked,
+  applyMutationIntentUnlocked,
+  claimFile,
+  mutationWrite,
   withLedgerLock,
-  writeClaim,
-  writeJsonAtomic,
 } from "./store.ts";
 import { indexById, taskReadiness } from "./tasks.ts";
 import { idStamp, nowIso, safeIdPart } from "./time.ts";
@@ -45,10 +45,6 @@ function requireLoadedTask(tasks: LoadedTask[], id: string): LoadedTask {
 
 function requireTask(root: string, id: string): LoadedTask {
   return requireLoadedTask(loadTaskFiles(root), id);
-}
-
-function writeTask(file: string, task: TaskRecord): void {
-  writeJsonAtomic(file, task);
 }
 
 function claimGitContext(
@@ -101,14 +97,13 @@ export async function addTaskCommits(
     if (refs.length === 0) return task;
     const ts = nowIso(now);
     const updated = { ...taskWithCommits(task, refs), updated_at: ts };
-    appendEventUnlocked(root, {
-      type: "task.commits_attached",
-      task: id,
-      commits: refs,
-      actor: agent,
-      ts,
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-task-commits-${id}-${idStamp(now)}`,
+      kind: "task.commits_attached",
+      writes: [mutationWrite(root, file, updated)],
+      events: [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }],
     });
-    writeTask(file, updated);
     return updated;
   });
 }
@@ -162,27 +157,27 @@ export async function claimTask(
       completed_at: null,
     };
     const from = task.status;
-    // Write-ahead: append events before record writes so the event log is
-    // always a superset of applied record changes (see H4 in the audit).
-    appendEventUnlocked(root, {
-      type: "task.claimed",
-      task: id,
-      claim: claim.id,
-      actor: agent,
-      branch: claim.branch,
-      worktree: claim.worktree,
-      ts,
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-claim-${claim.id}`,
+      kind: "task.claim",
+      writes: [
+        mutationWrite(root, claimFile(root, claim.id), claim),
+        mutationWrite(root, file, { ...task, status: "in_progress", updated_at: ts }),
+      ],
+      events: [
+        {
+          type: "task.claimed",
+          task: id,
+          claim: claim.id,
+          actor: agent,
+          branch: claim.branch,
+          worktree: claim.worktree,
+          ts,
+        },
+        { type: "task.status_changed", task: id, from, to: "in_progress", actor: agent, ts },
+      ],
     });
-    appendEventUnlocked(root, {
-      type: "task.status_changed",
-      task: id,
-      from,
-      to: "in_progress",
-      actor: agent,
-      ts,
-    });
-    writeClaim(root, claim);
-    writeTask(file, { ...task, status: "in_progress", updated_at: ts });
     return claim;
   });
 }
@@ -206,26 +201,25 @@ export async function releaseTask(
     }
     const ts = nowIso(now);
     const from = task.status;
-    // Write-ahead: events first, then records (see H4 in the audit).
-    appendEventUnlocked(root, {
-      type: "claim.released",
-      task: id,
-      claim: claim.id,
-      actor: agent,
-      ts,
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-release-${claim.id}`,
+      kind: "task.release",
+      writes: [
+        mutationWrite(root, claimFile(root, claim.id), {
+          ...claim,
+          status: "released",
+          released_at: ts,
+        }),
+        mutationWrite(root, file, { ...task, status: "ready", updated_at: ts }),
+      ],
+      events: [
+        { type: "claim.released", task: id, claim: claim.id, actor: agent, ts },
+        { type: "task.status_changed", task: id, from, to: "ready", actor: agent, ts },
+      ],
     });
-    appendEventUnlocked(root, {
-      type: "task.status_changed",
-      task: id,
-      from,
-      to: "ready",
-      actor: agent,
-      ts,
-    });
-    writeClaim(root, { ...claim, status: "released", released_at: ts });
     // Released tasks return to `ready` (actionable) by design; claims are only
     // allowed from todo/ready, so no other prior status can be lost here.
-    writeTask(file, { ...task, status: "ready", updated_at: ts });
   });
 }
 
@@ -256,41 +250,37 @@ export async function finishTask(
       ...(options.commitHead ? [headCommit(root) ?? ""] : []),
     ]);
     const from = task.status;
-    // Write-ahead: events first, then records (see H4 in the audit).
-    appendEventUnlocked(root, {
-      type: "task.status_changed",
-      task: id,
-      from,
-      to: "done",
-      actor: agent,
-      ts,
-    });
-    if (claim) {
-      appendEventUnlocked(root, {
-        type: "claim.completed",
-        task: id,
-        claim: claim.id,
-        actor: agent,
-        ts,
-      });
-    }
-    if (refs.length > 0) {
-      appendEventUnlocked(root, {
-        type: "task.commits_attached",
-        task: id,
-        commits: refs,
-        actor: agent,
-        ts,
-      });
-    }
-    if (claim) {
-      writeClaim(root, { ...claim, status: "completed", completed_at: ts });
-    }
-    writeTask(file, {
+    const completedTask = {
       ...taskWithCommits(task, refs),
       status: "done",
       updated_at: ts,
       closed_at: ts,
+    };
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-finish-${id}-${idStamp(now)}`,
+      kind: "task.finish",
+      writes: [
+        ...(claim
+          ? [
+              mutationWrite(root, claimFile(root, claim.id), {
+                ...claim,
+                status: "completed",
+                completed_at: ts,
+              }),
+            ]
+          : []),
+        mutationWrite(root, file, completedTask),
+      ],
+      events: [
+        { type: "task.status_changed", task: id, from, to: "done", actor: agent, ts },
+        ...(claim
+          ? [{ type: "claim.completed", task: id, claim: claim.id, actor: agent, ts }]
+          : []),
+        ...(refs.length
+          ? [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }]
+          : []),
+      ],
     });
   });
 }

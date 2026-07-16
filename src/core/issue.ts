@@ -3,7 +3,7 @@ import { join, resolve, sep } from "node:path";
 import { MutationError } from "./mutate.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type IssueRecord, IssueRecord as IssueSchema, isSafeRecordId } from "./schema.ts";
-import { appendEventUnlocked, withLedgerLock, writeJsonAtomic } from "./store.ts";
+import { applyMutationIntentUnlocked, mutationWrite, withLedgerLock } from "./store.ts";
 import { nowIso, safeIdPart } from "./time.ts";
 
 export interface CreateIssueInput {
@@ -71,13 +71,12 @@ export async function createIssue(
     if (input.description !== undefined) record.description = input.description;
 
     const parsed = IssueSchema.parse(record);
-    writeJsonAtomic(file, record);
-    appendEventUnlocked(root, {
-      type: "issue.created",
-      issue: id,
-      title: input.title,
-      actor: "mcp",
-      ts,
+    applyMutationIntentUnlocked(root, {
+      version: 1,
+      id: `mutation-issue-${id}`,
+      kind: "issue.create",
+      writes: [mutationWrite(root, file, record)],
+      events: [{ type: "issue.created", issue: id, title: input.title, actor: "mcp", ts }],
     });
     return parsed;
   });

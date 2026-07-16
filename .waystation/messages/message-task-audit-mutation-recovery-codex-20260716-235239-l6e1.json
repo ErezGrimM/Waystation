@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-mutation-recovery-codex-20260716-235239-l6e1",
+  "thread": "task-audit-mutation-recovery",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting crash-recovery work. I will introduce a durable ledger mutation intent with idempotent recovery under the existing lock, then cover every interruption boundary with tests.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T23:52:39+03:00"
+}

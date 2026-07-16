@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 
 ## Ready
-- `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
+_none_
 
 ## Coordination warnings
 _none_

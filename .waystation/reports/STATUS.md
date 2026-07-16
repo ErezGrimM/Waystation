@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
+_none_
 
 ## In progress
-_none_
+- `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 
 ## Review
 _none_
