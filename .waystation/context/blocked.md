@@ -2,5 +2,11 @@
 
 # Blocked
 
-_none_
+- `task-audit-corrections-release` — waiting on: task-audit-lifecycle-surfaces, task-audit-project-validation-sync, task-audit-ranking-generated-policy
+- `task-audit-lifecycle-mutations` — waiting on: task-audit-correct-readiness-claims
+- `task-audit-lifecycle-surfaces` — waiting on: task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
+- `task-audit-project-validation-sync` — waiting on: task-audit-correct-readiness-claims, task-audit-shared-ledger-resolution, task-audit-lifecycle-mutations
+- `task-audit-ranking-generated-policy` — waiting on: task-audit-project-validation-sync
+- `task-audit-shared-ledger-resolution` — waiting on: task-audit-correct-readiness-claims
+- `task-operational-audit-corrections` — waiting on: task-audit-corrections-release
 

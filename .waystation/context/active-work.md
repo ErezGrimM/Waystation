@@ -6,6 +6,7 @@
 _none_
 
 ## Ready
+- `task-audit-correct-readiness-claims` [p1] — Correct task readiness and claim invariants
 - `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 - `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
 - `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes

@@ -3,6 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
+- `task-audit-correct-readiness-claims` [p1] — Correct task readiness and claim invariants
 - `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 - `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
 - `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
@@ -17,7 +18,13 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-_none_
+- `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
+- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
+- `task-audit-lifecycle-surfaces` [p2] — Expose task and issue lifecycle operations through all surfaces
+- `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
+- `task-audit-ranking-generated-policy` [p3] — Decide task ranking and generated artifact tracking policy
+- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
+- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints

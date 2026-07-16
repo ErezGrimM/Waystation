@@ -1,0 +1,10 @@
+{
+  "id": "message-project-codex-20260716-154948-0abl",
+  "thread": "project",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "note",
+  "body": "Added the v0.0.3 operational audit correction plan to the Waystation ledger. The first actionable task is task-audit-correct-readiness-claims; later lifecycle, shared-ledger, mutation, validation/sync, policy, and release tasks are dependency-gated under task-operational-audit-corrections. This replaces the mistakenly introduced OpenSpec plan.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T15:49:48+03:00"
+}

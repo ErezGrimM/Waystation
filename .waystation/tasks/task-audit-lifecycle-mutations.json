@@ -1,0 +1,33 @@
+{
+  "id": "task-audit-lifecycle-mutations",
+  "title": "Add safe core task and issue lifecycle mutations",
+  "status": "todo",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/schema.ts",
+    "src/core/store.ts",
+    "src/core/mutate.ts",
+    "src/core/issue.ts",
+    "src/core/result.ts",
+    "src/index/",
+    "test/"
+  ],
+  "prompts": ["prompt-waystation-v1"],
+  "dependencies": ["task-audit-correct-readiness-claims"],
+  "created_at": "2026-07-16T15:47:47+03:00",
+  "updated_at": "2026-07-16T15:47:47+03:00",
+  "closed_at": null,
+  "description": "Remove the need for routine hand edits of canonical task and issue JSON. Add patch-safe core operations for task creation, metadata updates, explicit status transitions, and terminal reopen, plus issue update and close. Expand IssueRecord so debugging context is typed and survives parsing, indexing, views, and mutation round trips. All mutations must preserve the single locked atomic write path and append audited events.",
+  "acceptance": [
+    "Core exposes createTask, updateTask, explicit task transition, and reopenTask operations with Zod input schemas.",
+    "Generic task updates cannot change id, status, creation/close timestamps, or claim state.",
+    "A documented transition matrix governs todo, ready, in_progress, blocked, review, done, and wont_do; reopening done/wont_do requires an explicit todo or ready target.",
+    "IssueRecord models description, priority, evidence, expected, actual, acceptance, resolution, notes, source, and lifecycle timestamps while preserving additional unknown fields.",
+    "Issue update and close operations atomically update timestamps/resolution and append events.",
+    "Existing issue fixtures and rich unknown fields survive load-update-write round trips without data loss.",
+    "Every accepted or rejected mutation has tests for locking, atomic writes, events, diagnostics, and unchanged-ledger failure behavior."
+  ],
+  "commits": [],
+  "notes": "This resolves the contradiction between the single-write-path invariant and instructions that currently require direct JSON edits. Keep surface-specific parsing out of core and raw stack traces out of results."
+}
