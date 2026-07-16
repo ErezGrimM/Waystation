@@ -6,6 +6,7 @@ import { GraphView } from "./pages/GraphView.tsx";
 import { Tasks } from "./pages/Tasks.tsx";
 import { TaskDetail } from "./pages/TaskDetail.tsx";
 import { Issues } from "./pages/Issues.tsx";
+import { IssueDetail } from "./pages/IssueDetail.tsx";
 import { Claims } from "./pages/Claims.tsx";
 import { Git } from "./pages/Git.tsx";
 import { Messages } from "./pages/Messages.tsx";
@@ -16,6 +17,7 @@ const VIEWS: Record<string, [string, string]> = {
   "/tasks": ["Tasks", "Ready, in-progress, and blocked work"],
   "/tasks/detail": ["Task detail", ""],
   "/issues": ["Issues", "Bugs, blockers, and review findings"],
+  "/issues/detail": ["Issue detail", "Lifecycle and preserved issue context"],
   "/claims": ["Claims", "Who is working on what, right now"],
   "/messages": ["Messages", "Shared async inbox — project and task threads"],
   "/git": ["Git", "Status, diff, and commit"],
@@ -27,7 +29,9 @@ export function App() {
   const location = useLocation();
   const path = location.pathname.startsWith("/tasks/")
     ? "/tasks/detail"
-    : location.pathname;
+    : location.pathname.startsWith("/issues/")
+      ? "/issues/detail"
+      : location.pathname;
   const [title, subtitle] = VIEWS[path] ?? ["", ""];
   const [reindexMsg, setReindexMsg] = useState("");
 
@@ -112,6 +116,7 @@ export function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
             <Route path="/issues" element={<Issues />} />
+            <Route path="/issues/:id" element={<IssueDetail />} />
             <Route path="/claims" element={<Claims />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/git" element={<Git />} />

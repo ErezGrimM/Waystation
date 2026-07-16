@@ -7,21 +7,28 @@ import { exportGitHubIssues, importGitHubIssues } from "../core/gh.ts";
 import { getGitState } from "../core/git.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
-import { createIssue } from "../core/issue.ts";
+import { closeIssue, createIssue, type UpdateIssueInput, updateIssue } from "../core/issue.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import {
   addTaskCommits,
+  type CreateTaskInput,
   claimTask,
+  createTask,
   finishTask,
   MutationError,
   releaseTask,
+  reopenTask,
+  setTaskStatus,
+  type TaskPatch,
+  updateTask,
 } from "../core/mutate.ts";
 import { resolveLedgerRoot } from "../core/paths.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, diag, okResult, toResult } from "../core/result.ts";
+import type { TaskStatus } from "../core/schema.ts";
 import { loadClaims, loadIssues } from "../core/store.ts";
-import { nextTask } from "../core/tasks.ts";
+import { indexById, nextTask, taskReadiness } from "../core/tasks.ts";
 import { nowIso } from "../core/time.ts";
 import { validateLedger } from "../core/validate.ts";
 
@@ -66,6 +73,16 @@ function emit(type: string, data: Record<string, unknown>) {
 function gitStatusFiles(root: string): string[] {
   const state = getGitState(root);
   return state.data?.status.files.map((file) => file.file) ?? [];
+}
+
+function taskViews(root: string) {
+  const tasks = loadTasks(root);
+  const byId = indexById(tasks);
+  return tasks.map((task) => ({
+    ...task,
+    readiness: taskReadiness(task, byId),
+    ledgerRoot: root,
+  }));
 }
 
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
@@ -143,7 +160,7 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
 
   app.get("/api/tasks", (c) => {
     try {
-      const tasks = loadTasks(root);
+      const tasks = taskViews(root);
       const status = c.req.query("status");
       const sort = c.req.query("sort") ?? "created_at";
       const order = c.req.query("order") ?? "desc";
@@ -174,14 +191,68 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
   });
 
   app.get("/api/tasks/:id", (c) => {
-    const task = loadTasks(root).find((t) => t.id === c.req.param("id")) ?? null;
-    if (!task) {
-      const id = c.req.param("id");
-      return json(
-        toResult(null, [diag("no_such_task", { message: `no such task: ${id}`, details: { id } })]),
-      );
+    try {
+      const task = taskViews(root).find((t) => t.id === c.req.param("id")) ?? null;
+      if (!task) {
+        const id = c.req.param("id");
+        return json(
+          toResult(null, [
+            diag("no_such_task", { message: `no such task: ${id}`, details: { id } }),
+          ]),
+        );
+      }
+      return json(okResult(task));
+    } catch (e) {
+      return json(catchDiag(e));
     }
-    return json(okResult(task));
+  });
+
+  app.post("/api/tasks", async (c) => {
+    try {
+      const body = await c.req.json<CreateTaskInput & { actor?: string }>();
+      const { actor = "dashboard", ...input } = body;
+      const task = await createTask(root, input, actor);
+      emit("task.created", { task: task.id, actor });
+      return json(okResult(task));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.patch("/api/tasks/:id", async (c) => {
+    try {
+      const body = await c.req.json<TaskPatch & { actor?: string }>();
+      const { actor = "dashboard", ...patch } = body;
+      const task = await updateTask(root, c.req.param("id"), patch, actor);
+      emit("task.updated", { task: task.id, actor });
+      return json(okResult(task));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.post("/api/tasks/:id/status", async (c) => {
+    try {
+      const body = await c.req.json<{ status: TaskStatus; actor?: string }>();
+      const actor = body.actor ?? "dashboard";
+      const task = await setTaskStatus(root, c.req.param("id"), body.status, actor);
+      emit("task.status_changed", { task: task.id, status: task.status, actor });
+      return json(okResult(task));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.post("/api/tasks/:id/reopen", async (c) => {
+    try {
+      const body = await c.req.json<{ status: "todo" | "ready"; actor?: string }>();
+      const actor = body.actor ?? "dashboard";
+      const task = await reopenTask(root, c.req.param("id"), body.status, actor);
+      emit("task.reopened", { task: task.id, status: task.status, actor });
+      return json(okResult(task));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
   });
 
   app.get("/api/tasks/:id/brief", (c) => {
@@ -241,11 +312,54 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
     }
   });
 
+  app.get("/api/issues/:id", (c) => {
+    try {
+      const issue = loadIssues(root).find((item) => item.id === c.req.param("id"));
+      if (!issue) {
+        return json(
+          toResult(null, [
+            diag("not_found", {
+              message: `no such issue: ${c.req.param("id")}`,
+              details: { id: c.req.param("id") },
+            }),
+          ]),
+        );
+      }
+      return json(okResult({ ...issue, ledgerRoot: root }));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
   app.post("/api/issues", async (c) => {
     try {
       const body = await c.req.json();
       const issue = await createIssue(root, body);
       emit("issue.created", { issue: issue.id, title: body.title });
+      return json(okResult(issue));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.patch("/api/issues/:id", async (c) => {
+    try {
+      const body = await c.req.json<UpdateIssueInput & { actor?: string }>();
+      const { actor = "dashboard", ...patch } = body;
+      const issue = await updateIssue(root, c.req.param("id"), patch, actor);
+      emit("issue.updated", { issue: issue.id, actor });
+      return json(okResult(issue));
+    } catch (e) {
+      return json(catchDiag(e));
+    }
+  });
+
+  app.post("/api/issues/:id/close", async (c) => {
+    try {
+      const body = await c.req.json<{ resolution: string; actor?: string }>();
+      const actor = body.actor ?? "dashboard";
+      const issue = await closeIssue(root, c.req.param("id"), body.resolution, actor);
+      emit("issue.closed", { issue: issue.id, actor });
       return json(okResult(issue));
     } catch (e) {
       return json(catchDiag(e));

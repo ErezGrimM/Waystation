@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { api } from "../api.ts";
-import { ErrorBanner } from "../components.tsx";
+import { api, type CommandDiagnostic, firstError } from "../api.ts";
+import { DiagnosticBanner, ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
+import { claimDisabledReason, type TaskReadiness } from "../lifecycle.ts";
 
 interface TaskItem {
   id: string;
@@ -15,6 +16,8 @@ interface TaskItem {
   description?: string;
   acceptance?: string[];
   dependencies?: string[];
+  readiness: TaskReadiness;
+  ledgerRoot: string;
 }
 
 const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
@@ -41,6 +44,9 @@ export function Tasks() {
   const [order, setOrder] = useState<"desc" | "asc">("desc");
   const [agent, setAgent] = useState("opencode");
   const [msg, setMsg] = useState("");
+  const [commandError, setCommandError] = useState<CommandDiagnostic | null>(null);
+  const [newId, setNewId] = useState("");
+  const [newTitle, setNewTitle] = useState("");
   const msgTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { revision } = useLedgerEvents();
 
@@ -88,11 +94,42 @@ export function Tasks() {
       body: JSON.stringify({ agent }),
     });
     if (r.ok) {
+      setCommandError(null);
       flashMsg(`${action}d ${taskId}`);
       load();
     } else {
-      flashMsg(r.errors?.[0]?.message ?? `${action} failed`);
+      setCommandError(firstError(r, `${action} failed`));
     }
+  };
+
+  const create = async () => {
+    const result = await api("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: newId,
+        title: newTitle,
+        status: "todo",
+        priority: 3,
+        scope: null,
+        path_hints: [],
+        prompts: [],
+        dependencies: [],
+        description: "",
+        acceptance: [],
+        notes: "",
+        actor: agent,
+      }),
+    });
+    if (!result.ok) {
+      setCommandError(firstError(result, "Task creation failed"));
+      return;
+    }
+    setCommandError(null);
+    setNewId("");
+    setNewTitle("");
+    flashMsg("created task");
+    load();
   };
 
   return (
@@ -100,6 +137,16 @@ export function Tasks() {
       <h1>Tasks</h1>
 
       <ErrorBanner message={error} onRetry={load} />
+      <DiagnosticBanner error={commandError} />
+
+      <div className="panel" style={{ padding: 16, marginBottom: 16 }}>
+        <div className="section-label">Create task</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input className="input" value={newId} onChange={(event) => setNewId(event.target.value)} placeholder="task-id" style={{ width: 220 }} />
+          <input className="input" value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder="Task title" style={{ flex: 1 }} />
+          <button className="btn-primary" onClick={create} disabled={!newId.trim() || !newTitle.trim()}>Create</button>
+        </div>
+      </div>
 
       {msg && (
         <div style={{ color: "var(--green)", marginBottom: 12, fontSize: 12, fontFamily: "var(--mono)" }}>
@@ -157,6 +204,7 @@ export function Tasks() {
         {tasks.map((t) => {
           const meta = STATUS_META[t.status] ?? { label: t.status, bg: "#1c2430", fg: "#8b98a9" };
           const isExpanded = expandedId === t.id;
+          const claimReason = claimDisabledReason(t.readiness, agent);
           return (
             <div key={t.id}>
               <div
@@ -180,7 +228,7 @@ export function Tasks() {
                 </span>
                 <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                   {(t.status === "ready" || t.status === "todo") && (
-                    <button className="btn-action" onClick={(e) => { e.stopPropagation(); doAction("claim", t.id); }}>Claim</button>
+                    <button className="btn-action" disabled={Boolean(claimReason)} title={claimReason ?? undefined} onClick={(e) => { e.stopPropagation(); doAction("claim", t.id); }}>Claim</button>
                   )}
                   {t.status === "in_progress" && (
                     <>
@@ -204,7 +252,7 @@ export function Tasks() {
                         View full detail →
                       </Link>
                       <div style={{ fontSize: "11.5px", color: "var(--text-dim)", marginTop: 2 }}>
-                        P{t.priority}{t.scope ? ` · ${t.scope}` : ""}
+                        P{t.priority}{t.scope ? ` · ${t.scope}` : ""} · readiness: {t.readiness.state}
                       </div>
                     </div>
                   </div>

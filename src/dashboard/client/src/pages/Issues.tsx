@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api.ts";
 import { ErrorBanner } from "../components.tsx";
 import { useLedgerEvents } from "../events.tsx";
@@ -258,7 +259,7 @@ export function Issues() {
           return (
             <div key={i.id} className="issue-card">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>{i.title}</div>
+                <Link to={`/issues/${i.id}`} style={{ fontSize: 14, fontWeight: 700 }}>{i.title}</Link>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <span className="badge" style={{ background: sm.bg, color: sm.fg }}>
                     {i.severity ?? "-"}

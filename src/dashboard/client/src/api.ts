@@ -1,8 +1,21 @@
-interface CommandResult<T = unknown> {
+export interface CommandDiagnostic {
+  code: string;
+  message: string;
+  hint?: string;
+}
+
+export interface CommandResult<T = unknown> {
   ok: boolean;
   data: T | null;
-  errors: Array<{ code: string; message: string; hint?: string }>;
-  warnings: Array<{ code: string; message: string; hint?: string }>;
+  errors: CommandDiagnostic[];
+  warnings: CommandDiagnostic[];
+}
+
+export function firstError(
+  result: Pick<CommandResult, "errors">,
+  fallback = "Request failed.",
+): CommandDiagnostic {
+  return result.errors[0] ?? { code: "unexpected_error", message: fallback };
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<CommandResult<T>> {

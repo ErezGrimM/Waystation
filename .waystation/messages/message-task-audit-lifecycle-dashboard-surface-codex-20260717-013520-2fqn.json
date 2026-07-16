@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-lifecycle-dashboard-surface-codex-20260717-013520-2fqn",
+  "thread": "task-audit-lifecycle-dashboard-surface",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implemented dashboard lifecycle parity: task create/update/status/reopen APIs and UI; issue detail/update/close APIs and UI; fresh readiness/blockers and ledger-root disclosure; coded client diagnostics; invalid-action explanations. Verification: 190 tests pass, typecheck clean, Biome clean, Vite production build clean, compiled binary rebuilt, validate 0 errors. No SyntaxError: Unexpected end of input.",
+  "in_reply_to": null,
+  "created_at": "2026-07-17T01:35:20+03:00"
+}

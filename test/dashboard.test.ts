@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { emitMutationEvent, onMutationEvent } from "../src/core/events.ts";
+import { firstError } from "../src/dashboard/client/src/api.ts";
+import { claimDisabledReason } from "../src/dashboard/client/src/lifecycle.ts";
 import { createApp } from "../src/dashboard/server.ts";
 
 const testRoot = join(process.cwd(), ".waystation-test-dashboard");
@@ -98,6 +100,78 @@ describe("dashboard API server", () => {
     expect(body.errors[0].code).toBe("no_such_task");
   });
 
+  test("dashboard task lifecycle routes create, update, transition, and reopen", async () => {
+    const app = createApp(testRoot);
+    const created = await app.request("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "dashboard-lifecycle-task",
+        title: "Dashboard lifecycle task",
+        status: "todo",
+        priority: 2,
+        scope: null,
+        path_hints: [],
+        prompts: [],
+        dependencies: [],
+        description: "Original description",
+        acceptance: [],
+        notes: "preserve me",
+        actor: "dashboard-test",
+      }),
+    });
+    expect((await created.json()).ok).toBe(true);
+
+    const updated = await app.request("/api/tasks/dashboard-lifecycle-task", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Updated from dashboard", actor: "dashboard-test" }),
+    });
+    const updatedBody = await updated.json();
+    expect(updatedBody.ok).toBe(true);
+    expect(updatedBody.data.title).toBe("Updated from dashboard");
+    expect(updatedBody.data.notes).toBe("preserve me");
+
+    const ready = await app.request("/api/tasks/dashboard-lifecycle-task/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ready", actor: "dashboard-test" }),
+    });
+    expect((await ready.json()).data.status).toBe("ready");
+
+    const invalid = await app.request("/api/tasks/dashboard-lifecycle-task/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "in_progress", actor: "dashboard-test" }),
+    });
+    const invalidBody = await invalid.json();
+    expect(invalidBody.ok).toBe(false);
+    expect(invalidBody.errors[0].code).toBe("invalid_transition");
+
+    const abandoned = await app.request("/api/tasks/dashboard-lifecycle-task/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "wont_do", actor: "dashboard-test" }),
+    });
+    expect((await abandoned.json()).data.status).toBe("wont_do");
+
+    const reopened = await app.request("/api/tasks/dashboard-lifecycle-task/reopen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "todo", actor: "dashboard-test" }),
+    });
+    expect((await reopened.json()).data.status).toBe("todo");
+
+    const detail = await app.request("/api/tasks/dashboard-lifecycle-task");
+    const detailBody = await detail.json();
+    expect(detailBody.data.ledgerRoot).toBe(testRoot);
+    expect(detailBody.data.readiness).toEqual({
+      state: "not_eligible",
+      reason: "status_todo",
+      blockers: [],
+    });
+  });
+
   test("GET /api/tasks/:id/brief returns task brief", async () => {
     const app = createApp(testRoot);
     const res = await app.request("/api/tasks/test-task/brief");
@@ -187,6 +261,78 @@ describe("dashboard API server", () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("dashboard issue routes show, update, and close while preserving rich context", async () => {
+    const app = createApp(testRoot);
+    const created = await app.request("/api/issues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "dashboard-rich-issue",
+        title: "Rich issue",
+        severity: "high",
+        type: "bug",
+        description: "Context description",
+        expected: "Expected result",
+        actual: "Actual result",
+        evidence: { command: "bun test", exitCode: 1 },
+        acceptance: ["The regression is fixed"],
+        notes: "Important note",
+        source: { system: "audit", id: 42 },
+      }),
+    });
+    expect((await created.json()).ok).toBe(true);
+
+    const updated = await app.request("/api/issues/dashboard-rich-issue", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "triaged", severity: "critical", actor: "dashboard-test" }),
+    });
+    const updatedBody = await updated.json();
+    expect(updatedBody.data.status).toBe("triaged");
+    expect(updatedBody.data.severity).toBe("critical");
+    expect(updatedBody.data.expected).toBe("Expected result");
+    expect(updatedBody.data.evidence.command).toBe("bun test");
+
+    const closed = await app.request("/api/issues/dashboard-rich-issue/close", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resolution: "Fixed in dashboard", actor: "dashboard-test" }),
+    });
+    const closedBody = await closed.json();
+    expect(closedBody.data.status).toBe("closed");
+    expect(closedBody.data.resolution).toBe("Fixed in dashboard");
+
+    const detail = await app.request("/api/issues/dashboard-rich-issue");
+    const detailBody = await detail.json();
+    expect(detailBody.data.ledgerRoot).toBe(testRoot);
+    expect(detailBody.data.acceptance).toEqual(["The regression is fixed"]);
+    expect(detailBody.data.source).toEqual({ system: "audit", id: 42 });
+  });
+
+  test("client lifecycle helpers preserve coded errors and explain disabled claims", () => {
+    expect(
+      firstError({
+        errors: [
+          {
+            code: "invalid_transition",
+            message: "Transition rejected.",
+            hint: "Release the claim first.",
+          },
+        ],
+      }),
+    ).toEqual({
+      code: "invalid_transition",
+      message: "Transition rejected.",
+      hint: "Release the claim first.",
+    });
+    expect(
+      claimDisabledReason(
+        { state: "waiting", reason: "unmet_dependencies", blockers: ["task-parent"] },
+        "codex",
+      ),
+    ).toContain("task-parent");
   });
 
   test("GET /api/validate returns validation result", async () => {
