@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-message-storage-decision-codex-a-20260716-061422-rzpg",
+  "thread": "task-phase8-message-storage-decision",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. ADR-0004 and decision-message-storage-layout record keep one-file-per-message JSON storage for V1; no storage code changes. Checks are green.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:14:22+03:00"
+}

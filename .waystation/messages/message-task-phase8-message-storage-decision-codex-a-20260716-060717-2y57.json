@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-message-storage-decision-codex-a-20260716-060717-2y57",
+  "thread": "task-phase8-message-storage-decision",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting decision review for message storage layout. Will document keep-vs-migrate tradeoff before any storage implementation.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:07:17+03:00"
+}

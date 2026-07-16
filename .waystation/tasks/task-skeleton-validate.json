@@ -15,8 +15,8 @@
     "task-skeleton-task-next"
   ],
   "created_at": "2026-07-06T12:26:00+03:00",
-  "updated_at": "2026-07-05T23:17:27.046Z",
-  "closed_at": "2026-07-05T23:17:27.046Z",
+  "updated_at": "2026-07-06T02:17:27.046+03:00",
+  "closed_at": "2026-07-06T02:17:27.046+03:00",
   "description": "Extend the single task schema from task-skeleton-task-next into zod schemas for every record type, and add `waystation validate` for cross-record checks per spec §18. This is the guardrail that makes it safe for humans and agents to touch files directly.\n",
   "acceptance": [
     "zod schemas exist for config, task, issue, prompt, scope, claim, handoff, decision, and test-run records.",

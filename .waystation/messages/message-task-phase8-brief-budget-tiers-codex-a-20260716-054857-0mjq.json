@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-brief-budget-tiers-codex-a-20260716-054857-0mjq",
+  "thread": "task-phase8-brief-budget-tiers",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting implementation of deterministic brief budget tiers across core, CLI, MCP, and dashboard.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T05:48:57+03:00"
+}

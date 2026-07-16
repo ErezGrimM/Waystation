@@ -1,0 +1,31 @@
+{
+  "id": "task-phase8-reconcile-docs-and-build",
+  "title": "Reconcile docs, generated views, and rebuilt binary for Phase 8",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "docs/roadmap.md",
+    "README.md",
+    ".waystation/reports/",
+    ".waystation/context/",
+    ".waystation/views/",
+    "waystation.exe"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-15T23:12:24+03:00",
+  "updated_at": "2026-07-15T23:36:38+03:00",
+  "closed_at": "2026-07-15T23:36:38+03:00",
+  "description": "Close the gap between the completed ledger and stale human-facing documentation. Regenerate reports/views, make the roadmap and README agree with completed Phase 6/7 work, rebuild the compiled binary, and smoke-test the resulting CLI before other Phase 8 work branches from it.",
+  "acceptance": [
+    "docs/roadmap.md marks Phase 6 and Phase 7 as complete and describes the Phase 8 plan.",
+    "README does not contradict the current CLI/dashboard/git/Graphify/GitHub behavior.",
+    "Generated reports/context/task views are refreshed from the current ledger.",
+    "waystation.exe is rebuilt from src/cli/index.ts and responds to --version.",
+    "bun test, typecheck, biome check, waystation validate, and binary smoke checks are clean."
+  ],
+  "notes": "This is the Phase 8 kickoff task and should be finished before implementation tasks branch out. Keep generated Markdown generated; do not hand-edit generated reports or task views."
+}

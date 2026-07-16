@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { MutationError } from "./mutate.ts";
 import { ledgerPaths } from "./paths.ts";
-import { type IssueRecord, IssueRecord as IssueSchema } from "./schema.ts";
+import { type IssueRecord, IssueRecord as IssueSchema, isSafeRecordId } from "./schema.ts";
 import { appendEventUnlocked, withLedgerLock, writeJsonAtomic } from "./store.ts";
 import { nowIso, safeIdPart } from "./time.ts";
 
@@ -24,7 +24,7 @@ function issueDir(root: string): string {
 
 function issueFile(root: string, id: string): string {
   const dir = resolve(issueDir(root));
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id) || id.includes("..")) {
+  if (!isSafeRecordId(id)) {
     throw new Error(`invalid issue id: ${id}`);
   }
   const file = resolve(dir, `${id}.json`);

@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-brief-budget-tiers-codex-a-20260716-055912-v99j",
+  "thread": "task-phase8-brief-budget-tiers",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Implemented deterministic small/medium/large/full brief tiers, shared invalid budget diagnostics, CLI/MCP/dashboard pass-through, tests, rebuild, and smoke checks.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T05:59:12+03:00"
+}

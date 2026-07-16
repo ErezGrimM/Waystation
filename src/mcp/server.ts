@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { type BriefBudget, buildBrief } from "../core/brief.ts";
+import { buildBrief, parseBriefBudget } from "../core/brief.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { createIssue } from "../core/issue.ts";
@@ -88,7 +88,9 @@ export function buildServer(root: string): McpServer {
     },
     async ({ task, budget }) => {
       try {
-        const brief = buildBrief(root, task, (budget as BriefBudget) ?? "medium");
+        const parsedBudget = parseBriefBudget(budget);
+        if (!parsedBudget.ok || !parsedBudget.data) return toContent(parsedBudget);
+        const brief = buildBrief(root, task, parsedBudget.data);
         return toContent(okResult(brief));
       } catch (e) {
         return toContent(toResult(null, [catchDiag(e, "no_such_task")]));

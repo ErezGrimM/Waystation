@@ -83,6 +83,41 @@ interface GitHubIssue {
   labels: Array<{ name: string }>;
 }
 
+function parseGitHubIssue(value: unknown): GitHubIssue | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (raw.pull_request !== undefined) return null;
+  if (!Number.isInteger(raw.number) || (raw.number as number) <= 0) {
+    throw new Error("GitHub issue payload is missing a positive integer number");
+  }
+  if (typeof raw.title !== "string" || raw.title.length === 0) {
+    throw new Error(`GitHub issue #${raw.number} is missing a title`);
+  }
+  if (raw.state !== "open" && raw.state !== "closed") {
+    throw new Error(`GitHub issue #${raw.number} has unsupported state`);
+  }
+  if (raw.body !== null && raw.body !== undefined && typeof raw.body !== "string") {
+    throw new Error(`GitHub issue #${raw.number} has a non-string body`);
+  }
+  const labels = Array.isArray(raw.labels)
+    ? raw.labels
+        .filter(
+          (label): label is { name: string } =>
+            !!label &&
+            typeof label === "object" &&
+            typeof (label as Record<string, unknown>).name === "string",
+        )
+        .map((label) => ({ name: label.name }))
+    : [];
+  return {
+    number: raw.number as number,
+    title: raw.title,
+    state: raw.state,
+    body: raw.body ?? null,
+    labels,
+  };
+}
+
 function extractLabels(issue: GitHubIssue): { type?: string; severity?: string } {
   let type: string | undefined;
   let severity: string | undefined;
@@ -114,7 +149,8 @@ export async function importGitHubIssues(
     const raw = await fetchAllIssues(repo, token);
     const created: string[] = [];
     for (const r of raw) {
-      const ghIssue = r as GitHubIssue;
+      const ghIssue = parseGitHubIssue(r);
+      if (!ghIssue) continue;
       const id = `gh-${ghIssue.number}`;
       if (existing.has(id)) continue;
 

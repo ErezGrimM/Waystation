@@ -1,0 +1,30 @@
+{
+  "id": "task-phase9-generated-artifact-audit",
+  "title": "Audit generated reports and Markdown views",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/generate.ts",
+    ".waystation/reports/",
+    ".waystation/context/",
+    ".waystation/views/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T06:36:14+03:00",
+  "updated_at": "2026-07-16T06:49:27+03:00",
+  "closed_at": "2026-07-16T06:49:27+03:00",
+  "description": "Audit the generated Markdown and context artifacts for stale content, unsafe Markdown rendering, regeneration drift, and behavior around imported text. The generator should be deterministic and safe for task titles, issue titles, notes, and other user/imported strings.",
+  "acceptance": [
+    "Generated STATUS, context, and task/issue views are regenerated and reviewed for unexplained drift.",
+    "Markdown output escapes or safely renders imported/user-controlled text where needed.",
+    "Tests cover at least one generated Markdown case with punctuation or Markdown-sensitive imported text.",
+    "waystation report --views and waystation validate are clean.",
+    "bun test, typecheck, biome check, and rebuilt binary smoke checks are green if code changes are made."
+  ],
+  "notes": "The audit notes previously called out imported GitHub issue titles in generated Markdown as an area worth checking. Keep generated files one-way; do not make hand-authored docs depend on generated output."
+}

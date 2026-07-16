@@ -25,10 +25,10 @@ Cross-cutting principles that hold across every phase:
 
 ---
 
-## Current State (2026-07-06)
+## Current State (2026-07-15)
 
 **Runtime:** Bun 1.3.14 (local at `C:\bun`, not on PATH). Node 24 works as a
-fallback. 102 tests green; `validate` clean. **Version:** 0.0.2.
+fallback. The ledger validates cleanly. **Version:** 0.0.3.
 
 **V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
 rebuildable SQLite index (all record types); `validate`; `task
@@ -40,11 +40,18 @@ dogfooded through the CLI and version-controlled (git).
 **Error handling:** the `CommandResult`/`Diagnostic` envelope is adopted across
 commands with a stable code catalog and coverage test.
 
-**Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
-features.
+**Git/worktree integration:** complete. Claims record branch/worktree context,
+briefs can resolve from the current git claim context, validation warns on
+overlapping active claims, and dashboard/MCP surfaces git context.
 
-**Next:** Complete Phase 6 (git claim resolution done; active-claim overlap
-warnings + worktree visibility in progress).
+**External integrations:** GitHub Issues import/export and Graphify brief
+enrichment are implemented and remain optional.
+
+**Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
+features; worktree messages are scoped to the current checkout/worktree for V1.
+
+**Next:** Phase 9 operational hardening. UX polish is intentionally deferred to
+a later phase; release packaging follows hardening.
 
 ---
 
@@ -98,7 +105,7 @@ Issues, Claims, Messages, Brief, Git); SSE live updates; writes via the core
 path; reindex button; git status/diff/commit. Dark theme matching design mockup.
 **LLM features deferred** (see `decision-dashboard-llm-features`).
 
-## Phase 6 — Git & Worktree Integration (in progress, 2026-07-06)
+## Phase 6 — Git & Worktree Integration ✅ DONE (2026-07-06)
 
 Goal: read git state and support worktree-per-agent parallelism (spec §17).
 Scope: detect branch/worktree, map to active claims, warn on overlapping file
@@ -128,25 +135,111 @@ through a live shared inbox. See
 - Dashboard git page shows status, diff, and supports commit.
 - `bun test`, `tsc --noEmit`, `biome check`, `waystation validate` all green.
 
-## Phase 7 — External Integrations (later)
+## Phase 7 — External Integrations ✅ DONE (2026-07-06)
 
 GitHub Issues import/export; Graphify context enrichment for briefs (spec
 §17.1, §22). All optional, never required. Out of scope: making any external
 service a hard dependency.
 
+**Completed:**
+- GitHub Issues import/export core module, CLI commands, and dashboard actions.
+- Graphify context enrichment for briefs, CLI, MCP, and dashboard.
+- Graphify crash/duplicate fixes so malformed graph data does not break briefs.
+
+## Phase 8 — Release Readiness & Polish ✅ DONE (2026-07-16)
+
+Goal: make the current feature set easier to ship, install, and hand to other
+agents without stale docs or ambiguous next steps.
+
+Completed slices:
+- Reconcile generated reports/views and update hand-authored docs to match the
+  completed Phase 6/7 reality.
+- Rebuild and smoke-test the compiled `waystation.exe` artifact.
+- Document install/distribution options for local CLI and MCP usage.
+- Implement real `brief --budget` tiers instead of accepting the flag with one
+  behavior.
+- Evaluate whether the current one-file-per-message layout needs changes for
+  multi-worktree merge friction; decision recorded in
+  [ADR-0004](../adr/ADR-0004-message-storage-layout.md): keep one-file-per-message
+  JSON for V1 and defer any migration until real friction appears.
+
+Exit criteria:
+- `task next` shows only intentional Phase 8 work.
+- `docs/roadmap.md`, README, generated reports, and task views agree.
+- `bun test`, `tsc --noEmit`, `biome check`, `waystation validate`, and the
+  rebuilt binary smoke checks are green.
+
+---
+
+## Phase 9 — Operational Hardening
+
+Goal: tighten the existing system before adding more user-facing surface area.
+This phase is about trust: validation catches the shapes that migration and
+generated artifacts can introduce, old ledger data is normalized where useful,
+and generated outputs are audited for safety and correctness.
+
+Planned slices:
+- Normalize older UTC-`Z` timestamps to the current local-offset convention, or
+  document a deliberate reason to leave any record unchanged.
+- Audit generated Markdown/context views for escaping, stale content, and
+  regeneration drift.
+- Harden validation around migrated/imported records, especially ids,
+  path-derived filenames, references, status mappings, and imported text that
+  later appears in generated Markdown.
+- Keep the migration guide aligned with the hardening rules as they land.
+
+Out of scope:
+- Dashboard/UX polish; this becomes a later dedicated UX phase.
+- Installer or binary distribution polish; this follows in Phase 10.
+- New hosted services or external systems beyond the current optional GitHub
+  support.
+
+Exit criteria:
+- `waystation validate` catches the agreed migration/import edge cases.
+- Generated reports/views can be regenerated cleanly with no unsafe Markdown
+  output or unexplained drift.
+- Timestamp handling is consistent, either by normalization or documented
+  compatibility.
+- `bun test`, `tsc --noEmit`, `biome check`, `waystation validate`, and the
+  rebuilt binary smoke checks are green.
+
+Progress:
+- Legacy UTC-`Z` timestamps in early task, claim, and event records were
+  normalized to equivalent `+03:00` local-offset timestamps on 2026-07-16.
+- Validation now enforces filesystem-safe record ids/references and flags
+  filename/body-id mismatches; GitHub import rejects malformed issue payloads
+  before writing ledger records.
+
+## Phase 10 — Release Packaging
+
+Goal: make Waystation straightforward to install, rebuild, smoke-test, and hand
+to another local agent or human after the hardening pass is complete.
+
+Likely slices:
+- Release checklist and version bump procedure.
+- Fresh-clone smoke test script or documented checklist.
+- Binary distribution notes and artifact naming.
+- MCP launch examples for compiled and source modes.
+
+## Phase 11 — UX Polish
+
+Goal: improve the human-facing experience after the core behavior and release
+path are stable.
+
+Likely slices:
+- Dashboard import/export affordances.
+- Clearer health/warning surfaces.
+- Task and issue lifecycle guidance in the UI.
+- Small CLI wording improvements where diagnostics are technically correct but
+  hard to act on.
+
 ---
 
 ## Backlog / follow-ups not yet phased
 
-- Revisit message storage layout (one-file-per-record vs per-thread JSONL) if
-  merge friction or chatty threads become real.
-- Brief `--budget` tiers (small/medium/large/full) — currently accepted but
-  one behavior.
-- Timestamp normalization of the earlier UTC-`Z` records to local offset (the
-  format is now local; old records left valid).
+_none_
 
 ## Open decisions
 
-1. When to `git init` (recommended: Phase 3, before more code accretes).
-2. Whether summary.md-style hand docs stay separate from generated context
+1. Whether summary.md-style hand docs stay separate from generated context
    (current answer: yes, generation never touches hand-authored docs).

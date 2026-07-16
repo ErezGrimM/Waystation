@@ -14,8 +14,8 @@
     "task-skeleton-validate"
   ],
   "created_at": "2026-07-06T12:15:00+03:00",
-  "updated_at": "2026-07-05T23:24:32.774Z",
-  "closed_at": "2026-07-05T23:24:32.774Z",
+  "updated_at": "2026-07-06T02:24:32.774+03:00",
+  "closed_at": "2026-07-06T02:24:32.774+03:00",
   "description": "decision-record-format makes JSON the canonical on-disk format, but the existing hand-written ledger (config.yaml, tasks/*.yaml, scopes/*.yaml, prompts/*.yaml) is still YAML. Convert these to JSON so the live ledger matches the spec and the chosen stack. events.jsonl already fits. Decision records were already authored as JSON.\n",
   "acceptance": [
     "config.yaml becomes config.json with equivalent content.",

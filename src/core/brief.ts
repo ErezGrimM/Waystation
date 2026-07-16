@@ -10,6 +10,7 @@ import type { TaskRecord } from "./schema.ts";
 import { activeClaimForTask, loadClaims } from "./store.ts";
 
 export type BriefBudget = "small" | "medium" | "large" | "full";
+export const BRIEF_BUDGETS = ["small", "medium", "large", "full"] as const;
 
 export interface ActiveClaimInfo {
   id: string;
@@ -19,6 +20,7 @@ export interface ActiveClaimInfo {
 }
 
 export interface Brief {
+  budget: BriefBudget;
   task: {
     id: string;
     title: string;
@@ -38,6 +40,18 @@ export interface Brief {
   relatedFiles?: string[];
   concepts?: string[];
   impactHints?: string[];
+}
+
+export function parseBriefBudget(value: string | undefined | null): CommandResult<BriefBudget> {
+  const budget = value ?? "medium";
+  if ((BRIEF_BUDGETS as readonly string[]).includes(budget)) {
+    return okResult(budget as BriefBudget);
+  }
+  return toResult<BriefBudget>(null, [
+    diag("invalid_brief_budget", {
+      details: { budget, supported: [...BRIEF_BUDGETS] },
+    }),
+  ]);
 }
 
 /** Read the `rules` array from a scope record (JSON), if present. */
@@ -62,9 +76,8 @@ function computeNextAction(task: TaskRecord, blockedBy: string[], claimed: boole
   return "Claimed and ready; implement against the acceptance criteria.";
 }
 
-/** Build a task-scoped brief (spec §10). Budget is accepted but currently
- * produces one sensible brief regardless of level (tiers are future work). */
-export function buildBrief(root: string, taskId: string, _budget: BriefBudget = "medium"): Brief {
+/** Build a task-scoped brief (spec §10) with deterministic section tiers. */
+export function buildBrief(root: string, taskId: string, budget: BriefBudget = "medium"): Brief {
   const tasks = loadTasks(root);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const task = byId.get(taskId);
@@ -78,7 +91,11 @@ export function buildBrief(root: string, taskId: string, _budget: BriefBudget = 
   const claim = activeClaimForTask(root, taskId);
   const coordinationWarnings = overlapsForTask(root, taskId);
 
-  const graphResult = loadGraphData(root);
+  const includeMedium = budget === "medium" || budget === "large" || budget === "full";
+  const includeLarge = budget === "large" || budget === "full";
+  const includeFull = budget === "full";
+
+  const graphResult = includeLarge ? loadGraphData(root) : okResult(null);
   const enrichment =
     graphResult.ok && graphResult.data
       ? enrichFromGraph(graphResult.data, {
@@ -90,6 +107,7 @@ export function buildBrief(root: string, taskId: string, _budget: BriefBudget = 
       : { relatedFiles: [], concepts: [], impactHints: [] };
 
   return {
+    budget,
     task: {
       id: task.id,
       title: task.title,
@@ -101,21 +119,22 @@ export function buildBrief(root: string, taskId: string, _budget: BriefBudget = 
     acceptance: task.acceptance,
     dependencies,
     blockedBy,
-    scopeRules: scopeRules(root, task.scope),
-    prompts: task.prompts,
-    activeClaim: claim
-      ? {
-          id: claim.id,
-          agent: claim.agent,
-          branch: claim.branch ?? null,
-          worktree: claim.worktree ?? null,
-        }
-      : null,
-    coordinationWarnings,
+    scopeRules: includeMedium ? scopeRules(root, task.scope) : [],
+    prompts: includeMedium ? task.prompts : [],
+    activeClaim:
+      includeMedium && claim
+        ? {
+            id: claim.id,
+            agent: claim.agent,
+            branch: claim.branch ?? null,
+            worktree: claim.worktree ?? null,
+          }
+        : null,
+    coordinationWarnings: includeLarge ? coordinationWarnings : [],
     nextAction: computeNextAction(task, blockedBy, Boolean(claim)),
-    relatedFiles: enrichment.relatedFiles,
-    concepts: enrichment.concepts,
-    impactHints: enrichment.impactHints,
+    relatedFiles: includeLarge ? enrichment.relatedFiles : [],
+    concepts: includeLarge ? enrichment.concepts : [],
+    impactHints: includeFull ? enrichment.impactHints : [],
   };
 }
 
@@ -164,7 +183,7 @@ export function renderBrief(b: Brief): string {
   const lines: string[] = [];
   lines.push(`# ${b.task.id} — ${b.task.title}`);
   lines.push(
-    `status: ${b.task.status}  priority: ${b.task.priority}  scope: ${b.task.scope ?? "-"}`,
+    `status: ${b.task.status}  priority: ${b.task.priority}  scope: ${b.task.scope ?? "-"}  budget: ${b.budget}`,
   );
   lines.push("");
   lines.push("## Goal");

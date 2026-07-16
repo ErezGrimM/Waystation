@@ -11,6 +11,7 @@ interface TaskItem {
 }
 
 interface BriefData {
+  budget: BriefBudget;
   task: { id: string; title: string; status: string; priority: number; scope: string | null };
   goal: string;
   acceptance: string[];
@@ -23,6 +24,9 @@ interface BriefData {
   impactHints?: string[];
 }
 
+type BriefBudget = "small" | "medium" | "large" | "full";
+const BRIEF_BUDGETS: BriefBudget[] = ["small", "medium", "large", "full"];
+
 const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
   ready: { label: "Ready", bg: "rgba(79,140,255,0.14)", fg: "#5b9bff" },
   in_progress: { label: "In Progress", bg: "rgba(245,166,35,0.14)", fg: "#f5a623" },
@@ -34,6 +38,7 @@ const STATUS_META: Record<string, { label: string; bg: string; fg: string }> = {
 export function Brief() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [budget, setBudget] = useState<BriefBudget>("medium");
   const [brief, setBrief] = useState<BriefData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,9 +55,9 @@ export function Brief() {
 
   useEffect(loadTasks, []);
 
-  const select = (id: string) => {
+  const select = (id: string, nextBudget: BriefBudget = budget) => {
     setSelected(id);
-    api<BriefData>(`/api/tasks/${id}/brief`).then((r) => {
+    api<BriefData>(`/api/tasks/${id}/brief?budget=${nextBudget}`).then((r) => {
       if (r.ok && r.data) {
         setBrief(r.data);
         setError(null);
@@ -60,6 +65,11 @@ export function Brief() {
         setError(r.errors?.[0]?.message ?? "Failed to load brief");
       }
     });
+  };
+
+  const changeBudget = (nextBudget: BriefBudget) => {
+    setBudget(nextBudget);
+    if (selected) select(selected, nextBudget);
   };
 
   return (
@@ -71,6 +81,24 @@ export function Brief() {
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <div style={{ width: 280, flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>
           <div className="section-label" style={{ padding: "0 4px" }}>Select a task</div>
+          <div style={{ display: "flex", gap: 4, padding: "0 4px 6px", flexWrap: "wrap" }}>
+            {BRIEF_BUDGETS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                className="btn-secondary"
+                onClick={() => changeBudget(b)}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 11,
+                  background: budget === b ? "var(--accent)" : undefined,
+                  color: budget === b ? "#06121f" : undefined,
+                }}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
           {tasks.map((t) => (
             <div
               key={t.id}
@@ -88,7 +116,7 @@ export function Brief() {
         {brief && (
           <div style={{ flex: 1, minWidth: 0, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "28px 32px" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 8 }}>
-              Generated brief · budget: medium
+              Generated brief · budget: {brief.budget}
             </div>
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{brief.task.title}</div>
             <div style={{ fontSize: 12, fontFamily: "var(--mono)", color: "var(--text-dim)", marginBottom: 24 }}>

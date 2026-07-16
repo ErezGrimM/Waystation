@@ -5,6 +5,20 @@ const isoTs = z
   .string()
   .refine((s) => !Number.isNaN(Date.parse(s)), { message: "must be an ISO-8601 timestamp" });
 
+const RECORD_ID_RE = /^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+export function isSafeRecordId(id: string): boolean {
+  return RECORD_ID_RE.test(id);
+}
+
+export const RecordId = z
+  .string()
+  .min(1)
+  .regex(RECORD_ID_RE, "must be filesystem-safe: [A-Za-z0-9._-], no slashes or '..'");
+export type RecordId = z.infer<typeof RecordId>;
+
+const ProjectOrRecordId = z.union([z.literal("project"), RecordId]);
+
 /**
  * Task status values (spec §6.2). `claimed` is intentionally NOT a status;
  * claim state is tracked separately.
@@ -26,14 +40,14 @@ export type TaskStatus = z.infer<typeof TaskStatus>;
  * task-skeleton-validate.
  */
 export const TaskRecord = z.object({
-  id: z.string().min(1),
+  id: RecordId,
   title: z.string().min(1),
   status: TaskStatus,
   priority: z.number().int().nonnegative().default(3),
-  scope: z.string().nullable().optional(),
+  scope: RecordId.nullable().optional(),
   path_hints: z.array(z.string()).default([]),
-  prompts: z.array(z.string()).default([]),
-  dependencies: z.array(z.string()).default([]),
+  prompts: z.array(RecordId).default([]),
+  dependencies: z.array(RecordId).default([]),
   created_at: isoTs.optional(),
   updated_at: isoTs.optional(),
   closed_at: isoTs.nullable().optional(),
@@ -48,20 +62,20 @@ export type TaskRecord = z.infer<typeof TaskRecord>;
  * reports need are modeled; extra fields are tolerated (stripped on read).
  */
 export const IssueRecord = z.object({
-  id: z.string().min(1),
+  id: RecordId,
   title: z.string().min(1),
   status: z.string().min(1),
   severity: z.string().optional(),
   type: z.string().optional(),
-  task: z.string().nullable().optional(),
-  scope: z.string().nullable().optional(),
+  task: RecordId.nullable().optional(),
+  scope: RecordId.nullable().optional(),
 });
 export type IssueRecord = z.infer<typeof IssueRecord>;
 
 /** Handoff record schema (spec §6.7): a one-shot baton pass between agents. */
 export const HandoffRecord = z.object({
-  id: z.string().min(1),
-  task: z.string().min(1),
+  id: RecordId,
+  task: RecordId,
   from_agent: z.string().min(1),
   to_agent: z.string().nullable().optional(),
   branch: z.string().nullable().optional(),
@@ -85,13 +99,13 @@ export type MessageKind = z.infer<typeof MessageKind>;
  * entry. `thread` is a task/issue id OR the reserved `project` channel.
  */
 export const MessageRecord = z.object({
-  id: z.string().min(1),
-  thread: z.string().min(1),
+  id: RecordId,
+  thread: ProjectOrRecordId,
   from_agent: z.string().min(1),
   to_agent: z.string().nullable().optional(),
   kind: MessageKind.default("update"),
   body: z.string(),
-  in_reply_to: z.string().nullable().optional(),
+  in_reply_to: RecordId.nullable().optional(),
   created_at: isoTs,
 });
 export type MessageRecord = z.infer<typeof MessageRecord>;
@@ -102,7 +116,7 @@ export type PromptStatus = z.infer<typeof PromptStatus>;
 
 /** Prompt record schema (spec §6.4): reusable, scoped instruction records. */
 export const PromptRecord = z.object({
-  id: z.string().min(1),
+  id: RecordId,
   title: z.string().min(1),
   version: z.number().int().default(1),
   status: PromptStatus.default("active"),
@@ -110,8 +124,8 @@ export const PromptRecord = z.object({
     .object({
       agents: z.array(z.string()).default([]),
       roles: z.array(z.string()).default([]),
-      scopes: z.array(z.string()).default([]),
-      tasks: z.array(z.string()).default([]),
+      scopes: z.array(RecordId).default([]),
+      tasks: z.array(RecordId).default([]),
     })
     .default({ agents: [], roles: [], scopes: [], tasks: [] }),
   priority: z.number().int().default(50),
@@ -129,8 +143,8 @@ export type ClaimStatus = z.infer<typeof ClaimStatus>;
 
 /** Claim record schema (spec §6.6). Claims track who is working on what. */
 export const ClaimRecord = z.object({
-  id: z.string().min(1),
-  task: z.string().min(1),
+  id: RecordId,
+  task: RecordId,
   agent: z.string().min(1),
   status: ClaimStatus,
   branch: z.string().nullable().optional(),

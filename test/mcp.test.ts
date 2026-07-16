@@ -29,7 +29,7 @@ function setupLedger() {
     priority: 1,
     dependencies: [],
     prompts: [],
-    path_hints: [],
+    path_hints: ["src/core/brief.ts"],
     acceptance: [],
     created_at: "2026-07-06T12:00:00+03:00",
     updated_at: "2026-07-06T12:00:00+03:00",
@@ -213,7 +213,40 @@ describe("mcp server integration", () => {
     expect(result.ok).toBe(true);
     expect(result.data.task.id).toBe("test-task");
     expect(result.data.task.status).toBe("in_progress");
+    expect(result.data.budget).toBe("medium");
     expect(result.data.activeClaim).not.toBeNull();
+
+    await client.close();
+    await server.close();
+  });
+
+  test("get_brief validates and applies budget", async () => {
+    const server = buildServer(testRoot);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+
+    const client = new Client({ name: "test-client", version: "0.0.1" });
+    await client.connect(clientTransport);
+
+    const full = await client.callTool({
+      name: "get_brief",
+      arguments: { task: "test-task", budget: "full" },
+    });
+    const fullResult: any = JSON.parse(
+      (full.content as Array<{ type: string; text: string }>)[0]!.text,
+    );
+    expect(fullResult.ok).toBe(true);
+    expect(fullResult.data.budget).toBe("full");
+
+    const invalid = await client.callTool({
+      name: "get_brief",
+      arguments: { task: "test-task", budget: "tiny" },
+    });
+    const invalidResult: any = JSON.parse(
+      (invalid.content as Array<{ type: string; text: string }>)[0]!.text,
+    );
+    expect(invalidResult.ok).toBe(false);
+    expect(invalidResult.errors[0].code).toBe("invalid_brief_budget");
 
     await client.close();
     await server.close();
@@ -227,7 +260,9 @@ describe("mcp server integration", () => {
     writeFileSync(
       join(graphDir, "graph.json"),
       JSON.stringify({
-        nodes: [{ id: "n1", type: "function", file: "src/core/brief.ts", name: "buildBrief" }],
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+        ],
         edges: [],
         concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
       }),
@@ -242,13 +277,14 @@ describe("mcp server integration", () => {
 
     const res = await client.callTool({
       name: "get_brief",
-      arguments: { task: "test-task" },
+      arguments: { task: "test-task", budget: "large" },
     });
     const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
     const result: any = JSON.parse(text);
     expect(result.ok).toBe(true);
-    expect(result.data.relatedFiles).toBeDefined();
-    expect(result.data.concepts).toBeDefined();
+    expect(result.data.budget).toBe("large");
+    expect(result.data.relatedFiles.length).toBeGreaterThan(0);
+    expect(result.data.concepts.length).toBeGreaterThan(0);
     expect(result.data.impactHints).toBeDefined();
 
     await client.close();

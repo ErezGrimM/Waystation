@@ -27,7 +27,7 @@ function setupLedger() {
     priority: 1,
     dependencies: [],
     prompts: [],
-    path_hints: [],
+    path_hints: ["src/core/brief.ts"],
     acceptance: [],
     created_at: "2026-07-06T20:00:00+03:00",
     updated_at: "2026-07-06T20:00:00+03:00",
@@ -103,6 +103,20 @@ describe("dashboard API server", () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.task.id).toBe("test-task");
+    expect(body.data.budget).toBe("medium");
+  });
+
+  test("GET /api/tasks/:id/brief passes budget through core validation", async () => {
+    const app = createApp(testRoot);
+    const full = await app.request("/api/tasks/test-task/brief?budget=full");
+    const fullBody = await full.json();
+    expect(fullBody.ok).toBe(true);
+    expect(fullBody.data.budget).toBe("full");
+
+    const invalid = await app.request("/api/tasks/test-task/brief?budget=tiny");
+    const invalidBody = await invalid.json();
+    expect(invalidBody.ok).toBe(false);
+    expect(invalidBody.errors[0].code).toBe("invalid_brief_budget");
   });
 
   test("GET /api/tasks/:id/brief returns enriched brief with graph data", async () => {
@@ -113,18 +127,21 @@ describe("dashboard API server", () => {
     writeFileSync(
       join(graphDir, "graph.json"),
       JSON.stringify({
-        nodes: [{ id: "n1", type: "function", file: "src/core/brief.ts", name: "buildBrief" }],
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+        ],
         edges: [],
         concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
       }),
     );
 
     const app = createApp(testRoot);
-    const res = await app.request("/api/tasks/test-task/brief");
+    const res = await app.request("/api/tasks/test-task/brief?budget=large");
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.data.relatedFiles).toBeDefined();
-    expect(body.data.concepts).toBeDefined();
+    expect(body.data.budget).toBe("large");
+    expect(body.data.relatedFiles.length).toBeGreaterThan(0);
+    expect(body.data.concepts.length).toBeGreaterThan(0);
     expect(body.data.impactHints).toBeDefined();
   });
 

@@ -1,0 +1,31 @@
+{
+  "id": "task-phase8-install-distribution-docs",
+  "title": "Document install and distribution paths",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "README.md",
+    "docs/",
+    "package.json",
+    "src/cli/index.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-phase8-reconcile-docs-and-build"
+  ],
+  "created_at": "2026-07-15T23:12:24+03:00",
+  "updated_at": "2026-07-16T06:06:23+03:00",
+  "closed_at": "2026-07-16T06:06:23+03:00",
+  "description": "Make it clear how a user or agent should install and run Waystation locally. Cover Bun source execution, compiled binary usage, MCP stdio setup, and expected rebuild steps without adding a hosted service or remote dependency.",
+  "acceptance": [
+    "README documents source-run and compiled-binary workflows using the local Bun path.",
+    "MCP usage notes explain how to launch the server over stdio from the local checkout.",
+    "The docs explain when to rebuild waystation.exe and what smoke checks to run.",
+    "Any package metadata changes are justified by the documented workflow.",
+    "bun test, typecheck, biome check, and waystation validate are clean."
+  ],
+  "notes": "Keep this as documentation and packaging polish. Do not introduce an installer unless the task is explicitly expanded."
+}

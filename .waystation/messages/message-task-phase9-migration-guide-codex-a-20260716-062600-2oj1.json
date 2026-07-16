@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase9-migration-guide-codex-a-20260716-062600-2oj1",
+  "thread": "task-phase9-migration-guide",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting migration guide docs for importing other task systems into Waystation.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:26:00+03:00"
+}

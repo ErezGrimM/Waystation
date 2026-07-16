@@ -1,0 +1,29 @@
+{
+  "id": "task-phase9-normalize-timestamps",
+  "title": "Normalize or document legacy timestamp formats",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    ".waystation/",
+    "src/core/schema.ts",
+    "src/core/validate.ts",
+    "docs/roadmap.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T06:36:14+03:00",
+  "updated_at": "2026-07-16T06:54:04+03:00",
+  "closed_at": "2026-07-16T06:54:04+03:00",
+  "description": "Review legacy ledger records that use UTC-Z timestamps while newer records use local offset timestamps. Decide whether to normalize old records or explicitly document compatibility. If normalizing, preserve semantic instants and avoid touching unrelated fields.",
+  "acceptance": [
+    "All timestamp records are reviewed for mixed UTC-Z and local-offset formatting.",
+    "Either legacy timestamps are normalized to the current convention or the compatibility decision is documented in docs/roadmap.md or an ADR.",
+    "No unrelated ledger fields are changed during normalization.",
+    "waystation validate is clean after the change.",
+    "bun test, typecheck, biome check, and rebuilt binary smoke checks are green if code changes are made."
+  ],
+  "notes": "This was the only remaining not-yet-phased backlog item. Treat record churn carefully because many generated views depend on ledger timestamps."
+}

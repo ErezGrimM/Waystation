@@ -1,0 +1,17 @@
+{
+  "id": "decision-message-storage-layout",
+  "title": "Keep one-file-per-message JSON storage for V1",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": "task-phase8-message-storage-decision",
+  "created_at": "2026-07-16T06:07:17+03:00",
+  "decided_by": "codex-a",
+  "context": "Phase 8 revisited whether Waystation should migrate messages from one immutable JSON file per message to per-thread JSONL. The concern was possible merge friction or many small files as multi-agent usage grows.",
+  "decision": "Keep the current one-file-per-message JSON layout for V1 and Phase 8. Do not migrate to per-thread JSONL until real volume or merge-conflict evidence justifies a separate migration task.",
+  "consequences": [
+    "Existing message post/list/inbox, validation, MCP, dashboard, and index behavior remain valid.",
+    "Git merges usually add distinct message files instead of editing one hot thread file.",
+    "Very chatty projects may accumulate many small files, but that is acceptable at the current scale.",
+    "Future migration requires a separate task with schema, validation, index, compatibility, and migration acceptance criteria."
+  ]
+}

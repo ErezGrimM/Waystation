@@ -1,0 +1,32 @@
+{
+  "id": "task-phase9-validation-import-hardening",
+  "title": "Harden validation for migrated and imported records",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/schema.ts",
+    "src/core/validate.ts",
+    "src/core/gh.ts",
+    "docs/migration-guide.md",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-phase9-generated-artifact-audit"
+  ],
+  "created_at": "2026-07-16T06:36:14+03:00",
+  "updated_at": "2026-07-16T07:02:08+03:00",
+  "closed_at": "2026-07-16T07:02:08+03:00",
+  "description": "Strengthen validation and import-facing rules for records produced by migrations or external systems. Focus on filename/id safety, dangling references, status/priority mappings, and imported text that later flows into generated reports or views.",
+  "acceptance": [
+    "Record ids that become filenames are constrained or validated so path traversal and unsafe filenames are rejected.",
+    "Migration-relevant references such as dependencies, scopes, prompts, message threads, and issue/task links produce clear diagnostics when invalid.",
+    "GitHub/import mapping edge cases are reviewed and documented or tested where appropriate.",
+    "docs/migration-guide.md reflects any new validation rules an LLM or human migrator must follow.",
+    "bun test, typecheck, biome check, waystation validate, and rebuilt binary smoke checks are green."
+  ],
+  "notes": "This is Phase 9's main hardening slice. Keep CLI/dashboard/MCP thin; any new rule should live in schema/validate/core helpers first."
+}

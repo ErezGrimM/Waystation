@@ -17,6 +17,26 @@ function recordExists(dir: string, id: string): boolean {
   return existsSync(join(dir, `${id}.json`)) || existsSync(join(dir, `${id}.yaml`));
 }
 
+function expectedJsonName(id: string): string {
+  return `${id}.json`;
+}
+
+function addFilenameMismatch(
+  diags: Diagnostic[],
+  kind: string,
+  fileName: string,
+  id: string,
+): void {
+  const expected = expectedJsonName(id);
+  if (fileName === expected) return;
+  diags.push(
+    diag("filename_mismatch", {
+      message: `${kind} file ${fileName} contains id ${id}; expected ${expected}`,
+      details: { kind, file: fileName, id, expected },
+    }),
+  );
+}
+
 function listJson(dir: string): string[] {
   try {
     return readdirSync(dir).filter((n) => n.endsWith(".json"));
@@ -96,6 +116,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "task", name, parsed.data.id);
     seenTaskIds.add(parsed.data.id);
     tasks.push(parsed.data);
   }
@@ -182,6 +203,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "issue", name, parsed.data.id);
     if (parsed.data.task && !taskExists(parsed.data.task)) {
       diags.push(
         diag("issue_orphan", {
@@ -229,6 +251,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "claim", name, parsed.data.id);
     seenClaimIds.add(parsed.data.id);
     if (!taskExists(parsed.data.task)) {
       diags.push(
@@ -300,6 +323,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "handoff", name, parsed.data.id);
     seenHandoffIds.add(parsed.data.id);
     if (!taskExists(parsed.data.task)) {
       diags.push(
@@ -346,6 +370,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "prompt", name, parsed.data.id);
     seenPromptIds.add(parsed.data.id);
   }
 
@@ -404,6 +429,7 @@ export function validateLedger(root?: string): CommandResult<null> {
         }),
       );
     }
+    addFilenameMismatch(diags, "message", name, parsed.data.id);
     seenMessageIds.add(parsed.data.id);
     messages.push({
       id: parsed.data.id,

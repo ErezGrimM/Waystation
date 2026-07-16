@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase9-migration-guide-codex-a-20260716-062739-2rzp",
+  "thread": "task-phase9-migration-guide",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Added docs/migration-guide.md with mapping workflow, LLM prompt, source-system guidance, validation commands, and review checklist; linked from README.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:27:39+03:00"
+}

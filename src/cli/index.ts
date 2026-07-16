@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
 import {
-  type BriefBudget,
   buildBrief,
+  parseBriefBudget,
   renderBrief,
   resolveTaskFromGitClaim,
 } from "../core/brief.ts";
@@ -186,10 +186,15 @@ program
   .option("--json", "output JSON")
   .action((opts: { task?: string; budget: string; json?: boolean }) => {
     const root = findProjectRoot();
+    const budget = parseBriefBudget(opts.budget);
+    if (!budget.ok || !budget.data) {
+      emitResult(budget as CommandResult<unknown>, opts.json, () => {});
+      return;
+    }
 
     if (opts.task) {
       try {
-        const brief = buildBrief(root, opts.task, opts.budget as BriefBudget);
+        const brief = buildBrief(root, opts.task, budget.data);
         emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
       } catch (e) {
         const code =
@@ -210,7 +215,7 @@ program
     }
 
     try {
-      const brief = buildBrief(root, resolved.data, opts.budget as BriefBudget);
+      const brief = buildBrief(root, resolved.data, budget.data);
       emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
     } catch (e) {
       const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";

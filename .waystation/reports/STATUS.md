@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-gh-core` [p2] — GitHub Issues import/export core module (API + field mapping)
+- `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
 
 ## In progress
 _none_
@@ -15,8 +15,7 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-- `task-gh-cli` [p2] — GitHub Issues CLI commands (import/export)
-- `task-gh-dashboard` [p3] — GitHub Issues import/export buttons on dashboard Issues page
+_none_
 
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints
@@ -29,29 +28,43 @@ _none_
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
-- `task-dashboard-frontend` [p2] — Implement the dashboard SPA (Vite + React + TanStack Query)
+- `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
-- `task-dashboard-server` [p2] — Implement the dashboard API server (Hono + SSE + CLI command)
-- `task-error-envelope` [p2] — Adopt the structured error envelope (CommandResult / Diagnostic)
+- `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
+- `task-error-envelope` [p2] — Adopt the structured error envelope \(CommandResult / Diagnostic\)
+- `task-gh-cli` [p2] — GitHub Issues CLI commands \(import/export\)
+- `task-gh-core` [p2] — GitHub Issues import/export core module \(API \+ field mapping\)
+- `task-gh-dashboard` [p3] — GitHub Issues import/export buttons on dashboard Issues page
 - `task-git-init` [p1] — Initialize git version control
 - `task-git-state-core` [p1] — Detect current git branch, root, worktree, and status in core
+- `task-graph-brief` [p2] — Wire Graphify enrichment into brief, CLI, MCP, and dashboard
+- `task-graph-core` [p2] — Graphify context enrichment core module
+- `task-graph-fix-crash-and-duplicates` [p1] — Fix loadGraphData crash on malformed JSON and deduplicate impact hints
 - `task-handoff` [p2] — Implement handoff create/show
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
-- `task-init` [p1] — Implement `waystation init`
-- `task-mcp-server` [p2] — Implement the MCP server (thin wrappers over core)
-- `task-mcp-smoke` [p1] — Smoke-test @modelcontextprotocol/sdk on Bun
-- `task-migrate-ledger-json` [p1] — Migrate the hand-written ledger from YAML to JSON
+- `task-init` [p1] — Implement \`waystation init\`
+- `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
+- `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
+- `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
 - `task-phase6-docs-and-exit` [p3] — Document Phase 6 behavior and mark exit criteria
 - `task-phase6-worktree-message-scope-decision` [p1] — Phase 6 decision: worktree messaging scope
+- `task-phase8-brief-budget-tiers` [p2] — Implement real brief budget tiers
+- `task-phase8-install-distribution-docs` [p2] — Document install and distribution paths
+- `task-phase8-message-storage-decision` [p3] — Decide whether message storage layout needs to change
+- `task-phase8-reconcile-docs-and-build` [p1] — Reconcile docs, generated views, and rebuilt binary for Phase 8
+- `task-phase9-generated-artifact-audit` [p2] — Audit generated reports and Markdown views
+- `task-phase9-migration-guide` [p2] — Write migration guide for importing other task systems
+- `task-phase9-normalize-timestamps` [p2] — Normalize or document legacy timestamp formats
+- `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
 - `task-prompt-render` [p2] — Implement prompt list/show/render
-- `task-readme` [p2] — Write README (run instructions, layout, dogfood loop)
+- `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-scaffold-cli` [p1] — Scaffold CLI project
-- `task-skeleton-brief` [p1] — Widen skeleton: `waystation brief --task <id>`
+- `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
 - `task-skeleton-mutations` [p2] — Widen skeleton: claim/release/finish with events and locking
-- `task-skeleton-read-commands` [p2] — Widen skeleton: `task list` and `task show`
-- `task-skeleton-task-next` [p1] — Walking skeleton: end-to-end `waystation task next`
-- `task-skeleton-validate` [p2] — Widen skeleton: full-ledger validation
+- `task-skeleton-read-commands` [p2] — Widen skeleton: \`task list\` and \`task show\`
+- `task-skeleton-task-next` [p1] — Walking skeleton: end\-to\-end \`waystation task next\`
+- `task-skeleton-validate` [p2] — Widen skeleton: full\-ledger validation
 - `task-validate-messages` [p3] — Extend validate to cover message records
 
 ## Won't do

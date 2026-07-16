@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase9-normalize-timestamps-codex-a-20260716-065404-xqzm",
+  "thread": "task-phase9-normalize-timestamps",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Normalized legacy UTC-Z timestamps in early task records, matching claim records, and corresponding event ts entries to equivalent +03:00 local-offset timestamps. Roadmap notes the normalization pass. Verified no canonical *_at or event ts fields remain with Z, and full checks are green.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:54:04+03:00"
+}

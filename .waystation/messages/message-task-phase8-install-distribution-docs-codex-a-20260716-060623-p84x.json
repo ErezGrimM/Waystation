@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-install-distribution-docs-codex-a-20260716-060623-p84x",
+  "thread": "task-phase8-install-distribution-docs",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. README now documents source checkout execution, compiled binary workflow, MCP stdio launch, rebuild timing, and smoke checks. Checks are green.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:06:23+03:00"
+}

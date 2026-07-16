@@ -17,8 +17,8 @@
     "task-skeleton-task-next"
   ],
   "created_at": "2026-07-06T12:24:00+03:00",
-  "updated_at": "2026-07-05T23:13:33.686Z",
-  "closed_at": "2026-07-05T23:13:33.686Z",
+  "updated_at": "2026-07-06T02:13:33.686+03:00",
+  "closed_at": "2026-07-06T02:13:33.686+03:00",
   "description": "Add the mutation half of the skeleton — the first commands that write. This forces the core write path: acquire a local write lock (proper-lockfile), validate input, write the JSON record atomically, append a JSONL event, and invalidate or update the bun:sqlite index. Implement `task claim`, `task release`, and `task finish`.\n",
   "acceptance": [
     "`waystation task claim <id> --agent <a>` creates an active claim JSON record and appends a task.claimed event.",

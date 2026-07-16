@@ -3,7 +3,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildBrief, renderBrief, resolveTaskFromGitClaim } from "../src/core/brief.ts";
+import {
+  buildBrief,
+  parseBriefBudget,
+  renderBrief,
+  resolveTaskFromGitClaim,
+} from "../src/core/brief.ts";
 import {
   generateActiveWork,
   generateBlocked,
@@ -553,6 +558,14 @@ describe("CLI: task list / show", () => {
     expect(r.code).toBe(1);
     expect(r.err).toContain("no such task");
   });
+
+  test("brief rejects an invalid budget with a coded diagnostic", () => {
+    const r = run(["brief", "--task", "task-b", "--budget", "tiny", "--json"]);
+    const res = JSON.parse(r.out) as { ok: boolean; errors: Array<{ code: string }> };
+    expect(r.code).toBe(1);
+    expect(res.ok).toBe(false);
+    expect(res.errors[0]?.code).toBe("invalid_brief_budget");
+  });
 });
 
 describe("mutations: claim / release / finish", () => {
@@ -672,7 +685,7 @@ describe("active claim overlap warnings", () => {
 
   test("brief includes advisory coordination warnings", async () => {
     const root = await overlapRoot();
-    const brief = buildBrief(root, "task-left");
+    const brief = buildBrief(root, "task-left", "large");
     expect(brief.coordinationWarnings.length).toBeGreaterThan(0);
     expect(renderBrief(brief)).toContain("Coordination warnings");
   });
@@ -721,6 +734,13 @@ describe("validate", () => {
     expect(codes(root)).toContain("duplicate_id");
   });
 
+  test("flags a record whose filename does not match its id", () => {
+    const root = fixtureRoot([{ ...A }]);
+    const second = join(root, ".waystation", "tasks", "wrong-name.json");
+    writeFileSync(second, JSON.stringify({ ...D, id: "task-d" }));
+    expect(codes(root)).toContain("filename_mismatch");
+  });
+
   test("detects a circular dependency", () => {
     const p = { id: "task-p", title: "P", status: "todo", priority: 1, dependencies: ["task-q"] };
     const q = { id: "task-q", title: "Q", status: "todo", priority: 1, dependencies: ["task-p"] };
@@ -730,6 +750,32 @@ describe("validate", () => {
   test("flags an invalid record schema", () => {
     const bad = { id: "task-bad", title: "Bad", status: "nope", dependencies: [] };
     expect(codes(fixtureRoot([bad]))).toContain("schema_invalid");
+  });
+
+  test("flags migrated ids and references that are not filesystem-safe", () => {
+    const root = fixtureRoot([{ ...A }]);
+    const tasksDir = join(root, ".waystation", "tasks");
+    writeFileSync(
+      join(tasksDir, "bad-id.json"),
+      JSON.stringify({
+        id: "../bad",
+        title: "Bad",
+        status: "ready",
+        priority: 1,
+        dependencies: [],
+      }),
+    );
+    writeFileSync(
+      join(tasksDir, "bad-ref.json"),
+      JSON.stringify({
+        id: "task-bad-ref",
+        title: "Bad ref",
+        status: "ready",
+        priority: 1,
+        dependencies: ["../bad"],
+      }),
+    );
+    expect(codes(root)).toContain("schema_invalid");
   });
 
   const t0 = new Date("2026-07-06T10:00:00Z");
@@ -861,11 +907,70 @@ describe("brief", () => {
       }),
     );
 
-    const brief = buildBrief(root, "task-graph");
+    const brief = buildBrief(root, "task-graph", "large");
     const rendered = renderBrief(brief);
     expect(rendered).toContain("## Related files");
     expect(rendered).toContain("## Concepts");
     expect(rendered).toContain("Task Management");
+  });
+
+  test("budget tiers deterministically add brief sections", async () => {
+    const root = fixtureRoot([
+      {
+        id: "task-budget",
+        title: "Improve brief generation",
+        status: "ready",
+        priority: 2,
+        scope: "scope-core",
+        path_hints: ["src/core/brief.ts"],
+        prompts: ["prompt-waystation-v1"],
+        dependencies: ["task-a"],
+        acceptance: ["Budget tiers are deterministic."],
+        description: "Improve task brief generation for agents.",
+      },
+      A,
+    ]);
+    mkdirSync(join(root, ".waystation", "scopes"), { recursive: true });
+    writeFileSync(
+      join(root, ".waystation", "scopes", "scope-core.json"),
+      JSON.stringify({ id: "scope-core", rules: ["Keep logic in core."] }),
+    );
+    const graphDir = join(root, "graphify-out");
+    mkdirSync(graphDir, { recursive: true });
+    writeFileSync(
+      join(graphDir, "graph.json"),
+      JSON.stringify({
+        nodes: [
+          { id: "n1", label: "buildBrief", file_type: "code", source_file: "src/core/brief.ts" },
+          { id: "n2", label: "readyTasks", file_type: "code", source_file: "src/core/tasks.ts" },
+        ],
+        edges: [{ source: "n1", target: "n2", relation: "calls" }],
+        concepts: [{ id: "c1", name: "Task Management", keywords: ["task", "brief"] }],
+      }),
+    );
+    await claimTask(root, "task-budget", "tester");
+
+    const small = buildBrief(root, "task-budget", "small");
+    const medium = buildBrief(root, "task-budget", "medium");
+    const large = buildBrief(root, "task-budget", "large");
+    const full = buildBrief(root, "task-budget", "full");
+
+    expect(small.acceptance).toEqual(["Budget tiers are deterministic."]);
+    expect(small.scopeRules).toEqual([]);
+    expect(small.activeClaim).toBeNull();
+    expect(medium.scopeRules).toEqual(["Keep logic in core."]);
+    expect(medium.activeClaim?.agent).toBe("tester");
+    expect(medium.relatedFiles).toEqual([]);
+    expect(large.relatedFiles).toContain("src/core/brief.ts");
+    expect(large.concepts).toContain("Task Management");
+    expect(large.impactHints).toEqual([]);
+    expect(full.impactHints?.[0]).toContain("src/core/brief.ts depends on");
+  });
+
+  test("invalid brief budget returns a coded diagnostic", () => {
+    const result = parseBriefBudget("tiny");
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]?.code).toBe("invalid_brief_budget");
   });
 });
 
@@ -963,6 +1068,40 @@ describe("generate", () => {
     generateTaskViews(root);
     expect(existsSync(join(dir, "task-gone.md"))).toBe(false);
     expect(existsSync(join(dir, "task-a.md"))).toBe(true);
+  });
+
+  test("generated Markdown escapes imported task and issue text", async () => {
+    const task = {
+      id: "task-markdown",
+      title: "Fix [link](https://example.test) <script>",
+      status: "ready",
+      priority: 2,
+      dependencies: [],
+      description: "Imported **description** with <html>.",
+      acceptance: ["Do not render [acceptance](https://example.test) as a link."],
+    };
+    const root = fixtureRoot([task]);
+    await createIssue(root, {
+      id: "issue-markdown",
+      title: "Imported [issue](https://example.test) <b>",
+      status: "open",
+      severity: "high|critical",
+    });
+
+    const status = generateStatus(root);
+    expect(status).toContain("Imported \\[issue\\]\\(https://example\\.test\\) \\<b\\>");
+    expect(status).toContain("[high\\|critical]");
+
+    generateTaskViews(root);
+    const view = readFileSync(
+      join(root, ".waystation", "views", "tasks", "task-markdown.md"),
+      "utf8",
+    );
+    expect(view).toContain("Fix \\[link\\]\\(https://example\\.test\\) \\<script\\>");
+    expect(view).toContain("Imported \\*\\*description\\*\\* with \\<html\\>\\.");
+    expect(view).toContain(
+      "Do not render \\[acceptance\\]\\(https://example\\.test\\) as a link\\.",
+    );
   });
 
   test("reindex returns a CommandResult with per-type counts", async () => {
@@ -1101,6 +1240,59 @@ describe("github import/export", () => {
     const result = await importGitHubIssues(root, "owner/nonexistent-zzz", "fake-token");
     expect(result.ok).toBe(false);
     expect(result.errors.map((d) => d.code)).toContain("github_api_error");
+  });
+
+  test("importGitHubIssues imports valid issues and skips pull requests", async () => {
+    const root = fixtureRoot([D]);
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      new Response(
+        JSON.stringify([
+          {
+            number: 42,
+            title: "GitHub bug",
+            state: "open",
+            body: "Steps",
+            labels: [{ name: "bug" }, { name: "high" }],
+          },
+          {
+            number: 43,
+            title: "Pull request",
+            state: "open",
+            body: null,
+            labels: [],
+            pull_request: {},
+          },
+        ]),
+        { status: 200 },
+      )) as unknown as typeof fetch;
+    try {
+      const result = await importGitHubIssues(root, "owner/repo", "tok");
+      expect(result.ok).toBe(true);
+      expect(result.data?.ids).toEqual(["gh-42"]);
+      expect(loadIssues(root).find((i) => i.id === "gh-42")?.type).toBe("bug");
+      expect(loadIssues(root).find((i) => i.id === "gh-42")?.severity).toBe("high");
+      expect(loadIssues(root).some((i) => i.id === "gh-43")).toBe(false);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  test("importGitHubIssues rejects malformed API items before creating records", async () => {
+    const root = fixtureRoot([D]);
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      new Response(JSON.stringify([{ title: "No number", state: "open", labels: [] }]), {
+        status: 200,
+      })) as unknown as typeof fetch;
+    try {
+      const result = await importGitHubIssues(root, "owner/repo", "tok");
+      expect(result.ok).toBe(false);
+      expect(result.errors.map((d) => d.code)).toContain("github_api_error");
+      expect(loadIssues(root)).toEqual([]);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
   });
 
   test("exportGitHubIssues returns no_github_token when token is empty", async () => {
@@ -1299,7 +1491,7 @@ describe("graph enrichment", () => {
       }),
     );
 
-    const brief = buildBrief(root, "task-graph");
+    const brief = buildBrief(root, "task-graph", "large");
     expect(brief.relatedFiles).toBeDefined();
     expect(brief.relatedFiles?.length).toBeGreaterThan(0);
     expect(brief.concepts).toBeDefined();

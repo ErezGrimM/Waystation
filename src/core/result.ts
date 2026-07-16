@@ -56,6 +56,12 @@ export const CODES = {
     hint: "Ids must be unique; rename one record.",
     retryable: false,
   },
+  filename_mismatch: {
+    severity: "error",
+    message: "Record filename does not match its id.",
+    hint: "Rename the file to <id>.json or correct the record id.",
+    retryable: false,
+  },
   missing_dependency: {
     severity: "error",
     message: "Task depends on a task that does not exist.",
@@ -239,6 +245,12 @@ export const CODES = {
     message:
       "Multiple active claims match the current git branch or worktree — cannot auto-resolve. Provide --task explicitly.",
     hint: "Specify the task id: waystation brief --task <id>.",
+    retryable: false,
+  },
+  invalid_brief_budget: {
+    severity: "error",
+    message: "Invalid brief budget.",
+    hint: "Use one of: small, medium, large, full.",
     retryable: false,
   },
   // github

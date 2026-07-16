@@ -314,7 +314,7 @@ surface.
 
 | ADR | Status | Summary |
 |---|---|---|
-| [ADR-0001](./ADR-0001-implementation-stack.md) | Proposed | TypeScript/Bun implementation stack |
-| [ADR-0002](./ADR-0002-implementation-stack-revised.md) | Proposed | Go core/API with embedded React dashboard |
-
-No implementation stack ADR has been accepted yet.
+| [ADR-0001](./ADR-0001-implementation-stack.md) | Accepted | Bun + TypeScript implementation stack |
+| [ADR-0002](./ADR-0002-implementation-stack-revised.md) | Superseded | Go core/API with embedded React dashboard |
+| [ADR-0003](./ADR-0003-worktree-message-scope.md) | Accepted | Worktree-local messages and ledger records for V1 |
+| [ADR-0004](./ADR-0004-message-storage-layout.md) | Accepted | Keep one-file-per-message JSON storage for V1 |

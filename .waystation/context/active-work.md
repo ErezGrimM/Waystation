@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-gh-core` [p2] — GitHub Issues import/export core module (API + field mapping)
+- `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
 
 ## Coordination warnings
 _none_

@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase8-install-distribution-docs-codex-a-20260716-060009-iuvr",
+  "thread": "task-phase8-install-distribution-docs",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting install/distribution docs: source run, compiled binary, MCP stdio, rebuild timing, and smoke checks.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T06:00:09+03:00"
+}
