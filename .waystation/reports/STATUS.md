@@ -3,10 +3,12 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
+- `task-audit-lifecycle-dashboard-surface` [p2] — Expose lifecycle mutations through the dashboard
+- `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
 
 ## In progress
-- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
+_none_
 
 ## Review
 _none_
@@ -16,9 +18,6 @@ _none_
 
 ## Waiting (blocked by dependencies)
 - `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
-- `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
-- `task-audit-lifecycle-dashboard-surface` [p2] — Expose lifecycle mutations through the dashboard
-- `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
 - `task-audit-lifecycle-surfaces` [p2] — Verify lifecycle parity across CLI, MCP, and dashboard
 - `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
 - `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
@@ -40,6 +39,7 @@ _none_
 - `task-audit-fix-dedup-and-tests` [p3] — Deduplicate readJson, fix test/lint config, clean up generate
 - `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file naming
 - `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
+- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
 - `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 - `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files

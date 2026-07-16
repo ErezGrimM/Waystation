@@ -3,9 +3,6 @@
 # Blocked
 
 - `task-audit-corrections-release` — waiting on: task-phase10-binary-distribution-notes
-- `task-audit-lifecycle-cli-surface` — waiting on: task-audit-lifecycle-mutations
-- `task-audit-lifecycle-dashboard-surface` — waiting on: task-audit-lifecycle-mutations
-- `task-audit-lifecycle-mcp-surface` — waiting on: task-audit-lifecycle-mutations
 - `task-audit-lifecycle-surfaces` — waiting on: task-audit-lifecycle-cli-surface, task-audit-lifecycle-mcp-surface, task-audit-lifecycle-dashboard-surface
 - `task-audit-project-validation-sync` — waiting on: task-audit-lifecycle-surfaces
 - `task-audit-ranking-policy` — waiting on: task-audit-corrections-release

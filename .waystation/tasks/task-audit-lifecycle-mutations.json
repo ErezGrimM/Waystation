@@ -1,7 +1,7 @@
 {
   "id": "task-audit-lifecycle-mutations",
   "title": "Add safe core task and issue lifecycle mutations",
-  "status": "in_progress",
+  "status": "done",
   "priority": 1,
   "scope": "scope-core",
   "path_hints": [
@@ -20,8 +20,8 @@
     "task-audit-mutation-recovery"
   ],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-17T00:03:51+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-17T00:13:12+03:00",
+  "closed_at": "2026-07-17T00:13:12+03:00",
   "description": "Remove the need for routine hand edits of canonical task and issue JSON. Add patch-safe core operations for task creation, metadata updates, explicit status transitions, terminal reopen, issue update, and issue close on top of the recoverable mutation protocol. Expand IssueRecord so debugging context survives parsing, indexing, views, and mutation round trips. Define claim, timestamp, and event effects for every lifecycle transition before exposing the operations through any surface.",
   "acceptance": [
     "Core exposes createTask, updateTask, explicit task transition, and reopenTask operations with Zod input schemas.",
@@ -34,6 +34,8 @@
     "Existing issue fixtures and rich unknown fields survive load-update-write round trips without data loss.",
     "Every accepted or rejected mutation has tests for locking, recovery, claim coherence, events, diagnostics, and unchanged-ledger failure behavior."
   ],
-  "commits": [],
+  "commits": [
+    "0aaacd1"
+  ],
   "notes": "This resolves the contradiction between the single-write-path invariant and instructions that currently require direct JSON edits. Keep surface-specific parsing out of core and raw stack traces out of results."
 }

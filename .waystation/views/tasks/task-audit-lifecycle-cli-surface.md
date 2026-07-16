@@ -2,8 +2,7 @@
 
 # task\-audit\-lifecycle\-cli\-surface — Expose lifecycle mutations through the CLI
 status: ready  priority: 2  scope: scope-cli
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-lifecycle\-mutations
+readiness: actionable  reason: declared_ready
 
 Add scriptable CLI wrappers for the finalized core task and issue lifecycle operations, using the shared root resolver and the standard CommandResult envelope without duplicating transition logic\.
 
