@@ -305,3 +305,4 @@
 {"type":"message.posted","message":"message-task-audit-correct-readiness-claims-codex-20260716-165850-h3q8","thread":"task-audit-correct-readiness-claims","from":"codex","to":null,"actor":"codex","ts":"2026-07-16T16:58:50+03:00"}
 {"type":"task.status_changed","task":"task-audit-correct-readiness-claims","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-16T16:58:50+03:00"}
 {"type":"claim.completed","task":"task-audit-correct-readiness-claims","claim":"claim-task-audit-correct-readiness-claims-codex-20260716-164841","actor":"codex","ts":"2026-07-16T16:58:50+03:00"}
+{"type":"task.commits_attached","task":"task-audit-correct-readiness-claims","commits":["d658715"],"actor":"codex","ts":"2026-07-16T16:59:43+03:00"}

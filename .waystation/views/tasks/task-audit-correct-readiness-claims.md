@@ -3,6 +3,7 @@
 # task\-audit\-correct\-readiness\-claims — Correct task readiness and claim invariants
 status: done  priority: 1  scope: scope-core
 readiness: not_eligible  reason: status_done
+commits: d658715
 
 Establish one authoritative lifecycle/readiness model\. Canonical status remains stored, while readiness is derived from status and the current dependency graph\. Only declared\-ready tasks whose dependencies are done or wont\_do may appear in ready/next or be claimed\. Claim eligibility must be re\-evaluated while holding the ledger lock\. Briefs, reports, validation, and index\-backed queries must use the same evaluator instead of implementing their own dependency rules\.
 

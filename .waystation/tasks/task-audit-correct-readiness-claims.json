@@ -17,7 +17,7 @@
   ],
   "dependencies": [],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T16:58:50+03:00",
+  "updated_at": "2026-07-16T16:59:43+03:00",
   "closed_at": "2026-07-16T16:58:50+03:00",
   "description": "Establish one authoritative lifecycle/readiness model. Canonical status remains stored, while readiness is derived from status and the current dependency graph. Only declared-ready tasks whose dependencies are done or wont_do may appear in ready/next or be claimed. Claim eligibility must be re-evaluated while holding the ledger lock. Briefs, reports, validation, and index-backed queries must use the same evaluator instead of implementing their own dependency rules.",
   "acceptance": [
@@ -28,6 +28,8 @@
     "Briefs, generated reports, validation, in-memory queries, and index-backed queries treat wont_do dependencies consistently.",
     "Table-driven tests cover every task status, missing dependencies, done/wont_do dependencies, and concurrent selection-versus-claim changes."
   ],
-  "commits": [],
+  "commits": [
+    "d658715"
+  ],
   "notes": "Breaking behavior correction from the v0.0.3 operational audit. Expose stored status plus derived readiness; do not store an effective_status field that can become stale. Do not add a deferred status in this slice—todo becomes the non-actionable backlog state."
 }
