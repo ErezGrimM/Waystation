@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-generated-artifact-policy-codex-20260716-235220-5od4",
+  "thread": "task-audit-generated-artifact-policy",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. ADR-0005 selects tracked generated ledger Markdown, default report/context generation, --views-only task views, and matching read-only freshness validation. README, release notes, decision record, and sync-task contract updated. Checks: bun test (185 pass), typecheck, biome check, validate. Commit follows.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T23:52:20+03:00"
+}

@@ -3,7 +3,7 @@
 # task\-audit\-project\-validation\-sync — Add semantic project validation and deterministic sync
 status: ready  priority: 2  scope: scope-core
 readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-lifecycle\-surfaces, task\-audit\-generated\-artifact\-policy
+readiness_blockers: task\-audit\-lifecycle\-surfaces
 
 Extend health checks beyond record shape and make routine regeneration reliable\. Default validation should report readiness inconsistencies\. Project validation should check safe literal path hints and generated artifact freshness using the caller project root\. A sync command should validate canonical records, rebuild the index, regenerate selected reports/views, and verify project health in a deterministic order\.
 

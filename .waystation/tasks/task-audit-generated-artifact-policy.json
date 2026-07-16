@@ -1,7 +1,7 @@
 {
   "id": "task-audit-generated-artifact-policy",
   "title": "Decide generated artifact tracking policy before sync",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "scope": "scope-core",
   "path_hints": [
@@ -20,8 +20,8 @@
     "task-audit-correct-readiness-claims"
   ],
   "created_at": "2026-07-16T16:37:46+03:00",
-  "updated_at": "2026-07-16T23:50:40+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-16T23:52:27+03:00",
+  "closed_at": "2026-07-16T23:52:27+03:00",
   "description": "Decide the repository policy for generated STATUS, context, and task-view Markdown before freshness validation and sync behavior are implemented. Keep canonical JSON, the disposable SQLite index, and generated Markdown distinct and make the chosen tracking policy an explicit input to the validation/sync task.",
   "acceptance": [
     "An ADR compares tracked, optional, and ignored generated Markdown with clone usability, merge churn, stale-output detection, and CI implications.",
@@ -30,6 +30,8 @@
     "The decision provides concrete requirements to task-audit-project-validation-sync and does not implement a competing sync path.",
     "No canonical JSON is reclassified as disposable or generated."
   ],
-  "commits": [],
+  "commits": [
+    "ea74db7"
+  ],
   "notes": "This decision precedes sync implementation to avoid building freshness rules and then changing their repository policy afterward."
 }

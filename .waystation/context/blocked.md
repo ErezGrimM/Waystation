@@ -8,8 +8,7 @@
 - `task-audit-lifecycle-mcp-surface` — waiting on: task-audit-lifecycle-mutations
 - `task-audit-lifecycle-mutations` — waiting on: task-audit-mutation-recovery
 - `task-audit-lifecycle-surfaces` — waiting on: task-audit-lifecycle-cli-surface, task-audit-lifecycle-mcp-surface, task-audit-lifecycle-dashboard-surface
-- `task-audit-mutation-recovery` — waiting on: task-audit-generated-artifact-policy
-- `task-audit-project-validation-sync` — waiting on: task-audit-lifecycle-surfaces, task-audit-generated-artifact-policy
+- `task-audit-project-validation-sync` — waiting on: task-audit-lifecycle-surfaces
 - `task-audit-ranking-policy` — waiting on: task-audit-corrections-release
 - `task-operational-audit-corrections` — waiting on: task-audit-ranking-policy
 - `task-phase10-binary-distribution-notes` — waiting on: task-phase10-mcp-launch-examples

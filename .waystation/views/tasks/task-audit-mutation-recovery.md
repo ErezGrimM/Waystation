@@ -2,8 +2,7 @@
 
 # task\-audit\-mutation\-recovery — Make multi\-file mutations crash\-recoverable
 status: ready  priority: 1  scope: scope-core
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-generated\-artifact\-policy
+readiness: actionable  reason: declared_ready
 
 Close the remaining high\-priority crash\-consistency gap from audit H4 before adding more lifecycle mutations\. Design and implement a recoverable protocol for canonical operations that update multiple records and events so interruption at any write boundary is detected and deterministically completed or rolled back before later mutations proceed\.
 
