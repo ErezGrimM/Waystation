@@ -2,6 +2,7 @@
 
 # task\-dashboard\-server — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Build the dashboard API server: a Hono app embedded in Bun\.serve that exposes REST endpoints over the core ledger \(thin wrappers, same pattern as MCP\)\. Includes an in\-process SSE event bus for live updates and the \`waystation dashboard\` CLI command with \`\-\-dev\` flag for Vite HMR proxying\. Phase 5\.1 of docs/roadmap\.md\.
 

@@ -2,6 +2,7 @@
 
 # task\-init — Implement \`waystation init\`
 status: done  priority: 1  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Spec §21 item 1: there is no \`waystation init\` — the ledger was hand\-bootstrapped\. Add a command that scaffolds a fresh \.waystation/ in a project: config\.json, the record subdirectories, an empty events\.jsonl, and seed context/reports\. Must be idempotent and refuse to clobber an existing ledger unless \-\-force\.
 

@@ -2,6 +2,8 @@
 
 # task\-audit\-ranking\-policy — Decide equal\-priority task ranking policy
 status: ready  priority: 4  scope: scope-core
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-audit\-corrections\-release
 
 Resolve the lower\-priority question of how equal\-priority actionable tasks should be ordered\. This task records a product decision only; it does not expand the operational correctness release with a new schema and UI field\. If explicit rank is justified, create a separately phased implementation task with migration and surface requirements\.
 

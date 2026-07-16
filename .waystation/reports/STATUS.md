@@ -3,7 +3,8 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-correct-readiness-claims` [p1] — Correct task readiness and claim invariants
+- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
+- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 
 ## In progress
 _none_
@@ -16,7 +17,6 @@ _none_
 
 ## Waiting (blocked by dependencies)
 - `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
-- `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 - `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
 - `task-audit-lifecycle-dashboard-surface` [p2] — Expose lifecycle mutations through the dashboard
 - `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
@@ -25,15 +25,18 @@ _none_
 - `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 - `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
 - `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
-- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 - `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 - `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
 - `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
 - `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 
+## Backlog (todo)
+_none_
+
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints
 - `task-agent-messaging` [p2] — Agent messaging: shared async inbox via message records
+- `task-audit-correct-readiness-claims` [p1] — Correct task readiness and claim invariants
 - `task-audit-fix-cli-message-post` [p2] — Fix CLI message post to use structured error handling
 - `task-audit-fix-core-bugs` [p1] — Fix core correctness bugs found in code audit
 - `task-audit-fix-dashboard-cleanup` [p3] — Clean up dashboard: dead pages, dep placement, SSE heartbeat

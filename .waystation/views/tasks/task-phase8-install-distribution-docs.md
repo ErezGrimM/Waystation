@@ -2,6 +2,7 @@
 
 # task\-phase8\-install\-distribution\-docs — Document install and distribution paths
 status: done  priority: 2  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Make it clear how a user or agent should install and run Waystation locally\. Cover Bun source execution, compiled binary usage, MCP stdio setup, and expected rebuild steps without adding a hosted service or remote dependency\.
 

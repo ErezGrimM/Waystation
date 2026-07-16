@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-correct-readiness-claims-codex-20260716-164841-9kbb",
+  "thread": "task-audit-correct-readiness-claims",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting implementation of the authoritative derived-readiness contract, including lock-time claim enforcement and consistent in-memory, index, brief, report, and validation semantics.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T16:48:41+03:00"
+}

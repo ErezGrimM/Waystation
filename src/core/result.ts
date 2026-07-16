@@ -68,6 +68,12 @@ export const CODES = {
     hint: "Create the dependency or fix the reference.",
     retryable: false,
   },
+  ready_with_unmet_dependencies: {
+    severity: "warning",
+    message: "A task is declared ready but has unmet dependencies.",
+    hint: "Finish the blockers, or move the task back to todo/blocked until it is intentionally ready.",
+    retryable: false,
+  },
   cycle: {
     severity: "error",
     message: "Circular task dependency.",
@@ -168,7 +174,13 @@ export const CODES = {
   invalid_transition: {
     severity: "error",
     message: "The task's current status does not allow this transition.",
-    hint: "Only todo/ready tasks can be claimed; terminal tasks cannot be finished.",
+    hint: "Only dependency-satisfied ready tasks can be claimed; terminal tasks cannot be finished.",
+    retryable: false,
+  },
+  task_not_ready: {
+    severity: "error",
+    message: "Task is declared ready but has unmet dependencies.",
+    hint: "Complete or decline every blocker before claiming this task.",
     retryable: false,
   },
   issue_orphan: {

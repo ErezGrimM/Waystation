@@ -36,7 +36,7 @@ import { loadTasks, RecordError } from "../src/core/records.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
 import { activeClaimForTask, loadClaims, loadIssues, sweepTmpDirs } from "../src/core/store.ts";
-import { nextTask, readyTasks } from "../src/core/tasks.ts";
+import { indexById, nextTask, readyTasks, taskReadiness } from "../src/core/tasks.ts";
 import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
 import {
@@ -329,6 +329,79 @@ describe("next / ready resolution", () => {
     };
     expect(readyTasks(loadTasks(fixtureRoot([inProg]))).map((t) => t.id)).toEqual([]);
   });
+
+  test("a dependency-free todo task remains non-actionable backlog", () => {
+    const todo = { id: "task-todo", title: "Todo", status: "todo", priority: 1, dependencies: [] };
+    const loaded = loadTasks(fixtureRoot([todo]));
+    expect(nextTask(loaded)).toBeNull();
+    expect(taskReadiness(loaded[0]!, indexById(loaded))).toEqual({
+      state: "not_eligible",
+      reason: "status_todo",
+      blockers: [],
+    });
+  });
+
+  test("derived readiness covers every declared task status", () => {
+    const expected = {
+      todo: "not_eligible",
+      ready: "actionable",
+      in_progress: "not_eligible",
+      blocked: "not_eligible",
+      review: "not_eligible",
+      done: "not_eligible",
+      wont_do: "not_eligible",
+    } as const;
+    const loaded = loadTasks(
+      fixtureRoot(
+        Object.keys(expected).map((status) => ({
+          id: `task-${status}`,
+          title: status,
+          status,
+          priority: 1,
+          dependencies: [],
+        })),
+      ),
+    );
+    const byId = indexById(loaded);
+    for (const task of loaded) {
+      expect(taskReadiness(task, byId).state).toBe(expected[task.status]);
+    }
+  });
+
+  test("ready dependency states derive actionable or waiting with exact blockers", () => {
+    const loaded = loadTasks(
+      fixtureRoot([
+        { id: "dep-done", title: "Done", status: "done", priority: 1, dependencies: [] },
+        { id: "dep-declined", title: "Declined", status: "wont_do", priority: 1, dependencies: [] },
+        { id: "dep-open", title: "Open", status: "ready", priority: 1, dependencies: [] },
+        {
+          id: "task-actionable",
+          title: "Actionable",
+          status: "ready",
+          priority: 1,
+          dependencies: ["dep-done", "dep-declined"],
+        },
+        {
+          id: "task-waiting",
+          title: "Waiting",
+          status: "ready",
+          priority: 1,
+          dependencies: ["dep-done", "dep-open", "dep-missing"],
+        },
+      ]),
+    );
+    const byId = indexById(loaded);
+    expect(taskReadiness(byId.get("task-actionable")!, byId)).toEqual({
+      state: "actionable",
+      reason: "declared_ready",
+      blockers: [],
+    });
+    expect(taskReadiness(byId.get("task-waiting")!, byId)).toEqual({
+      state: "waiting",
+      reason: "unmet_dependencies",
+      blockers: ["dep-open", "dep-missing"],
+    });
+  });
 });
 
 describe("bun:sqlite index", () => {
@@ -372,6 +445,44 @@ describe("bun:sqlite index", () => {
     const fromIndex = readyFromIndex(db).map((t) => t.id);
     db.close();
     expect(fromIndex).toContain("task-y");
+    await claimTask(root, "task-y", "agent");
+    expect(loadTasks(root).find((task) => task.id === "task-y")?.status).toBe("in_progress");
+  });
+
+  test("index and in-memory readiness agree across every status and blocker state", async () => {
+    const records = [
+      { id: "dep-done", title: "Done", status: "done", priority: 1, dependencies: [] },
+      { id: "dep-wont", title: "Wont", status: "wont_do", priority: 1, dependencies: [] },
+      { id: "dep-open", title: "Open", status: "ready", priority: 9, dependencies: [] },
+      ...["todo", "in_progress", "blocked", "review"].map((status, index) => ({
+        id: `task-${status}`,
+        title: status,
+        status,
+        priority: index + 2,
+        dependencies: [],
+      })),
+      {
+        id: "task-ready-good",
+        title: "Good",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-done", "dep-wont"],
+      },
+      {
+        id: "task-ready-waiting",
+        title: "Waiting",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-open", "dep-missing"],
+      },
+    ];
+    const root = fixtureRoot(records);
+    const tasks = loadTasks(root);
+    const db = await buildTaskIndex(join(root, ".waystation", "index.sqlite"), tasks);
+    expect(readyFromIndex(db).map((task) => task.id)).toEqual(
+      readyTasks(tasks).map((task) => task.id),
+    );
+    db.close();
   });
 
   // M4: the orphan-tmp sweep removes stray *.tmp but never a real record.
@@ -403,6 +514,74 @@ describe("bun:sqlite index", () => {
     }
     // The ledger ends with exactly one active claim on disk.
     expect(loadClaims(root).filter((c) => c.status === "active").length).toBe(1);
+  });
+
+  test("claim rejects todo and dependency-blocked ready tasks without ledger writes", async () => {
+    for (const record of [
+      { id: "task-todo", title: "Todo", status: "todo", priority: 1, dependencies: [] },
+      {
+        id: "task-waiting",
+        title: "Waiting",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-open"],
+      },
+    ]) {
+      const records =
+        record.id === "task-waiting"
+          ? [
+              { id: "dep-open", title: "Open", status: "ready", priority: 2, dependencies: [] },
+              record,
+            ]
+          : [record];
+      const root = fixtureRoot(records);
+      const taskFile = join(root, ".waystation", "tasks", `${record.id}.json`);
+      const before = readFileSync(taskFile, "utf8");
+      const events = join(root, ".waystation", "events.jsonl");
+
+      let code = "";
+      try {
+        await claimTask(root, record.id, "agent");
+      } catch (error) {
+        code = (error as MutationError).code;
+      }
+
+      expect(code).toBe(record.id === "task-todo" ? "invalid_transition" : "task_not_ready");
+      expect(readFileSync(taskFile, "utf8")).toBe(before);
+      expect(loadClaims(root)).toEqual([]);
+      expect(existsSync(events)).toBe(false);
+    }
+  });
+
+  test("claim rechecks dependencies after an earlier selection becomes stale", async () => {
+    const dependency = {
+      id: "dep",
+      title: "Dependency",
+      status: "done",
+      priority: 1,
+      dependencies: [],
+    };
+    const target = {
+      id: "target",
+      title: "Target",
+      status: "ready",
+      priority: 1,
+      dependencies: ["dep"],
+    };
+    const root = fixtureRoot([dependency, target]);
+    expect(nextTask(loadTasks(root))?.id).toBe("target");
+
+    writeFileSync(
+      join(root, ".waystation", "tasks", "dep.json"),
+      JSON.stringify({ ...dependency, status: "ready" }, null, 2),
+    );
+
+    await expect(claimTask(root, "target", "agent")).rejects.toMatchObject({
+      code: "task_not_ready",
+    });
+    expect(loadTasks(root).find((task) => task.id === "target")?.status).toBe("ready");
+    expect(loadClaims(root)).toEqual([]);
+    expect(existsSync(join(root, ".waystation", "events.jsonl"))).toBe(false);
   });
 
   // H3: gh import/export reject a malformed/injecting repo before any network call.
@@ -533,6 +712,14 @@ describe("CLI: task list / show", () => {
     const p = Bun.spawnSync({ cmd: [process.execPath, "run", cli, ...args], cwd: root });
     return { code: p.exitCode, out: p.stdout.toString(), err: p.stderr.toString() };
   }
+
+  test("task ready exposes only declared-ready actionable tasks", () => {
+    const r = run(["task", "ready", "--json"]);
+    const result = JSON.parse(r.out) as { data: Array<{ id: string }> };
+    expect(r.code).toBe(0);
+    expect(result.data.map((task) => task.id)).toEqual(["task-d", "task-b"]);
+    expect(result.data.some((task) => task.id === "task-c")).toBe(false);
+  });
 
   test("list shows all tasks", () => {
     const r = run(["task", "list"]);
@@ -772,6 +959,48 @@ describe("validate", () => {
     expect(codes(fixtureRoot([orphan]))).toContain("missing_dependency");
   });
 
+  test("warns when a declared-ready task is waiting and reports exact blockers", () => {
+    const root = fixtureRoot([
+      { id: "dep-open", title: "Open", status: "ready", priority: 1, dependencies: [] },
+      {
+        id: "task-waiting",
+        title: "Waiting",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-open"],
+      },
+    ]);
+    const warning = validateLedger(root).warnings.find(
+      (diagnostic) => diagnostic.code === "ready_with_unmet_dependencies",
+    );
+    expect(warning?.details).toEqual({ task: "task-waiting", blockers: ["dep-open"] });
+  });
+
+  test("validation does not treat wont_do dependencies or todo backlog as waiting", () => {
+    const root = fixtureRoot([
+      { id: "dep-wont", title: "Wont", status: "wont_do", priority: 1, dependencies: [] },
+      {
+        id: "task-ready",
+        title: "Ready",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-wont"],
+      },
+      {
+        id: "task-todo",
+        title: "Todo",
+        status: "todo",
+        priority: 1,
+        dependencies: ["task-ready"],
+      },
+    ]);
+    expect(
+      validateLedger(root).warnings.filter(
+        (diagnostic) => diagnostic.code === "ready_with_unmet_dependencies",
+      ),
+    ).toEqual([]);
+  });
+
   test("detects a duplicate id via two files with the same id", () => {
     const root = fixtureRoot([{ ...A }]);
     const second = join(root, ".waystation", "tasks", "task-a-copy.json");
@@ -913,10 +1142,45 @@ describe("brief", () => {
   });
 
   test("reports blockers when a dependency is not done", () => {
-    const root = fixtureRoot([A, B, C, D]);
-    const brief = buildBrief(root, "task-c"); // depends on task-b (ready, not done)
+    const waiting = { ...C, status: "ready" };
+    const root = fixtureRoot([A, B, waiting, D]);
+    const brief = buildBrief(root, "task-c");
     expect(brief.blockedBy).toEqual(["task-b"]);
-    expect(brief.nextAction).toContain("Blocked");
+    expect(brief.task.readiness).toEqual({
+      state: "waiting",
+      reason: "unmet_dependencies",
+      blockers: ["task-b"],
+    });
+    expect(brief.nextAction).toContain("Waiting");
+  });
+
+  test("brief readiness treats wont_do as satisfied and todo as backlog", () => {
+    const root = fixtureRoot([
+      { id: "dep", title: "Declined", status: "wont_do", priority: 1, dependencies: [] },
+      {
+        id: "task-ready",
+        title: "Ready",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep"],
+      },
+      {
+        id: "task-todo",
+        title: "Todo",
+        status: "todo",
+        priority: 1,
+        dependencies: ["task-ready"],
+      },
+    ]);
+    const ready = buildBrief(root, "task-ready");
+    expect(ready.blockedBy).toEqual([]);
+    expect(ready.task.readiness.state).toBe("actionable");
+    expect(renderBrief(ready)).toContain("readiness: actionable");
+
+    const todo = buildBrief(root, "task-todo");
+    expect(todo.blockedBy).toEqual([]);
+    expect(todo.task.readiness.state).toBe("not_eligible");
+    expect(todo.nextAction).toContain("backlog");
   });
 
   test("throws on an unknown task", () => {
@@ -1079,9 +1343,47 @@ describe("generate", () => {
   });
 
   test("blocked lists tasks whose dependencies are unmet", () => {
-    const root = fixtureRoot([B, C, D]); // B waits on missing task-a; C waits on task-b
+    const root = fixtureRoot([B, { ...C, status: "ready" }, D]);
     const md = generateBlocked(root);
+    expect(md).toContain("task-b");
     expect(md).toContain("task-c");
+  });
+
+  test("reports distinguish actionable, waiting, and todo backlog readiness", () => {
+    const root = fixtureRoot([
+      { id: "dep-open", title: "Open", status: "ready", priority: 9, dependencies: [] },
+      { id: "dep-wont", title: "Wont", status: "wont_do", priority: 1, dependencies: [] },
+      {
+        id: "task-actionable",
+        title: "Actionable",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-wont"],
+      },
+      {
+        id: "task-waiting",
+        title: "Waiting",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep-open"],
+      },
+      {
+        id: "task-todo",
+        title: "Todo",
+        status: "todo",
+        priority: 1,
+        dependencies: ["dep-open"],
+      },
+    ]);
+    const status = generateStatus(root);
+    expect(status).toContain("## Ready to claim\n- `task-actionable`");
+    expect(status).toContain("## Waiting (blocked by dependencies)\n- `task-waiting`");
+    expect(status).toContain("## Backlog (todo)\n- `task-todo`");
+
+    const blocked = generateBlocked(root);
+    expect(blocked).toContain("task-waiting");
+    expect(blocked).not.toContain("task-todo");
+    expect(blocked).not.toContain("task-actionable");
   });
 
   test("reports keep review tasks out of dependency-blocked buckets", () => {
@@ -1120,6 +1422,26 @@ describe("generate", () => {
     generateTaskViews(root);
     expect(existsSync(join(dir, "task-gone.md"))).toBe(false);
     expect(existsSync(join(dir, "task-a.md"))).toBe(true);
+  });
+
+  test("generated task views expose derived readiness without persisting it", () => {
+    const root = fixtureRoot([
+      { id: "dep", title: "Dependency", status: "ready", priority: 2, dependencies: [] },
+      {
+        id: "task-view",
+        title: "View",
+        status: "ready",
+        priority: 1,
+        dependencies: ["dep"],
+      },
+    ]);
+    generateTaskViews(root);
+    const view = readFileSync(join(root, ".waystation", "views", "tasks", "task-view.md"), "utf8");
+    expect(view).toContain("readiness: waiting");
+    expect(view).toContain("readiness_blockers: dep");
+    expect(
+      readFileSync(join(root, ".waystation", "tasks", "task-view.json"), "utf8"),
+    ).not.toContain('"readiness"');
   });
 
   test("generated Markdown escapes imported task and issue text", async () => {

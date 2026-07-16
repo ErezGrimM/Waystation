@@ -1,5 +1,5 @@
 import { getGitState } from "./git.ts";
-import { loadTaskFiles } from "./records.ts";
+import { type LoadedTask, loadTaskFiles } from "./records.ts";
 import { type ClaimRecord, isCommitRef, type TaskRecord } from "./schema.ts";
 import {
   activeClaimForTask,
@@ -8,6 +8,7 @@ import {
   writeClaim,
   writeJsonAtomic,
 } from "./store.ts";
+import { indexById, taskReadiness } from "./tasks.ts";
 import { idStamp, nowIso, safeIdPart } from "./time.ts";
 
 export class MutationError extends Error {
@@ -34,10 +35,14 @@ export interface FinishTaskOptions {
  * Find a JSON task record by id, returning the record and the file it lives in
  * so the mutation writes back to that exact file (not an assumed `${id}.json`).
  */
-function requireTask(root: string, id: string): { task: TaskRecord; file: string } {
-  const found = loadTaskFiles(root).find((t) => t.task.id === id);
+function requireLoadedTask(tasks: LoadedTask[], id: string): LoadedTask {
+  const found = tasks.find((t) => t.task.id === id);
   if (!found) throw new MutationError(`no such task: ${id}`, "no_such_task");
   return found;
+}
+
+function requireTask(root: string, id: string): LoadedTask {
+  return requireLoadedTask(loadTaskFiles(root), id);
 }
 
 function writeTask(file: string, task: TaskRecord): void {
@@ -112,19 +117,27 @@ export async function claimTask(
   gitContext?: ClaimGitContext,
 ): Promise<ClaimRecord> {
   return withLedgerLock(root, () => {
-    const { task, file } = requireTask(root, id);
+    // Load the task and its dependency graph only after acquiring the ledger
+    // lock. Selection is advisory; this fresh canonical snapshot is the
+    // authoritative claim-time eligibility check.
+    const loaded = loadTaskFiles(root);
+    const { task, file } = requireLoadedTask(loaded, id);
     if (task.status === "done" || task.status === "wont_do") {
       throw new MutationError(`task ${id} is ${task.status}; cannot claim`, "task_done");
     }
     if (activeClaimForTask(root, id)) {
       throw new MutationError(`task ${id} already has an active claim`, "task_already_claimed");
     }
-    // Only actionable-from states are claimable (audit M10). in_progress with an
-    // active claim is already caught above; anything else (blocked/review/an
-    // orphaned in_progress) is an invalid transition, not a silent force.
-    if (task.status !== "todo" && task.status !== "ready") {
+    const readiness = taskReadiness(task, indexById(loaded.map((entry) => entry.task)));
+    if (readiness.state === "waiting") {
       throw new MutationError(
-        `task ${id} is ${task.status}; only todo/ready tasks can be claimed`,
+        `task ${id} is waiting on: ${readiness.blockers.join(", ")}`,
+        "task_not_ready",
+      );
+    }
+    if (readiness.state !== "actionable") {
+      throw new MutationError(
+        `task ${id} is ${task.status}; only ready tasks can be claimed`,
         "invalid_transition",
       );
     }

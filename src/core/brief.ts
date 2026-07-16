@@ -8,6 +8,7 @@ import { loadTasks } from "./records.ts";
 import { type CommandResult, diag, okResult, toResult } from "./result.ts";
 import type { TaskRecord } from "./schema.ts";
 import { activeClaimForTask, loadClaims } from "./store.ts";
+import { type TaskReadiness, taskReadiness } from "./tasks.ts";
 
 export type BriefBudget = "small" | "medium" | "large" | "full";
 export const BRIEF_BUDGETS = ["small", "medium", "large", "full"] as const;
@@ -28,6 +29,7 @@ export interface Brief {
     priority: number;
     scope: string | null;
     commits: string[];
+    readiness: TaskReadiness;
   };
   goal: string;
   acceptance: string[];
@@ -68,13 +70,24 @@ function scopeRules(root: string, scope: string | null | undefined): string[] {
   }
 }
 
-function computeNextAction(task: TaskRecord, blockedBy: string[], claimed: boolean): string {
+function computeNextAction(task: TaskRecord, readiness: TaskReadiness, claimed: boolean): string {
   if (task.status === "done") return "Task is done; nothing to do.";
   if (task.status === "wont_do") return "Task is won't-do; skip.";
-  if (blockedBy.length > 0) return `Blocked: finish ${blockedBy.join(", ")} first.`;
+  if (task.status === "todo") return "Task is in the backlog; move it to ready when intentional.";
   if (task.status === "blocked") return "Task is marked blocked; resolve the blocker.";
-  if (!claimed) return `Claim it: waystation task claim ${task.id} --agent <you>.`;
-  return "Claimed and ready; implement against the acceptance criteria.";
+  if (task.status === "review") return "Task is awaiting review.";
+  if (task.status === "in_progress") {
+    return claimed
+      ? "Claimed and in progress; implement against the acceptance criteria."
+      : "Task is in progress without an active claim; validate and repair the ledger.";
+  }
+  if (readiness.state === "waiting") {
+    return `Waiting: finish ${readiness.blockers.join(", ")} first.`;
+  }
+  if (readiness.state === "actionable") {
+    return `Claim it: waystation task claim ${task.id} --agent <you>.`;
+  }
+  return "Task is not eligible to start.";
 }
 
 /** Build a task-scoped brief (spec §10) with deterministic section tiers. */
@@ -88,7 +101,8 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
     id,
     status: byId.get(id)?.status ?? ("missing" as const),
   }));
-  const blockedBy = dependencies.filter((d) => d.status !== "done").map((d) => d.id);
+  const readiness = taskReadiness(task, byId);
+  const blockedBy = readiness.blockers;
   const claim = activeClaimForTask(root, taskId);
   const coordinationWarnings = overlapsForTask(root, taskId);
 
@@ -116,6 +130,7 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
       priority: task.priority,
       scope: task.scope ?? null,
       commits: task.commits ?? [],
+      readiness,
     },
     goal: (task.description ?? task.title).trim(),
     acceptance: task.acceptance,
@@ -133,7 +148,7 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
           }
         : null,
     coordinationWarnings: includeLarge ? coordinationWarnings : [],
-    nextAction: computeNextAction(task, blockedBy, Boolean(claim)),
+    nextAction: computeNextAction(task, readiness, Boolean(claim)),
     relatedFiles: includeLarge ? enrichment.relatedFiles : [],
     concepts: includeLarge ? enrichment.concepts : [],
     impactHints: includeFull ? enrichment.impactHints : [],
@@ -185,7 +200,7 @@ export function renderBrief(b: Brief): string {
   const lines: string[] = [];
   lines.push(`# ${b.task.id} — ${b.task.title}`);
   lines.push(
-    `status: ${b.task.status}  priority: ${b.task.priority}  scope: ${b.task.scope ?? "-"}  budget: ${b.budget}`,
+    `status: ${b.task.status}  readiness: ${b.task.readiness.state} (${b.task.readiness.reason})  priority: ${b.task.priority}  scope: ${b.task.scope ?? "-"}  budget: ${b.budget}`,
   );
   lines.push("");
   lines.push("## Goal");

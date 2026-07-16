@@ -2,6 +2,7 @@
 
 # task\-prompt\-render — Implement prompt list/show/render
 status: done  priority: 2  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Spec §21 item 10 / §11: prompts are loaded but there is no command to select and render them for an agent\. Add a PromptRecord \(zod\), \`prompt list\`, \`prompt show \<id\>\`, and \`prompt render \-\-task \<id\> \-\-agent \<a\> \[\-\-role \<r\>\]\` applying the selection precedence \(global \-\> agent \-\> role \-\> scope \-\> task\) and variable substitution \(\{\{task\_id\}\}, \{\{agent\}\}, \{\{scope\}\}, \{\{branch\}\}\)\. Emit prompt\.rendered when useful\.
 

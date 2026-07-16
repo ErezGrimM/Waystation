@@ -2,6 +2,8 @@
 
 # task\-audit\-lifecycle\-mutations — Add safe core task and issue lifecycle mutations
 status: ready  priority: 1  scope: scope-core
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-audit\-mutation\-recovery
 
 Remove the need for routine hand edits of canonical task and issue JSON\. Add patch\-safe core operations for task creation, metadata updates, explicit status transitions, terminal reopen, issue update, and issue close on top of the recoverable mutation protocol\. Expand IssueRecord so debugging context survives parsing, indexing, views, and mutation round trips\. Define claim, timestamp, and event effects for every lifecycle transition before exposing the operations through any surface\.
 

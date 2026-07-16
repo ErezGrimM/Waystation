@@ -2,6 +2,7 @@
 
 # task\-mcp\-server — Implement the MCP server \(thin wrappers over core\)
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Expose the core ledger over MCP stdio \(spec §14\) so coding agents can drive Waystation directly\. Tools are THIN wrappers over existing core functions — no new behavior, no reimplemented writes\. The SDK \(@modelcontextprotocol/sdk@1\.29\.0\) is already proven on Bun by test/mcp\.test\.ts \(McpServer \+ Client round trip over InMemoryTransport\)\. Build src/mcp/ \(a buildServer\(\) factory that registers the tools on an McpServer\) plus a \`waystation mcp\` command that connects it over StdioServerTransport\.
 

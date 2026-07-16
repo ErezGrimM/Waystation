@@ -2,6 +2,7 @@
 
 # task\-phase6\-worktree\-message\-scope\-decision — Phase 6 decision: worktree messaging scope
 status: done  priority: 1  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Resolve the Phase 6 open boundary: messages are currently scoped to the project folder/checkout, so agents working in separate git worktrees do not see each other's messages until records are merged\. Decide whether V1 accepts checkout\-local messaging or needs a shared ledger/message location for worktree\-per\-agent workflows\.
 

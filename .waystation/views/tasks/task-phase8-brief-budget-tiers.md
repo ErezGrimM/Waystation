@@ -2,6 +2,7 @@
 
 # task\-phase8\-brief\-budget\-tiers — Implement real brief budget tiers
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 The brief command accepts a budget option, but currently behaves as one fixed output shape\. Define and implement small/medium/large/full tiers in core brief generation, then expose the same behavior through CLI, MCP, and dashboard thin wrappers\.
 

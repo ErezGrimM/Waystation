@@ -2,6 +2,7 @@
 
 # task\-migrate\-ledger\-json — Migrate the hand\-written ledger from YAML to JSON
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 decision\-record\-format makes JSON the canonical on\-disk format, but the existing hand\-written ledger \(config\.yaml, tasks/\*\.yaml, scopes/\*\.yaml, prompts/\*\.yaml\) is still YAML\. Convert these to JSON so the live ledger matches the spec and the chosen stack\. events\.jsonl already fits\. Decision records were already authored as JSON\.
 

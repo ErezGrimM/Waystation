@@ -2,6 +2,7 @@
 
 # task\-git\-state\-core — Detect current git branch, root, worktree, and status in core
 status: done  priority: 1  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Add shared core git\-state detection for Phase 6\. V1 should read local git state only: current branch, git root, worktree path, and a small status summary\. This becomes the foundation for claim mapping and dashboard display without turning Waystation into a git automation tool\.
 

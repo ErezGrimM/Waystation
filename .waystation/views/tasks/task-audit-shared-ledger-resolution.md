@@ -2,6 +2,7 @@
 
 # task\-audit\-shared\-ledger\-resolution — Make ledger resolution explicit and support shared worktree coordination
 status: ready  priority: 1  scope: scope-git
+readiness: actionable  reason: declared_ready
 
 Stop treating an unrelated directory as an empty Waystation project and add an explicit shared\-ledger operating mode for agents in separate Git worktrees\. Resolve the ledger by explicit root, environment override, then upward discovery\. Keep ledger storage/locking separate from the invoking agent's Git branch and worktree context so a shared claim records the real caller\.
 

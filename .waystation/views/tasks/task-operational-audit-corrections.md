@@ -2,6 +2,8 @@
 
 # task\-operational\-audit\-corrections — Complete the v0\.0\.3 operational audit correction program
 status: ready  priority: 2  scope: scope-core
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-audit\-ranking\-policy
 
 Milestone record for the correction program derived from hands\-on Waystation v0\.0\.3 and DuckBrain migration feedback\. The program fixes lifecycle/readiness integrity, cross\-worktree coordination boundaries, missing mutation APIs, issue data loss, misleading missing\-ledger behavior, semantic validation gaps, and derived\-output ergonomics while preserving local\-first JSON and the single core write path\.
 

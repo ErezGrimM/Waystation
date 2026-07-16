@@ -2,6 +2,7 @@
 
 # task\-operational\-audit\-plan\-document — Write the operational audit correction implementation plan
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Create a durable, hand\-authored Markdown plan for the v0\.0\.3 operational audit correction program\. The document should explain the architecture, behavior changes, implementation sequence, migrations, risks, tests, and release gates while linking to the canonical Waystation task records\. Waystation remains the source of truth for dependencies, status, claims, and progress\.
 

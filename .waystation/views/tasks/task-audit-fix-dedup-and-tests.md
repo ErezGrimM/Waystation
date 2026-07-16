@@ -2,6 +2,7 @@
 
 # task\-audit\-fix\-dedup\-and\-tests — Deduplicate readJson, fix test/lint config, clean up generate
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Four code quality items from the audit:
 

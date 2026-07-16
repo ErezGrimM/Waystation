@@ -2,6 +2,7 @@
 
 # task\-skeleton\-task\-next — Walking skeleton: end\-to\-end \`waystation task next\`
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 The first and defining vertical slice\. Build the thinnest thread that touches every layer so the architecture is proven end\-to\-end: CLI entry \(commander\) \-\> load a JSON task record from \.waystation/tasks/ \-\> validate it with a zod task schema \-\> populate/query a bun:sqlite index \-\> print the next ready task\. It must run against the real \.waystation/ ledger, not fixtures\. Only the task record type needs a full schema at this stage; other record types can be loaded loosely and tightened in later slices\.
 

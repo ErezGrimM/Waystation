@@ -2,6 +2,7 @@
 
 # task\-graph\-core — Graphify context enrichment core module
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Build a core module that reads Graphify output \(graph\.json, concepts, file metadata\) and enriches Waystation briefs with codebase context\. This is best\-effort — missing or stale Graphify data degrades gracefully\. Graphify data informs briefs but never decides task status, claims, or completion\.
 

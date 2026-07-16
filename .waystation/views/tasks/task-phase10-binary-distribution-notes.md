@@ -2,6 +2,8 @@
 
 # task\-phase10\-binary\-distribution\-notes — Document binary distribution notes and artifact naming
 status: ready  priority: 3  scope: scope-cli
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-phase10\-mcp\-launch\-examples
 
 Clarify how compiled Waystation binaries should be named, stored, copied, and handed to another project or local agent\. Capture the current local distribution convention without accidentally committing ignored executable artifacts\.
 

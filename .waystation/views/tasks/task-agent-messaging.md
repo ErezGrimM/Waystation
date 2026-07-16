@@ -2,6 +2,7 @@
 
 # task\-agent\-messaging — Agent messaging: shared async inbox via message records
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Give parallel agents a shared async inbox without a sidecar service, chat server, or external tool — messages live in the ledger they already use, inheriting durability, timestamps, forkability, and after\-the\-fact inspectability \(spec §6\.10\)\. A coder posts step updates; an audit agent polls verdicts\. Complements handoffs \(a one\-shot baton pass\) with ongoing back\-and\-forth\.
 

@@ -2,6 +2,7 @@
 
 # task\-graph\-brief — Wire Graphify enrichment into brief, CLI, MCP, and dashboard
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Wire the Graphify enrichment from task\-graph\-core into all surfacing layers: brief output \(CLI text\), MCP get\_brief tool, and the dashboard Brief page\. Each layer adds related files, concepts, and impact hints to the existing brief display — no new commands or pages, just richer existing output\.
 

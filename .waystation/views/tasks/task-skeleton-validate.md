@@ -2,6 +2,7 @@
 
 # task\-skeleton\-validate — Widen skeleton: full\-ledger validation
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Extend the single task schema from task\-skeleton\-task\-next into zod schemas for every record type, and add \`waystation validate\` for cross\-record checks per spec §18\. This is the guardrail that makes it safe for humans and agents to touch files directly\.
 

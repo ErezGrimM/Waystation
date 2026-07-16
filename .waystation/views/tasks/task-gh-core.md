@@ -2,6 +2,7 @@
 
 # task\-gh\-core — GitHub Issues import/export core module \(API \+ field mapping\)
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Build the core GitHub Issues integration module\. Import fetches issues from the GitHub REST API, maps label conventions to Waystation fields, and writes IssueRecords through the single write path\. Export reads IssueRecords from the ledger, maps Waystation fields back to GitHub labels/state, and pushes via the API\. All optional — degrades gracefully when no token is configured\.
 

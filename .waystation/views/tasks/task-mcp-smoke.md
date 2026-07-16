@@ -2,6 +2,7 @@
 
 # task\-mcp\-smoke — Smoke\-test @modelcontextprotocol/sdk on Bun
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Before building the MCP server \(Phase 4\), verify the one unproven dependency: that @modelcontextprotocol/sdk imports and runs on Bun\. Construct an McpServer, register a trivial tool, connect a client over an in\-memory transport, list and call the tool\. This de\-risks the whole phase\.
 

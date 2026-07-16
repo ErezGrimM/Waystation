@@ -2,6 +2,8 @@
 
 # task\-audit\-corrections\-release — Migrate, document, verify, and release operational audit corrections
 status: ready  priority: 2  scope: scope-cli
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-phase10\-binary\-distribution\-notes
 
 Complete the compatibility and release work for the operational audit corrections\. Provide a way to identify dependency\-satisfied todo tasks for intentional promotion, reconcile every lifecycle and shared\-ledger document, regenerate derived state, run full source and binary verification, update the knowledge graph, and publish the required version bump\.
 

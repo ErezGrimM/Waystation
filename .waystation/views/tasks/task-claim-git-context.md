@@ -2,6 +2,7 @@
 
 # task\-claim\-git\-context — Record branch and worktree context on claims
 status: done  priority: 2  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Use the core git\-state helper when a task is claimed so active claims can carry branch and worktree context\. Claims already have nullable branch/worktree fields; Phase 6 should populate them when configured and expose explicit overrides where useful\.
 

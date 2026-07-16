@@ -2,6 +2,7 @@
 
 # task\-active\-claim\-overlap\-warnings — Warn when active claims have overlapping file hints
 status: done  priority: 2  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Add conservative warnings for likely collisions between active claims\. Compare task path\_hints and any known changed files from handoffs/claims so agents get early notice when parallel work may touch the same files or directories\.
 

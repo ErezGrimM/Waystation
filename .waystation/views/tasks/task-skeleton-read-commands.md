@@ -2,6 +2,7 @@
 
 # task\-skeleton\-read\-commands — Widen skeleton: \`task list\` and \`task show\`
 status: done  priority: 2  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Widen the read side of the skeleton by reusing the loader, schema, and index from task\-skeleton\-task\-next\. Add \`waystation task list\` and \`waystation task show \<id\>\` with stable, scriptable output\.
 

@@ -2,6 +2,7 @@
 
 # task\-dashboard\-frontend — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Build the Vite \+ React SPA served by the dashboard Hono server\. Pages: Dashboard \(overview \+ next task \+ quick actions\), Tasks \(list \+ detail \+ brief \+ claim/release/finish\), Issues \(list \+ create\), Messages \(inbox\), Prompts \(list \+ render preview\), Validation \(results\)\. All data fetched via the API routes from task\-dashboard\-server; SSE for live updates\. Phase 5\.2 of docs/roadmap\.md\.
 

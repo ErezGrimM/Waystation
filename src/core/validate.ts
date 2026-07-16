@@ -12,6 +12,7 @@ import {
   PromptRecord,
   TaskRecord,
 } from "./schema.ts";
+import { indexById, taskReadiness } from "./tasks.ts";
 
 /** True if a record file exists for `id` in `dir` as either JSON or YAML. */
 function recordExists(dir: string, id: string): boolean {
@@ -163,6 +164,19 @@ export function validateLedger(root?: string): CommandResult<null> {
           }),
         );
       }
+    }
+  }
+
+  const tasksById = indexById(tasks);
+  for (const task of tasks) {
+    const readiness = taskReadiness(task, tasksById);
+    if (readiness.state === "waiting") {
+      diags.push(
+        diag("ready_with_unmet_dependencies", {
+          message: `${task.id} is declared ready but waiting on: ${readiness.blockers.join(", ")}`,
+          details: { task: task.id, blockers: readiness.blockers },
+        }),
+      );
     }
   }
 

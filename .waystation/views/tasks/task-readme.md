@@ -2,6 +2,7 @@
 
 # task\-readme — Write README \(run instructions, layout, dogfood loop\)
 status: done  priority: 2  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 The repo has no README\. Capture how to run it \(Bun at C:\\bun, not on PATH; \`bun test\`, \`bun run typecheck\`, \`bunx biome check \.\`, \`bun run src/cli/index\.ts \<cmd\>\`\), the project layout \(src/cli, src/core, src/index; \.waystation ledger\), the canonical\-JSON \+ generated\-Markdown model, and the dogfood loop\. This knowledge currently lives only in agent memory \(waystation\-dev\-setup\)\.
 

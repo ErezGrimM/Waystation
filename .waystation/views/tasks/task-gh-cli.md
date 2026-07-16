@@ -2,6 +2,7 @@
 
 # task\-gh\-cli — GitHub Issues CLI commands \(import/export\)
 status: done  priority: 2  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Add \`waystation gh import\` and \`waystation gh export\` CLI commands as thin wrappers over the core gh module\. Import pulls issues into the ledger; export pushes ledger issues to GitHub\. Both support \-\-repo, \-\-json, and \-\-force flags\.
 

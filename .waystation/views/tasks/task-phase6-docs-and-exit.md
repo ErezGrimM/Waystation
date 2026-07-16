@@ -2,6 +2,7 @@
 
 # task\-phase6\-docs\-and\-exit — Document Phase 6 behavior and mark exit criteria
 status: done  priority: 3  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Close the Phase 6 loop by documenting what git/worktree integration does and does not do\. Update roadmap status, README usage notes, and generated reports/context after the implementation tasks are complete\.
 

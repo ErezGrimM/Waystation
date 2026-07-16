@@ -2,6 +2,7 @@
 
 # task\-phase8\-message\-storage\-decision — Decide whether message storage layout needs to change
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Review the current one\-file\-per\-message layout against the worktree messaging\-scope decision and expected merge patterns\. Decide whether to keep it for now or migrate toward per\-thread JSONL, documenting the tradeoff before any storage change\.
 

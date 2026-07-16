@@ -2,6 +2,7 @@
 
 # task\-audit\-fix\-validate\-and\-store — Add duplicate id checks and fix temp file naming
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Two store/validate items from the audit:
 

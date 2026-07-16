@@ -2,6 +2,7 @@
 
 # task\-index\-all\-records — Extend the SQLite index to all record types
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Today the index covers tasks only\. Extend reindex and the index to issues, claims, and messages so inbox and thread queries move from in\-memory scans to the disposable index \(spec §9\)\. Keep the index rebuildable and non\-canonical\.
 

@@ -2,6 +2,7 @@
 
 # task\-audit\-fix\-cli\-message\-post — Fix CLI message post to use structured error handling
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 The \`message post\` CLI command \(src/cli/index\.ts:403\-427\) has its own try/catch \+ process\.exit\(1\) instead of using \`runMutation\`\. Errors bypass the structured CommandResult envelope and it has no \-\-json flag, unlike every other write command\. Refactor to use runMutation for consistency \(spec §18\.1\)\.
 

@@ -1,4 +1,5 @@
-import type { TaskRecord } from "../core/schema.ts";
+import type { TaskRecord, TaskStatus } from "../core/schema.ts";
+import { type ReadinessTask, taskReadiness } from "../core/tasks.ts";
 import { type Db, openDb } from "./db.ts";
 
 /**
@@ -46,21 +47,20 @@ export function readyFromIndex(db: Db): IndexedTask[] {
   const rows = db.all<{
     id: string;
     title: string;
-    status: string;
+    status: TaskStatus;
     priority: number;
     scope: string | null;
     dependencies: string;
   }>("SELECT id, title, status, priority, scope, dependencies FROM tasks");
 
-  // A dependency counts as satisfied when done OR wont_do — mirrors
-  // dependencySatisfied() in tasks.ts so the SQL and in-memory paths agree (H6).
-  const doneIds = new Set(
-    rows.filter((r) => r.status === "done" || r.status === "wont_do").map((r) => r.id),
-  );
+  const indexed = rows.map((row) => ({
+    ...row,
+    dependencies: JSON.parse(row.dependencies) as string[],
+  }));
+  const byId = new Map<string, ReadinessTask>(indexed.map((task) => [task.id, task]));
 
-  return rows
-    .filter((r) => !["done", "wont_do", "blocked", "in_progress", "review"].includes(r.status))
-    .filter((r) => (JSON.parse(r.dependencies) as string[]).every((d) => doneIds.has(d)))
+  return indexed
+    .filter((task) => taskReadiness(task, byId).state === "actionable")
     .sort((a, b) =>
       a.priority !== b.priority ? a.priority - b.priority : a.id.localeCompare(b.id),
     )

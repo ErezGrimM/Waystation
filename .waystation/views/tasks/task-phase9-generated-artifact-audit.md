@@ -2,6 +2,7 @@
 
 # task\-phase9\-generated\-artifact\-audit — Audit generated reports and Markdown views
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Audit the generated Markdown and context artifacts for stale content, unsafe Markdown rendering, regeneration drift, and behavior around imported text\. The generator should be deterministic and safe for task titles, issue titles, notes, and other user/imported strings\.
 

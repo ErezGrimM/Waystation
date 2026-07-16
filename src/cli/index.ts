@@ -47,7 +47,7 @@ const task = program.command("task").description("Task commands");
 
 task
   .command("next")
-  .description("Show the next ready task (highest priority, all dependencies done)")
+  .description("Show the next declared-ready task whose dependencies are done or wont_do")
   .option("--json", "output JSON")
   .option("--from-index", "resolve via the SQLite index instead of in-memory")
   .action(async (opts: { json?: boolean; fromIndex?: boolean }) => {
@@ -70,7 +70,7 @@ task
 
 task
   .command("ready")
-  .description("List all ready tasks, best-first")
+  .description("List actionable declared-ready tasks, best-first")
   .option("--json", "output JSON")
   .action((opts: { json?: boolean }) => {
     const ready = readyTasks(loadTasks());

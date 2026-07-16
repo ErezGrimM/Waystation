@@ -2,6 +2,7 @@
 
 # task\-bootstrap\-ledger — Bootstrap Waystation ledger files
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Create the initial hand\-written Waystation project ledger so Waystation can be used to build Waystation before the CLI exists\.
 

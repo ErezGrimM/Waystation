@@ -2,6 +2,7 @@
 
 # task\-brief\-git\-claim\-resolution — Resolve task briefs from current branch or worktree claim
 status: done  priority: 2  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Implement the spec §10 brief resolution step that uses current branch/worktree context when \-\-task is omitted\. If the current branch or worktree maps to exactly one active claim, Waystation can build the matching task brief automatically; ambiguous or missing mappings should return a short disambiguation result\.
 

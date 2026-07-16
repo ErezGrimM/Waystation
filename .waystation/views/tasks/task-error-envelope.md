@@ -2,6 +2,7 @@
 
 # task\-error\-envelope — Adopt the structured error envelope \(CommandResult / Diagnostic\)
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Converge the code onto docs/error\-philosophy\.md\. Introduce a CommandResult envelope \{ ok, data, errors\[\], warnings\[\] \} and a Diagnostic \{ code, message, details?, hint?, retryable \} produced in core and rendered per surface\. Generalize validate's Problem\[\] into Diagnostic, and convert RecordError/MutationError into coded diagnostics\. Add a code catalog with a coverage test\.
 

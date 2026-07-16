@@ -2,6 +2,7 @@
 
 # task\-skeleton\-brief — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Implement the core feature: a task\-scoped brief that gives an agent only the context it needs \(spec §10\)\. Assemble goal, acceptance criteria, status, scope rules, applicable prompts, dependencies, open issues, recent handoffs, relevant decisions, and next action — while excluding unrelated tasks and full history\.
 

@@ -2,6 +2,7 @@
 
 # task\-scaffold\-cli — Scaffold CLI project
 status: done  priority: 1  scope: scope-cli
+readiness: not_eligible  reason: status_done
 
 Create the initial project skeleton and CLI entrypoint for Waystation in Bun \+ TypeScript\.
 

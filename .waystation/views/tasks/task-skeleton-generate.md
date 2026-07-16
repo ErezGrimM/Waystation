@@ -2,6 +2,7 @@
 
 # task\-skeleton\-generate — Widen skeleton: reindex, STATUS, context, and Markdown views
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Close the generated\-artifacts layer\. Add \`waystation reindex\` to rebuild the bun:sqlite index from canonical JSON \+ events, and generate the human/agent\-facing Markdown: STATUS\.md, the compact context/\*\.md files, and the one\-way JSON\-\>Markdown record views under views/ \(spec §16\)\. All of these are rebuildable, non\-canonical outputs\.
 

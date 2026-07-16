@@ -2,6 +2,7 @@
 
 # task\-gh\-dashboard — GitHub Issues import/export buttons on dashboard Issues page
 status: done  priority: 3  scope: scope-dashboard
+readiness: not_eligible  reason: status_done
 
 Add Import and Export buttons to the dashboard Issues page\. Import pulls issues from the configured GitHub repo into the ledger\. Export pushes ledger issues to GitHub\. Both call backend API endpoints that delegate to core/gh\.ts\.
 

@@ -2,6 +2,7 @@
 
 # task\-handoff — Implement handoff create/show
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Spec §21 item 11 / §6\.7: the handoff record type is specced but has no command\. Add HandoffRecord \(zod\) and \`handoff create \-\-task \<id\> \-\-from \<agent\> \[\-\-to \<agent\>\]\` plus \`handoff show \<id\>\`, written through the core write path with a handoff\.created event\. Handoffs are the one\-shot baton pass \(summary, changed files, unfinished, risks, next steps\), distinct from messages\.
 

@@ -2,6 +2,7 @@
 
 # task\-graph\-fix\-crash\-and\-duplicates — Fix loadGraphData crash on malformed JSON and deduplicate impact hints
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Two bugs found in src/core/graph\.ts during audit:
 

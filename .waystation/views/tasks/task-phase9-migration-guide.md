@@ -2,6 +2,7 @@
 
 # task\-phase9\-migration\-guide — Write migration guide for importing other task systems
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Document how humans and LLM agents should migrate tasks/issues/comments from other task management systems into Waystation's JSON ledger\. Include mapping guidance, validation flow, review strategy, and examples for common source systems\.
 

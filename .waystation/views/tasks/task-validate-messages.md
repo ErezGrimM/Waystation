@@ -2,6 +2,7 @@
 
 # task\-validate\-messages — Extend validate to cover message records
 status: done  priority: 3  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 validate does not yet check message records\. Add message validation: schema, a dangling in\_reply\_to \(points at a missing message\), and an orphan thread \(references a task/issue that does not exist, excluding the reserved \`project\` channel\)\. Emit coded diagnostics via the error envelope\.
 

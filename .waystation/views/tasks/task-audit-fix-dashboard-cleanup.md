@@ -2,6 +2,7 @@
 
 # task\-audit\-fix\-dashboard\-cleanup — Clean up dashboard: dead pages, dep placement, SSE heartbeat
 status: done  priority: 3  scope: scope-dashboard
+readiness: not_eligible  reason: status_done
 
 Three dashboard cleanup items from the audit:
 

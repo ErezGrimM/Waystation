@@ -2,6 +2,7 @@
 
 # task\-skeleton\-mutations — Widen skeleton: claim/release/finish with events and locking
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Add the mutation half of the skeleton — the first commands that write\. This forces the core write path: acquire a local write lock \(proper\-lockfile\), validate input, write the JSON record atomically, append a JSONL event, and invalidate or update the bun:sqlite index\. Implement \`task claim\`, \`task release\`, and \`task finish\`\.
 

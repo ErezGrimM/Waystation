@@ -2,6 +2,7 @@
 
 # task\-audit\-generated\-artifact\-policy — Decide generated artifact tracking policy before sync
 status: ready  priority: 2  scope: scope-core
+readiness: actionable  reason: declared_ready
 
 Decide the repository policy for generated STATUS, context, and task\-view Markdown before freshness validation and sync behavior are implemented\. Keep canonical JSON, the disposable SQLite index, and generated Markdown distinct and make the chosen tracking policy an explicit input to the validation/sync task\.
 

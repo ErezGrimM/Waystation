@@ -2,6 +2,7 @@
 
 # task\-dashboard\-git\-worktree\-visibility — Show git and worktree context in dashboard and MCP
 status: done  priority: 3  scope: scope-git
+readiness: not_eligible  reason: status_done
 
 Expose Phase 6 git/worktree context through the local dashboard and MCP server\. The dashboard should make it easy to see the current checkout, active claims, and overlap warnings; MCP should expose the same read\-only context for agents\.
 

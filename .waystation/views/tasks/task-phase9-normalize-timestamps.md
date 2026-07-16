@@ -2,6 +2,7 @@
 
 # task\-phase9\-normalize\-timestamps — Normalize or document legacy timestamp formats
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Review legacy ledger records that use UTC\-Z timestamps while newer records use local offset timestamps\. Decide whether to normalize old records or explicitly document compatibility\. If normalizing, preserve semantic instants and avoid touching unrelated fields\.
 

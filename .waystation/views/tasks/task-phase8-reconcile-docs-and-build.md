@@ -2,6 +2,7 @@
 
 # task\-phase8\-reconcile\-docs\-and\-build — Reconcile docs, generated views, and rebuilt binary for Phase 8
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Close the gap between the completed ledger and stale human\-facing documentation\. Regenerate reports/views, make the roadmap and README agree with completed Phase 6/7 work, rebuild the compiled binary, and smoke\-test the resulting CLI before other Phase 8 work branches from it\.
 

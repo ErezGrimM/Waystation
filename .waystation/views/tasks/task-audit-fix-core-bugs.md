@@ -2,6 +2,7 @@
 
 # task\-audit\-fix\-core\-bugs — Fix core correctness bugs found in code audit
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Fix four correctness bugs identified in the code audit:
 

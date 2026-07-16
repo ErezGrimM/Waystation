@@ -2,6 +2,8 @@
 
 # task\-audit\-lifecycle\-dashboard\-surface — Expose lifecycle mutations through the dashboard
 status: ready  priority: 2  scope: scope-dashboard
+readiness: waiting  reason: unmet_dependencies
+readiness_blockers: task\-audit\-shared\-ledger\-resolution, task\-audit\-lifecycle\-mutations
 
 Add dashboard API and UI controls for the finalized task and issue lifecycle operations while displaying declared status, derived readiness, blockers, rich issue context, and the selected ledger root\.
 

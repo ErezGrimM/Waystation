@@ -13,7 +13,7 @@ import { loadTasks } from "./records.ts";
 import { type CommandResult, okResult } from "./result.ts";
 import type { TaskRecord } from "./schema.ts";
 import { loadClaims, loadIssues } from "./store.ts";
-import { indexById, isActionable, readyTasks } from "./tasks.ts";
+import { indexById, readyTasks, taskReadiness } from "./tasks.ts";
 
 let textTempCounter = 0;
 
@@ -75,18 +75,14 @@ export function generateStatus(root?: string): string {
   const projectRoot = ledgerPaths(root).root;
   const tasks = loadTasks(root);
   const ready = readyTasks(tasks);
-  const readyIds = new Set(ready.map((t) => t.id));
   const byId = indexById(tasks);
+  const readiness = new Map(tasks.map((task) => [task.id, taskReadiness(task, byId)]));
 
   const inProgress = tasks.filter((t) => t.status === "in_progress");
   const review = tasks.filter((t) => t.status === "review");
   const markedBlocked = tasks.filter((t) => t.status === "blocked");
-  const waiting = tasks.filter(
-    (t) =>
-      !readyIds.has(t.id) &&
-      !["done", "wont_do", "in_progress", "review", "blocked"].includes(t.status) &&
-      t.dependencies.some((d) => byId.get(d)?.status !== "done"),
-  );
+  const waiting = tasks.filter((t) => readiness.get(t.id)?.state === "waiting");
+  const backlog = tasks.filter((t) => t.status === "todo");
   const done = tasks.filter((t) => t.status === "done");
   const wontDo = tasks.filter((t) => t.status === "wont_do");
   const openIssues = loadIssues(root).filter(
@@ -104,6 +100,7 @@ export function generateStatus(root?: string): string {
   section("Review", review.map(line));
   section("Marked blocked", markedBlocked.map(line));
   section("Waiting (blocked by dependencies)", waiting.map(line));
+  section("Backlog (todo)", backlog.map(line));
   section("Done", done.map(line));
   section("Won't do", wontDo.map(line));
   section(
@@ -141,11 +138,11 @@ export function generateBlocked(root?: string): string {
   const tasks = loadTasks(root);
   const byId = indexById(tasks);
   const blocked = tasks
-    .filter((t) => !["done", "wont_do", "in_progress", "review"].includes(t.status))
-    .filter((t) => !isActionable(t, byId))
+    .map((task) => ({ task, readiness: taskReadiness(task, byId) }))
+    .filter(({ task, readiness }) => task.status === "blocked" || readiness.state === "waiting")
     .map((t) => {
-      const unmet = t.dependencies.filter((d) => byId.get(d)?.status !== "done");
-      return `- \`${t.id}\` — waiting on: ${unmet.join(", ") || "(marked blocked)"}`;
+      const blockers = t.readiness.state === "waiting" ? t.readiness.blockers : [];
+      return `- \`${t.task.id}\` — waiting on: ${blockers.join(", ") || "(marked blocked)"}`;
     });
   const s = [
     GENERATED_HEADER,
@@ -180,6 +177,7 @@ export function generateTaskViews(root?: string): number {
   const dir = join(paths.ledger, "views", "tasks");
   mkdirSync(dir, { recursive: true });
   const tasks = loadTasks(root);
+  const byId = indexById(tasks);
 
   // Prune stale view files no longer backed by a current task (idempotency).
   const current = new Set(tasks.map((t) => `${t.id}.md`));
@@ -192,11 +190,16 @@ export function generateTaskViews(root?: string): number {
   }
 
   for (const t of tasks) {
+    const readiness = taskReadiness(t, byId);
     const md = [
       GENERATED_HEADER,
       "",
       `# ${markdownText(t.id)} — ${markdownText(t.title)}`,
       `status: ${t.status}  priority: ${t.priority}  scope: ${t.scope ?? "-"}`,
+      `readiness: ${readiness.state}  reason: ${readiness.reason}`,
+      ...(readiness.blockers.length
+        ? [`readiness_blockers: ${readiness.blockers.map(markdownText).join(", ")}`]
+        : []),
       ...(t.commits.length ? [`commits: ${t.commits.map(markdownText).join(", ")}`] : []),
       "",
       markdownBlock(t.description),

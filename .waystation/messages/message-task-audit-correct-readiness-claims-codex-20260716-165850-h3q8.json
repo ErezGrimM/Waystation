@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-correct-readiness-claims-codex-20260716-165850-h3q8",
+  "thread": "task-audit-correct-readiness-claims",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Added one derived-readiness evaluator used by selection, SQLite index queries, claim-time checks under lock, briefs, reports/views, and validation. Todo is backlog-only; ready tasks wait on exact blockers; done/wont_do satisfy dependencies; rejected claims leave tasks/claims/events unchanged. Added table-driven status/dependency tests, stale-selection claim coverage, index parity, report/brief/view coverage. Verified 181 tests, typecheck, Biome, rebuilt binary, Graphify update, and ledger validation with only expected waiting-task warnings.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T16:58:50+03:00"
+}

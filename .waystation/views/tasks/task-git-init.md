@@ -2,6 +2,7 @@
 
 # task\-git\-init — Initialize git version control
 status: done  priority: 1  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 The project has no version control, which is the single biggest risk now that there is substantial code and a live ledger\. Initialize git and make an initial commit\. Version control also enables the 'forkable/inspectable' properties the ledger and messaging designs assume \(git branches as the fork mechanism\)\.
 

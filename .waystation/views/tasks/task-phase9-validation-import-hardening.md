@@ -2,6 +2,7 @@
 
 # task\-phase9\-validation\-import\-hardening — Harden validation for migrated and imported records
 status: done  priority: 2  scope: scope-core
+readiness: not_eligible  reason: status_done
 
 Strengthen validation and import\-facing rules for records produced by migrations or external systems\. Focus on filename/id safety, dangling references, status/priority mappings, and imported text that later flows into generated reports or views\.
 

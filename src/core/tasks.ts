@@ -1,29 +1,59 @@
-import type { TaskRecord } from "./schema.ts";
+import type { TaskRecord, TaskStatus } from "./schema.ts";
+
+export type ReadinessState = "actionable" | "waiting" | "not_eligible";
+
+export type ReadinessReason = "declared_ready" | "unmet_dependencies" | `status_${TaskStatus}`;
+
+export interface TaskReadiness {
+  state: ReadinessState;
+  reason: ReadinessReason;
+  blockers: string[];
+}
+
+/** The minimal canonical task shape needed to derive readiness. */
+export type ReadinessTask = Pick<TaskRecord, "id" | "status" | "dependencies">;
 
 /**
  * A dependency is satisfied when its target is `done` OR `wont_do`. `wont_do`
  * is a legitimate terminal state ("decided not to do it"); treating it as
  * unsatisfied would permanently, silently block every dependent (audit H6).
  */
-function dependencySatisfied(target: TaskRecord | undefined): boolean {
+export function dependencySatisfied(target: ReadinessTask | undefined): boolean {
   return target?.status === "done" || target?.status === "wont_do";
 }
 
 /**
- * A task is "actionable" (a candidate for `next`) when it is not yet done and
- * every one of its dependencies exists and is resolved (done or wont_do). A
- * missing dependency target means the task is NOT ready (surfaced by
- * validation elsewhere).
+ * Derive readiness from declared status plus the current dependency graph.
+ * Readiness is never persisted: callers must compute it from a fresh canonical
+ * snapshot whenever they select, render, validate, or mutate a task.
  */
-export function isActionable(task: TaskRecord, byId: Map<string, TaskRecord>): boolean {
-  if (task.status === "done" || task.status === "wont_do") return false;
-  if (task.status === "blocked") return false;
-  if (task.status === "in_progress") return false; // already being worked
-  if (task.status === "review") return false; // work complete, awaiting review
-  for (const dep of task.dependencies) {
-    if (!dependencySatisfied(byId.get(dep))) return false;
+export function taskReadiness(
+  task: ReadinessTask,
+  byId: ReadonlyMap<string, ReadinessTask>,
+): TaskReadiness {
+  if (task.status !== "ready") {
+    return {
+      state: "not_eligible",
+      reason: `status_${task.status}`,
+      blockers: [],
+    };
   }
-  return true;
+
+  const blockers = task.dependencies.filter(
+    (dependency) => !dependencySatisfied(byId.get(dependency)),
+  );
+  if (blockers.length > 0) {
+    return { state: "waiting", reason: "unmet_dependencies", blockers };
+  }
+
+  return { state: "actionable", reason: "declared_ready", blockers: [] };
+}
+
+export function isActionable(
+  task: ReadinessTask,
+  byId: ReadonlyMap<string, ReadinessTask>,
+): boolean {
+  return taskReadiness(task, byId).state === "actionable";
 }
 
 /** Sort key: lower priority number first, then id for stability. */
