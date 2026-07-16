@@ -3,7 +3,7 @@
 # task\-audit\-lifecycle\-mcp\-surface — Expose lifecycle mutations through MCP
 status: ready  priority: 2  scope: scope-mcp
 readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-shared\-ledger\-resolution, task\-audit\-lifecycle\-mutations
+readiness_blockers: task\-audit\-lifecycle\-mutations
 
 Add typed MCP tools for the finalized task and issue lifecycle operations and shared\-root behavior as thin wrappers over core functions\.
 

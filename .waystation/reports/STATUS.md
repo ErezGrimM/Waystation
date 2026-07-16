@@ -6,7 +6,7 @@
 - `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 
 ## In progress
-- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
+_none_
 
 ## Review
 _none_
@@ -41,6 +41,7 @@ _none_
 - `task-audit-fix-dashboard-cleanup` [p3] — Clean up dashboard: dead pages, dep placement, SSE heartbeat
 - `task-audit-fix-dedup-and-tests` [p3] — Deduplicate readJson, fix test/lint config, clean up generate
 - `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file naming
+- `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims

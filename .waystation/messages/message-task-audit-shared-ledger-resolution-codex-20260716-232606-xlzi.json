@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-shared-ledger-resolution-codex-20260716-232606-xlzi",
+  "thread": "task-audit-shared-ledger-resolution",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Explicit root resolution, shared-ledger claim context, CLI/MCP/dashboard disclosure, ADR update, and regression coverage are in commit 143d4b1. Checks: bun test (185 pass), typecheck, biome check, validate.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T23:26:06+03:00"
+}
