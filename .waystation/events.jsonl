@@ -323,3 +323,6 @@
 {"type":"task.claimed","task":"task-audit-mutation-recovery","claim":"claim-task-audit-mutation-recovery-codex-20260716-235239","actor":"codex","branch":"main","worktree":"C:/Projects/Waystation","ts":"2026-07-16T23:52:39+03:00"}
 {"type":"task.status_changed","task":"task-audit-mutation-recovery","from":"ready","to":"in_progress","actor":"codex","ts":"2026-07-16T23:52:39+03:00"}
 {"type":"message.posted","message":"message-task-audit-mutation-recovery-codex-20260716-235239-l6e1","thread":"task-audit-mutation-recovery","from":"codex","to":null,"actor":"codex","ts":"2026-07-16T23:52:39+03:00"}
+{"type":"task.status_changed","task":"task-audit-mutation-recovery","from":"in_progress","to":"done","actor":"codex","ts":"2026-07-17T00:03:10+03:00","mutation":"mutation-finish-task-audit-mutation-recovery-20260717-000310"}
+{"type":"claim.completed","task":"task-audit-mutation-recovery","claim":"claim-task-audit-mutation-recovery-codex-20260716-235239","actor":"codex","ts":"2026-07-17T00:03:10+03:00","mutation":"mutation-finish-task-audit-mutation-recovery-20260717-000310"}
+{"type":"task.commits_attached","task":"task-audit-mutation-recovery","commits":["7bb4ad5"],"actor":"codex","ts":"2026-07-17T00:03:10+03:00","mutation":"mutation-finish-task-audit-mutation-recovery-20260717-000310"}

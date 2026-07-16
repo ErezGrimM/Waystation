@@ -1,7 +1,7 @@
 {
   "id": "task-audit-mutation-recovery",
   "title": "Make multi-file mutations crash-recoverable",
-  "status": "in_progress",
+  "status": "done",
   "priority": 1,
   "scope": "scope-core",
   "path_hints": [
@@ -23,8 +23,8 @@
     "task-audit-generated-artifact-policy"
   ],
   "created_at": "2026-07-16T16:37:46+03:00",
-  "updated_at": "2026-07-16T23:52:39+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-17T00:03:10+03:00",
+  "closed_at": "2026-07-17T00:03:10+03:00",
   "description": "Close the remaining high-priority crash-consistency gap from audit H4 before adding more lifecycle mutations. Design and implement a recoverable protocol for canonical operations that update multiple records and events so interruption at any write boundary is detected and deterministically completed or rolled back before later mutations proceed.",
   "acceptance": [
     "An ADR selects a durable journal/replay or staged-manifest protocol and documents failure points, recovery ownership, and event ordering.",
@@ -34,6 +34,8 @@
     "Crash-injection tests interrupt each multi-write operation after every durable boundary and prove recovery leaves coherent records, claims, events, and timestamps.",
     "Validation reports unrecoverable or malformed mutation intent with coded diagnostics and no raw stack leakage."
   ],
-  "commits": [],
+  "commits": [
+    "7bb4ad5"
+  ],
   "notes": "This task addresses the explicitly open portion of H4 in docs/audit-2026-07-08.md. Per-file atomic rename alone does not satisfy this acceptance criterion."
 }

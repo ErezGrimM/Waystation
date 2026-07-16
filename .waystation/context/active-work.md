@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-- `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
+_none_
 
 ## Ready
-_none_
+- `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
 
 ## Coordination warnings
 _none_
