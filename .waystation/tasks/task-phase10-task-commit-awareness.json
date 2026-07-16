@@ -20,7 +20,7 @@
   ],
   "dependencies": [],
   "created_at": "2026-07-16T07:29:22+03:00",
-  "updated_at": "2026-07-16T12:56:01+03:00",
+  "updated_at": "2026-07-16T13:02:18+03:00",
   "closed_at": "2026-07-16T12:56:01+03:00",
   "description": "Make task completion traceable to git commits. Add a first-class way for task records to reference one or more commit SHAs, and surface those references through the CLI, MCP, dashboard, briefs, and generated reports where useful.",
   "acceptance": [
@@ -33,6 +33,8 @@
     "Tests cover schema/validation, CLI finish behavior, and at least one dashboard or MCP surfacing path.",
     "bun test, typecheck, biome check, waystation validate, and rebuilt binary smoke checks are green."
   ],
-  "commits": [],
+  "commits": [
+    "91b08ad"
+  ],
   "notes": "This is Phase 10 traceability work. Keep canonical data in task records and route mutations through the core write path. Avoid making git required for non-git ledgers; explicit commit refs should still work in offline/local-first usage."
 }

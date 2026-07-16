@@ -284,3 +284,4 @@
 {"type":"message.posted","message":"message-task-phase10-task-commit-awareness-codex-a-20260716-125600-tldu","thread":"task-phase10-task-commit-awareness","from":"codex-a","to":null,"actor":"codex-a","ts":"2026-07-16T12:56:00+03:00"}
 {"type":"task.status_changed","task":"task-phase10-task-commit-awareness","from":"in_progress","to":"done","actor":"codex-a","ts":"2026-07-16T12:56:01+03:00"}
 {"type":"claim.completed","task":"task-phase10-task-commit-awareness","claim":"claim-task-phase10-task-commit-awareness-codex-a-20260716-123830","actor":"codex-a","ts":"2026-07-16T12:56:01+03:00"}
+{"type":"task.commits_attached","task":"task-phase10-task-commit-awareness","commits":["91b08ad"],"actor":"codex-a","ts":"2026-07-16T13:02:18+03:00"}

@@ -2,6 +2,7 @@
 
 # task\-phase10\-task\-commit\-awareness — Record commit references on tasks
 status: done  priority: 2  scope: scope-core
+commits: 91b08ad
 
 Make task completion traceable to git commits\. Add a first\-class way for task records to reference one or more commit SHAs, and surface those references through the CLI, MCP, dashboard, briefs, and generated reports where useful\.
 
