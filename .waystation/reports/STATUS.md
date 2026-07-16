@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
+_none_
 
 ## In progress
 - `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
@@ -38,6 +38,7 @@ _none_
 - `task-audit-fix-validate-and-store` [p3] — Add duplicate id checks and fix temp file naming
 - `task-audit-generated-artifact-policy` [p2] — Decide generated artifact tracking policy before sync
 - `task-audit-lifecycle-dashboard-surface` [p2] — Expose lifecycle mutations through the dashboard
+- `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
 - `task-audit-lifecycle-mutations` [p1] — Add safe core task and issue lifecycle mutations
 - `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 - `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination

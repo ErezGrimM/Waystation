@@ -89,6 +89,7 @@ describe("mcp server integration", () => {
     expect(names).toContain("get_status");
     expect(names).toContain("get_next_task");
     expect(names).toContain("get_task");
+    expect(names).toContain("get_issue");
     expect(names).toContain("get_brief");
     expect(names).toContain("render_prompt");
     expect(names).toContain("list_issues");
@@ -96,12 +97,18 @@ describe("mcp server integration", () => {
     expect(names).toContain("get_git_context");
     expect(names).toContain("validate_ledger");
     expect(names).toContain("claim_task");
+    expect(names).toContain("create_task");
+    expect(names).toContain("update_task");
+    expect(names).toContain("set_task_status");
+    expect(names).toContain("reopen_task");
     expect(names).toContain("release_task");
     expect(names).toContain("finish_task");
     expect(names).toContain("add_task_commit");
     expect(names).toContain("create_handoff");
     expect(names).toContain("post_message");
     expect(names).toContain("create_issue");
+    expect(names).toContain("update_issue");
+    expect(names).toContain("close_issue");
     expect(names).toContain("list_prompts");
 
     await client.close();
@@ -333,6 +340,188 @@ describe("mcp server integration", () => {
     const taskText = (taskRes.content as Array<{ type: string; text: string }>)[0]!.text;
     const taskResult = JSON.parse(taskText);
     expect(taskResult.data.status).toBe("ready");
+
+    await client.close();
+    await server.close();
+  });
+});
+
+describe("mcp lifecycle surfaces", () => {
+  const root = join(process.cwd(), ".waystation-test-mcp-lifecycle");
+
+  beforeAll(() => {
+    rmSync(root, { recursive: true, force: true });
+    for (const directory of [
+      "tasks",
+      "claims",
+      "messages",
+      "issues",
+      "handoffs",
+      "prompts",
+      "scopes",
+    ]) {
+      mkdirSync(join(root, ".waystation", directory), { recursive: true });
+    }
+    writeFileSync(join(root, ".waystation", "events.jsonl"), "");
+  });
+
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  test("tools expose the selected root and cover task and issue lifecycle results", async () => {
+    const server = buildServer(root);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: "lifecycle-test", version: "0.0.1" });
+    await client.connect(clientTransport);
+
+    expect(client.getInstructions()).toContain(root);
+
+    const call = async (name: string, args: Record<string, unknown>) => {
+      const response = await client.callTool({ name, arguments: args });
+      const text = (response.content as Array<{ type: string; text: string }>)[0]!.text;
+      return JSON.parse(text) as any;
+    };
+
+    const createdTask = await call("create_task", {
+      id: "mcp-lifecycle-task",
+      title: "MCP lifecycle task",
+      status: "todo",
+      priority: 2,
+      description: "Original description",
+      notes: "preserved note",
+      actor: "mcp-test",
+    });
+    expect(createdTask.ok).toBe(true);
+    expect(createdTask.data.status).toBe("todo");
+
+    const duplicateTask = await call("create_task", {
+      id: "mcp-lifecycle-task",
+      title: "Duplicate",
+    });
+    expect(duplicateTask.ok).toBe(false);
+    expect(duplicateTask.errors[0].code).toBe("duplicate_id");
+
+    const updatedTask = await call("update_task", {
+      id: "mcp-lifecycle-task",
+      title: "Updated through MCP",
+      actor: "mcp-test",
+    });
+    expect(updatedTask.ok).toBe(true);
+    expect(updatedTask.data.title).toBe("Updated through MCP");
+    expect(updatedTask.data.notes).toBe("preserved note");
+
+    const missingTask = await call("update_task", {
+      id: "missing-task",
+      title: "Missing",
+    });
+    expect(missingTask.ok).toBe(false);
+    expect(missingTask.errors[0].code).toBe("no_such_task");
+
+    const readyTask = await call("set_task_status", {
+      id: "mcp-lifecycle-task",
+      status: "ready",
+      actor: "mcp-test",
+    });
+    expect(readyTask.data.status).toBe("ready");
+
+    const invalidStatus = await call("set_task_status", {
+      id: "mcp-lifecycle-task",
+      status: "in_progress",
+      actor: "mcp-test",
+    });
+    expect(invalidStatus.ok).toBe(false);
+    expect(invalidStatus.errors[0].code).toBe("invalid_transition");
+
+    const terminalTask = await call("set_task_status", {
+      id: "mcp-lifecycle-task",
+      status: "wont_do",
+      actor: "mcp-test",
+    });
+    expect(terminalTask.data.status).toBe("wont_do");
+
+    const reopenedTask = await call("reopen_task", {
+      id: "mcp-lifecycle-task",
+      status: "todo",
+      actor: "mcp-test",
+    });
+    expect(reopenedTask.data.status).toBe("todo");
+
+    const invalidReopen = await call("reopen_task", {
+      id: "mcp-lifecycle-task",
+      status: "ready",
+      actor: "mcp-test",
+    });
+    expect(invalidReopen.ok).toBe(false);
+    expect(invalidReopen.errors[0].code).toBe("invalid_transition");
+
+    const listedEmpty = await call("list_issues", {});
+    expect(listedEmpty.data).toEqual([]);
+
+    const createdIssue = await call("create_issue", {
+      id: "mcp-rich-issue",
+      title: "Rich MCP issue",
+      severity: "high",
+      type: "bug",
+      description: "Context description",
+      evidence: "bun test failed",
+      expected: "Expected result",
+      actual: "Actual result",
+      acceptance: ["Regression fixed"],
+      notes: "preserved issue note",
+      source: { system: "audit", id: 7 },
+    });
+    expect(createdIssue.ok).toBe(true);
+
+    const duplicateIssue = await call("create_issue", {
+      id: "mcp-rich-issue",
+      title: "Duplicate issue",
+    });
+    expect(duplicateIssue.ok).toBe(false);
+    expect(duplicateIssue.errors[0].code).toBe("duplicate_id");
+
+    const shownIssue = await call("get_issue", { id: "mcp-rich-issue" });
+    expect(shownIssue.ok).toBe(true);
+    expect(shownIssue.data.expected).toBe("Expected result");
+    expect(shownIssue.data.source).toEqual({ system: "audit", id: 7 });
+
+    const missingIssue = await call("get_issue", { id: "missing-issue" });
+    expect(missingIssue.ok).toBe(false);
+    expect(missingIssue.errors[0].code).toBe("not_found");
+
+    const updatedIssue = await call("update_issue", {
+      id: "mcp-rich-issue",
+      status: "triaged",
+      severity: "critical",
+      actor: "mcp-test",
+    });
+    expect(updatedIssue.data.status).toBe("triaged");
+    expect(updatedIssue.data.severity).toBe("critical");
+    expect(updatedIssue.data.notes).toBe("preserved issue note");
+
+    const missingUpdate = await call("update_issue", {
+      id: "missing-issue",
+      status: "triaged",
+    });
+    expect(missingUpdate.ok).toBe(false);
+    expect(missingUpdate.errors[0].code).toBe("not_found");
+
+    const closedIssue = await call("close_issue", {
+      id: "mcp-rich-issue",
+      resolution: "Fixed through MCP",
+      actor: "mcp-test",
+    });
+    expect(closedIssue.data.status).toBe("closed");
+    expect(closedIssue.data.resolution).toBe("Fixed through MCP");
+
+    const missingClose = await call("close_issue", {
+      id: "missing-issue",
+      resolution: "Nothing to close",
+    });
+    expect(missingClose.ok).toBe(false);
+    expect(missingClose.errors[0].code).toBe("not_found");
+
+    const listedIssues = await call("list_issues", {});
+    expect(listedIssues.data.map((issue: { id: string }) => issue.id)).toContain("mcp-rich-issue");
 
     await client.close();
     await server.close();

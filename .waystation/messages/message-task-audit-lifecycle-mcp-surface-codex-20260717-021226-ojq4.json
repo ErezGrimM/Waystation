@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-lifecycle-mcp-surface-codex-20260717-021226-ojq4",
+  "thread": "task-audit-lifecycle-mcp-surface",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implemented typed MCP tools for task create/update/status/reopen and issue get/create/update/close, with full issue context schemas, CommandResult diagnostics, and selected ledger root in MCP initialization instructions. Verification: 191 tests pass, typecheck/Biome clean, binary rebuilt, validate 0 errors. No SyntaxError: Unexpected end of input.",
+  "in_reply_to": null,
+  "created_at": "2026-07-17T02:12:26+03:00"
+}

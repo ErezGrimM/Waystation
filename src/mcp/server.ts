@@ -3,19 +3,24 @@ import { z } from "zod";
 import { buildBrief, parseBriefBudget } from "../core/brief.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
-import { createIssue } from "../core/issue.ts";
+import { closeIssue, createIssue, updateIssue } from "../core/issue.ts";
 import { inbox, postMessage } from "../core/messages.ts";
 import {
   addTaskCommits,
   claimTask,
+  createTask,
   finishTask,
   MutationError,
   releaseTask,
+  reopenTask,
+  setTaskStatus,
+  updateTask,
 } from "../core/mutate.ts";
 import { resolveLedgerRoot } from "../core/paths.ts";
 import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, type Diagnostic, diag, okResult, toResult } from "../core/result.ts";
+import { RecordId, TaskRecord as TaskSchema, TaskStatus } from "../core/schema.ts";
 import { loadIssues } from "../core/store.ts";
 import { nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
@@ -25,10 +30,11 @@ function toContent(result: CommandResult): { content: Array<{ type: "text"; text
 }
 
 function catchDiag(e: unknown, fallbackCode: string = "unexpected_error"): Diagnostic {
-  if (e instanceof MutationError || e instanceof RecordError) {
+  if (e instanceof MutationError) {
     return diag(e.code as never, { message: e.message });
   }
-  return diag(fallbackCode as never, { message: (e as Error).message });
+  if (e instanceof RecordError) return diag(e.code as never);
+  return diag(fallbackCode as never);
 }
 
 /** Build an MCP server bound to one validated ledger root. */
@@ -37,7 +43,10 @@ export function buildServer(root?: string): McpServer {
 }
 
 function buildServerAtRoot(root: string): McpServer {
-  const server = new McpServer({ name: "waystation", version: "0.0.3" });
+  const server = new McpServer(
+    { name: "waystation", version: "0.0.3" },
+    { instructions: `Selected Waystation ledger root: ${root}` },
+  );
 
   // ── read tools ──
 
@@ -88,6 +97,29 @@ function buildServerAtRoot(root: string): McpServer {
         );
       }
       return toContent(okResult(task));
+    },
+  );
+
+  server.registerTool(
+    "get_issue",
+    {
+      description: "Get a single issue by id",
+      inputSchema: { id: RecordId.describe("issue id") },
+    },
+    async ({ id }) => {
+      try {
+        const issue = loadIssues(root).find((item) => item.id === id);
+        if (!issue) {
+          return toContent(
+            toResult(null, [
+              diag("not_found", { message: `no such issue: ${id}`, details: { id } }),
+            ]),
+          );
+        }
+        return toContent(okResult(issue));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
     },
   );
 
@@ -184,6 +216,115 @@ function buildServerAtRoot(root: string): McpServer {
   );
 
   // ── write tools ──
+
+  server.registerTool(
+    "create_task",
+    {
+      description: "Create a canonical task record",
+      inputSchema: {
+        id: RecordId.describe("task id"),
+        title: TaskSchema.shape.title.describe("task title"),
+        status: TaskStatus.optional().describe("initial status (default: todo)"),
+        priority: TaskSchema.shape.priority.optional(),
+        scope: TaskSchema.shape.scope,
+        path_hints: TaskSchema.shape.path_hints.optional(),
+        prompts: TaskSchema.shape.prompts.optional(),
+        dependencies: TaskSchema.shape.dependencies.optional(),
+        description: TaskSchema.shape.description,
+        acceptance: TaskSchema.shape.acceptance.optional(),
+        notes: TaskSchema.shape.notes,
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ actor, ...input }) => {
+      try {
+        const task = await createTask(
+          root,
+          {
+            ...input,
+            status: input.status ?? "todo",
+            priority: input.priority ?? 3,
+            path_hints: input.path_hints ?? [],
+            prompts: input.prompts ?? [],
+            dependencies: input.dependencies ?? [],
+            acceptance: input.acceptance ?? [],
+          },
+          actor ?? "mcp",
+        );
+        return toContent(okResult(task));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "update_task",
+    {
+      description: "Update mutable task fields without changing lifecycle status",
+      inputSchema: {
+        id: RecordId.describe("task id"),
+        title: TaskSchema.shape.title.optional(),
+        priority: TaskSchema.shape.priority.optional(),
+        scope: TaskSchema.shape.scope,
+        path_hints: TaskSchema.shape.path_hints.optional(),
+        prompts: TaskSchema.shape.prompts.optional(),
+        dependencies: TaskSchema.shape.dependencies.optional(),
+        description: TaskSchema.shape.description,
+        acceptance: TaskSchema.shape.acceptance.optional(),
+        notes: TaskSchema.shape.notes,
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ id, actor, ...patch }) => {
+      try {
+        const task = await updateTask(root, id, patch, actor ?? "mcp");
+        return toContent(okResult(task));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "set_task_status",
+    {
+      description: "Apply a valid non-claim task status transition",
+      inputSchema: {
+        id: RecordId.describe("task id"),
+        status: TaskStatus.describe("target status"),
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ id, status, actor }) => {
+      try {
+        const task = await setTaskStatus(root, id, status, actor ?? "mcp");
+        return toContent(okResult(task));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "reopen_task",
+    {
+      description: "Reopen a done or wont_do task as todo or ready",
+      inputSchema: {
+        id: RecordId.describe("task id"),
+        status: z.enum(["todo", "ready"]).describe("reopened status"),
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ id, status, actor }) => {
+      try {
+        const task = await reopenTask(root, id, status, actor ?? "mcp");
+        return toContent(okResult(task));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
 
   server.registerTool(
     "claim_task",
@@ -332,14 +473,75 @@ function buildServerAtRoot(root: string): McpServer {
         severity: z.string().optional().describe("e.g. low, medium, high, critical"),
         type: z.string().optional().describe("e.g. bug, feature, task, question"),
         priority: z.number().int().optional().describe("numeric priority"),
-        task: z.string().optional().describe("linked task id"),
-        scope: z.string().optional().describe("scope id"),
+        task: RecordId.nullable().optional().describe("linked task id"),
+        scope: RecordId.nullable().optional().describe("scope id"),
         description: z.string().optional().describe("issue description"),
+        evidence: z.string().optional().describe("textual evidence"),
+        expected: z.string().optional(),
+        actual: z.string().optional(),
+        acceptance: z.array(z.string()).optional(),
+        resolution: z.string().optional(),
+        notes: z.string().optional(),
+        source: z.unknown().optional().describe("source-system metadata"),
       },
     },
     async (input) => {
       try {
         const issue = await createIssue(root, input);
+        return toContent(okResult(issue));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "update_issue",
+    {
+      description: "Update mutable issue fields while preserving omitted context",
+      inputSchema: {
+        id: RecordId.describe("issue id"),
+        title: z.string().min(1).optional(),
+        status: z.string().optional(),
+        severity: z.string().optional(),
+        type: z.string().optional(),
+        priority: z.number().int().optional(),
+        task: RecordId.nullable().optional(),
+        scope: RecordId.nullable().optional(),
+        description: z.string().optional(),
+        evidence: z.string().optional(),
+        expected: z.string().optional(),
+        actual: z.string().optional(),
+        acceptance: z.array(z.string()).optional(),
+        resolution: z.string().optional(),
+        notes: z.string().optional(),
+        source: z.unknown().optional(),
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ id, actor, ...patch }) => {
+      try {
+        const issue = await updateIssue(root, id, patch, actor ?? "mcp");
+        return toContent(okResult(issue));
+      } catch (e) {
+        return toContent(toResult(null, [catchDiag(e)]));
+      }
+    },
+  );
+
+  server.registerTool(
+    "close_issue",
+    {
+      description: "Close an issue with a resolution",
+      inputSchema: {
+        id: RecordId.describe("issue id"),
+        resolution: z.string().describe("resolution summary"),
+        actor: z.string().optional().describe("mutation actor (default: mcp)"),
+      },
+    },
+    async ({ id, resolution, actor }) => {
+      try {
+        const issue = await closeIssue(root, id, resolution, actor ?? "mcp");
         return toContent(okResult(issue));
       } catch (e) {
         return toContent(toResult(null, [catchDiag(e)]));

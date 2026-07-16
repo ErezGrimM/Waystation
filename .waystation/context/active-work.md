@@ -6,7 +6,7 @@
 - `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
 
 ## Ready
-- `task-audit-lifecycle-mcp-surface` [p2] — Expose lifecycle mutations through MCP
+_none_
 
 ## Coordination warnings
 _none_
