@@ -1,17 +1,22 @@
 {
   "id": "task-audit-lifecycle-cli-surface",
   "title": "Expose lifecycle mutations through the CLI",
-  "status": "ready",
+  "status": "in_progress",
   "priority": 2,
   "scope": "scope-cli",
-  "path_hints": ["src/cli/index.ts", "test/skeleton.test.ts"],
-  "prompts": ["prompt-waystation-v1"],
+  "path_hints": [
+    "src/cli/index.ts",
+    "test/skeleton.test.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
   "dependencies": [
     "task-audit-shared-ledger-resolution",
     "task-audit-lifecycle-mutations"
   ],
   "created_at": "2026-07-16T16:37:46+03:00",
-  "updated_at": "2026-07-16T16:37:46+03:00",
+  "updated_at": "2026-07-17T00:27:53+03:00",
   "closed_at": null,
   "description": "Add scriptable CLI wrappers for the finalized core task and issue lifecycle operations, using the shared root resolver and the standard CommandResult envelope without duplicating transition logic.",
   "acceptance": [
