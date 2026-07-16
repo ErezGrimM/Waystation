@@ -1,0 +1,32 @@
+{
+  "id": "task-phase10-release-checklist",
+  "title": "Document release checklist and version bump procedure",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "docs/",
+    "README.md",
+    "package.json",
+    "src/cli/index.ts",
+    "src/mcp/server.ts",
+    "AGENTS.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T14:00:35+03:00",
+  "updated_at": "2026-07-16T14:00:35+03:00",
+  "closed_at": null,
+  "description": "Create a clear release checklist for Waystation so a local agent or human can bump versions, rebuild the executable, run verification, refresh generated artifacts, and prepare a commit without relying on chat history.",
+  "acceptance": [
+    "A release checklist exists in docs or README and lists the required verification commands in the correct order.",
+    "The version bump locations are documented: package.json, src/cli/index.ts, and src/mcp/server.ts.",
+    "The checklist explains when to rebuild waystation.exe and how to handle the ignored binary artifact.",
+    "The checklist references Waystation validation, report/view regeneration, and task commit-reference dogfooding.",
+    "Docs are consistent with AGENTS.md and do not duplicate contradictory commands."
+  ],
+  "commits": [],
+  "notes": "This is Phase 10 release packaging. Keep the checklist practical and local-first; do not introduce a hosted release process unless it already exists."
+}

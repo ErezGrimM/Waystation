@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-fresh-clone-smoke-codex-a-20260716-140752-c8iq",
+  "thread": "task-phase10-fresh-clone-smoke",
+  "from_agent": "codex-a",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Added docs/release-packaging.md with a fresh-clone smoke checklist and linked it from README. Checks are green; finishing task.",
+  "in_reply_to": null,
+  "created_at": "2026-07-16T14:07:52+03:00"
+}

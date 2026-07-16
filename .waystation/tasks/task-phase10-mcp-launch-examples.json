@@ -1,0 +1,30 @@
+{
+  "id": "task-phase10-mcp-launch-examples",
+  "title": "Document MCP launch examples for source and compiled modes",
+  "status": "ready",
+  "priority": 3,
+  "scope": "scope-cli",
+  "path_hints": [
+    "docs/",
+    "README.md",
+    "src/mcp/server.ts",
+    "src/cli/index.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T14:00:35+03:00",
+  "updated_at": "2026-07-16T14:00:35+03:00",
+  "closed_at": null,
+  "description": "Add concrete examples for launching Waystation's MCP server from source and from the compiled executable so another agent can connect without reading implementation files.",
+  "acceptance": [
+    "Docs show a source-mode MCP launch command using C:\\bun\\bin\\bun.exe.",
+    "Docs show a compiled-mode MCP launch command using waystation.exe.",
+    "The examples explain expected working directory and ledger discovery behavior.",
+    "The examples mention the available MCP capabilities at a high level and point to validation/smoke checks.",
+    "Commands are Windows-friendly and avoid assuming Bun is on PATH."
+  ],
+  "commits": [],
+  "notes": "Keep this as documentation unless implementation gaps are discovered while verifying the examples."
+}

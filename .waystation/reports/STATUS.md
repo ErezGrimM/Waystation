@@ -3,7 +3,9 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
+- `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
+- `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
 
 ## In progress
 _none_
@@ -46,6 +48,7 @@ _none_
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
 - `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
+- `task-phase10-fresh-clone-smoke` [p2] — Add fresh\-clone smoke test checklist
 - `task-phase10-task-commit-awareness` [p2] — Record commit references on tasks
 - `task-phase6-docs-and-exit` [p3] — Document Phase 6 behavior and mark exit criteria
 - `task-phase6-worktree-message-scope-decision` [p1] — Phase 6 decision: worktree messaging scope

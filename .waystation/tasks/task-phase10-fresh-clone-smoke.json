@@ -1,0 +1,31 @@
+{
+  "id": "task-phase10-fresh-clone-smoke",
+  "title": "Add fresh-clone smoke test checklist",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "docs/",
+    "README.md",
+    "package.json",
+    "src/cli/index.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-07-16T14:00:35+03:00",
+  "updated_at": "2026-07-16T14:07:59+03:00",
+  "closed_at": "2026-07-16T14:07:59+03:00",
+  "description": "Define a repeatable fresh-clone smoke test for Waystation. The goal is to prove that a clean checkout can install/run dependencies, validate the ledger, rebuild the executable, and exercise the CLI without hidden local state.",
+  "acceptance": [
+    "A documented smoke checklist or script covers dependency setup with Bun at C:\\bun\\bin\\bun.exe.",
+    "The smoke flow includes test, typecheck, Biome check, ledger validate, reindex/report generation, and executable rebuild.",
+    "The flow includes at least one CLI command against a temporary or existing ledger that proves the binary starts.",
+    "Any assumptions about PATH, ignored artifacts, or local-only files are called out.",
+    "The checklist is linked from the release packaging docs or README."
+  ],
+  "commits": [],
+  "notes": "Prefer documentation first. Add a script only if it fits existing package scripts and does not require external services."
+}
