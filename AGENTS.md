@@ -216,9 +216,12 @@ If another agent is working on the same scope, coordinate via:
 
 ## Versioning
 
-- Every phase completion or major bug fix: **bump by +0.1**
+- Every phase completion or major bug fix: **bump the minor version and reset
+  patch** (for example, `0.0.3` → `0.1.0`).
 - Update in: `package.json`, `src/cli/index.ts` (`.version(...)`), `src/mcp/server.ts` (`McpServer` constructor)
 - Rebuild: `& $bun build --compile src/cli/index.ts --outfile waystation.exe`
+- Follow the commit-aware checklist in `docs/release-packaging.md` so the task
+  records the implementation commit before its ledger-closure commit.
 
 ## Build & verify checklist
 

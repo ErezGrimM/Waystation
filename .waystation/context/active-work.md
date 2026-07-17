@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 
 ## Ready
-- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
+_none_
 
 ## Coordination warnings
 _none_

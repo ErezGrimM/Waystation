@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
+_none_
 
 ## In progress
-_none_
+- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 
 ## Review
 _none_

@@ -215,11 +215,15 @@ Progress:
 Goal: make Waystation straightforward to install, rebuild, smoke-test, and hand
 to another local agent or human after the hardening pass is complete.
 
-Likely slices:
-- Release checklist and version bump procedure.
-- Fresh-clone smoke test script or documented checklist.
-- Binary distribution notes and artifact naming.
+Completed slices:
+- Fresh-clone smoke checklist and source/binary verification flow.
+- Task commit-reference support for traceable completion.
+- Release checklist covering version bumps, deterministic sync, ignored binary
+  handling, commit-aware task closure, and final handoff.
+
+Remaining slices:
 - MCP launch examples for compiled and source modes.
+- Binary distribution notes and artifact naming.
 
 ## Phase 11 — UX Polish
 

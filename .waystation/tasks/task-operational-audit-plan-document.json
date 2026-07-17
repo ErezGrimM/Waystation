@@ -6,15 +6,15 @@
   "scope": "scope-core",
   "path_hints": [
     "docs/operational-audit-corrections-plan.md",
-    ".waystation/tasks/task-audit-",
-    ".waystation/tasks/task-operational-audit-corrections.json"
+    ".waystation/tasks/task-operational-audit-corrections.json",
+    ".waystation/tasks/task-audit-correct-readiness-claims.json"
   ],
   "prompts": [
     "prompt-waystation-v1"
   ],
   "dependencies": [],
   "created_at": "2026-07-16T16:12:05+03:00",
-  "updated_at": "2026-07-16T16:15:15+03:00",
+  "updated_at": "2026-07-18T01:43:57+03:00",
   "closed_at": "2026-07-16T16:15:15+03:00",
   "description": "Create a durable, hand-authored Markdown plan for the v0.0.3 operational audit correction program. The document should explain the architecture, behavior changes, implementation sequence, migrations, risks, tests, and release gates while linking to the canonical Waystation task records. Waystation remains the source of truth for dependencies, status, claims, and progress.",
   "acceptance": [

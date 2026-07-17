@@ -237,6 +237,6 @@ not on PATH, or use `.\waystation.exe` after rebuilding.
 - [docs/roadmap.md](docs/roadmap.md) — phased plan and current state
 - [docs/error-philosophy.md](docs/error-philosophy.md) — error/diagnostic model
 - [docs/migration-guide.md](docs/migration-guide.md) — migrating from other task systems
-- [docs/release-packaging.md](docs/release-packaging.md) — fresh-clone smoke checks and release packaging notes
+- [docs/release-packaging.md](docs/release-packaging.md) — release checklist, version bumps, binary handling, and fresh-clone smoke checks
 - [agentledger-spec.md](agentledger-spec.md) — full specification
 - [adr/](adr/) — stack and design decisions
