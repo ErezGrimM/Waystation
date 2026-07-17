@@ -2,8 +2,7 @@
 
 # task\-audit\-lifecycle\-surfaces — Verify lifecycle parity across CLI, MCP, and dashboard
 status: ready  priority: 2  scope: scope-cli
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-lifecycle\-cli\-surface
+readiness: actionable  reason: declared_ready
 
 Integration gate for the independently implemented CLI, MCP, and dashboard lifecycle surfaces\. Prove that all three remain thin wrappers over the same core readiness, resolution, recovery, and mutation contracts and that equivalent operations produce equivalent canonical effects\.
 

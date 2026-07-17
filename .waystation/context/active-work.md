@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-- `task-audit-lifecycle-cli-surface` [p2] — Expose lifecycle mutations through the CLI
+_none_
 
 ## Ready
-_none_
+- `task-audit-lifecycle-surfaces` [p2] — Verify lifecycle parity across CLI, MCP, and dashboard
 
 ## Coordination warnings
 _none_

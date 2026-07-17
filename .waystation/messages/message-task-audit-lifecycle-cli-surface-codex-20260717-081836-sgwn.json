@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-lifecycle-cli-surface-codex-20260717-081836-sgwn",
+  "thread": "task-audit-lifecycle-cli-surface",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Completed CLI lifecycle surfaces: task create/update/set-status/reopen and issue list/show/create/update/close with human and CommandResult JSON output. Added coded handling for invalid patches/values, missing records/ledgers, unmet dependencies, claim conflicts, and recovery diagnostics. Verification: 196 tests pass, typecheck/Biome clean, binary rebuilt, validate 0 errors. No SyntaxError: Unexpected end of input.",
+  "in_reply_to": null,
+  "created_at": "2026-07-17T08:18:36+03:00"
+}

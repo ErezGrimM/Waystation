@@ -883,6 +883,195 @@ describe("CLI: task list / show", () => {
   });
 });
 
+describe("CLI lifecycle surfaces", () => {
+  const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
+
+  function run(root: string, args: string[]) {
+    const process = Bun.spawnSync({
+      cmd: [globalThis.process.execPath, "run", cli, ...args],
+      cwd: root,
+    });
+    return {
+      code: process.exitCode,
+      out: process.stdout.toString(),
+      err: process.stderr.toString(),
+    };
+  }
+
+  test("task create, update, set-status, and reopen support JSON and human output", () => {
+    const root = fixtureRoot([]);
+    const created = run(root, [
+      "task",
+      "create",
+      "task-cli-life",
+      "--title",
+      "CLI lifecycle task",
+      "--notes",
+      "preserved note",
+      "--json",
+    ]);
+    expect(created.code).toBe(0);
+    expect(JSON.parse(created.out).data.status).toBe("todo");
+
+    const updated = run(root, [
+      "task",
+      "update",
+      "task-cli-life",
+      "--title",
+      "Updated through CLI",
+      "--priority",
+      "2",
+      "--json",
+    ]);
+    const updatedBody = JSON.parse(updated.out);
+    expect(updatedBody.data.title).toBe("Updated through CLI");
+    expect(updatedBody.data.notes).toBe("preserved note");
+
+    const ready = run(root, ["task", "set-status", "task-cli-life", "ready", "--json"]);
+    expect(JSON.parse(ready.out).data.status).toBe("ready");
+
+    const invalid = run(root, ["task", "set-status", "task-cli-life", "in_progress", "--json"]);
+    expect(invalid.code).toBe(1);
+    expect(JSON.parse(invalid.out).errors[0].code).toBe("invalid_transition");
+
+    expect(run(root, ["task", "set-status", "task-cli-life", "wont_do", "--json"]).code).toBe(0);
+    const reopened = run(root, ["task", "reopen", "task-cli-life", "--status", "ready", "--json"]);
+    expect(JSON.parse(reopened.out).data.status).toBe("ready");
+
+    const human = run(root, ["task", "create", "task-cli-human", "--title", "Human output"]);
+    expect(human.out).toContain("created task-cli-human (todo)");
+  });
+
+  test("issue list, show, create, update, and close preserve rich context", () => {
+    const root = fixtureRoot([]);
+    const empty = run(root, ["issue", "list", "--json"]);
+    expect(JSON.parse(empty.out).data).toEqual([]);
+
+    const created = run(root, [
+      "issue",
+      "create",
+      "--id",
+      "issue-cli-life",
+      "--title",
+      "CLI issue",
+      "--severity",
+      "high",
+      "--type",
+      "bug",
+      "--evidence",
+      "bun test failed",
+      "--expected",
+      "Expected result",
+      "--actual",
+      "Actual result",
+      "--notes",
+      "preserved issue note",
+      "--source",
+      '{"system":"audit","id":9}',
+      "--json",
+    ]);
+    expect(created.code).toBe(0);
+    expect(JSON.parse(created.out).data.id).toBe("issue-cli-life");
+
+    const shown = run(root, ["issue", "show", "issue-cli-life", "--json"]);
+    const shownBody = JSON.parse(shown.out);
+    expect(shownBody.data.expected).toBe("Expected result");
+    expect(shownBody.data.source).toEqual({ system: "audit", id: 9 });
+
+    const updated = run(root, [
+      "issue",
+      "update",
+      "issue-cli-life",
+      "--status",
+      "triaged",
+      "--severity",
+      "critical",
+      "--json",
+    ]);
+    const updatedBody = JSON.parse(updated.out);
+    expect(updatedBody.data.status).toBe("triaged");
+    expect(updatedBody.data.notes).toBe("preserved issue note");
+
+    const closed = run(root, [
+      "issue",
+      "close",
+      "issue-cli-life",
+      "--resolution",
+      "Fixed through CLI",
+      "--json",
+    ]);
+    expect(JSON.parse(closed.out).data.status).toBe("closed");
+
+    const listed = run(root, ["issue", "list", "--status", "closed", "--json"]);
+    expect(JSON.parse(listed.out).data.map((item: { id: string }) => item.id)).toEqual([
+      "issue-cli-life",
+    ]);
+    expect(run(root, ["issue", "show", "issue-cli-life"]).out).toContain("Fixed through CLI");
+  });
+
+  test("invalid patches and values return coded JSON diagnostics", () => {
+    const root = fixtureRoot([{ ...D, id: "task-cli-invalid" }]);
+    const emptyTaskPatch = run(root, ["task", "update", "task-cli-invalid", "--json"]);
+    expect(emptyTaskPatch.code).toBe(1);
+    expect(JSON.parse(emptyTaskPatch.out).errors[0].code).toBe("schema_invalid");
+
+    const badPriority = run(root, [
+      "task",
+      "update",
+      "task-cli-invalid",
+      "--priority",
+      "nope",
+      "--json",
+    ]);
+    expect(JSON.parse(badPriority.out).errors[0].code).toBe("schema_invalid");
+
+    const emptyIssuePatch = run(root, ["issue", "update", "missing", "--json"]);
+    expect(JSON.parse(emptyIssuePatch.out).errors[0].code).toBe("schema_invalid");
+
+    const missingIssue = run(root, ["issue", "show", "missing", "--json"]);
+    expect(JSON.parse(missingIssue.out).errors[0].code).toBe("not_found");
+  });
+
+  test("claim conflicts and unmet dependencies keep their core diagnostic codes", () => {
+    const waitingRoot = fixtureRoot([
+      { ...D, id: "task-cli-waiting", dependencies: ["task-missing"] },
+    ]);
+    const waiting = run(waitingRoot, [
+      "task",
+      "claim",
+      "task-cli-waiting",
+      "--agent",
+      "first",
+      "--json",
+    ]);
+    expect(JSON.parse(waiting.out).errors[0].code).toBe("task_not_ready");
+
+    const conflictRoot = fixtureRoot([{ ...D, id: "task-cli-conflict" }]);
+    expect(
+      run(conflictRoot, ["task", "claim", "task-cli-conflict", "--agent", "first", "--json"]).code,
+    ).toBe(0);
+    const conflict = run(conflictRoot, [
+      "task",
+      "claim",
+      "task-cli-conflict",
+      "--agent",
+      "second",
+      "--json",
+    ]);
+    expect(JSON.parse(conflict.out).errors[0].code).toBe("task_already_claimed");
+  });
+
+  test("validate exposes malformed recovery journals as coded JSON diagnostics", () => {
+    const root = fixtureRoot([{ ...D, id: "task-cli-recovery" }]);
+    writeFileSync(join(root, ".waystation", "mutation-intent.json"), "not json");
+    const result = run(root, ["validate", "--json"]);
+    expect(result.code).toBe(1);
+    expect(JSON.parse(result.out).errors.map((item: { code: string }) => item.code)).toContain(
+      "mutation_intent_invalid",
+    );
+  });
+});
+
 describe("mutations: claim / release / finish", () => {
   const fixedNow = new Date("2026-07-06T10:00:00.000Z");
 

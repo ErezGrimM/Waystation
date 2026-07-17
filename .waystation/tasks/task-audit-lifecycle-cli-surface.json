@@ -1,7 +1,7 @@
 {
   "id": "task-audit-lifecycle-cli-surface",
   "title": "Expose lifecycle mutations through the CLI",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "scope": "scope-cli",
   "path_hints": [
@@ -16,8 +16,8 @@
     "task-audit-lifecycle-mutations"
   ],
   "created_at": "2026-07-16T16:37:46+03:00",
-  "updated_at": "2026-07-17T00:27:53+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-17T08:18:36+03:00",
+  "closed_at": "2026-07-17T08:18:36+03:00",
   "description": "Add scriptable CLI wrappers for the finalized core task and issue lifecycle operations, using the shared root resolver and the standard CommandResult envelope without duplicating transition logic.",
   "acceptance": [
     "CLI provides task create, task update, task set-status, and task reopen with human and JSON output.",
