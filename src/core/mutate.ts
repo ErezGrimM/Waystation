@@ -16,7 +16,7 @@ import {
   withLedgerLock,
 } from "./store.ts";
 import { indexById, taskReadiness } from "./tasks.ts";
-import { idStamp, nowIso, safeIdPart } from "./time.ts";
+import { idStamp, mutationStamp, nowIso, safeIdPart } from "./time.ts";
 
 export class MutationError extends Error {
   readonly code: string;
@@ -79,7 +79,7 @@ export async function createTask(
       throw new MutationError(`task already exists: ${task.id}`, "duplicate_id");
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-task-create-${task.id}-${idStamp(now)}`,
+      id: `mutation-task-create-${task.id}-${mutationStamp(now)}`,
       kind: "task.create",
       writes: [mutationWrite(root, file, task)],
       events: [{ type: "task.created", task: task.id, actor, ts }],
@@ -110,7 +110,7 @@ export async function updateTask(
     });
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-task-update-${id}-${idStamp(now)}`,
+      id: `mutation-task-update-${id}-${mutationStamp(now)}`,
       kind: "task.update",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "task.updated", task: id, actor, ts }],
@@ -152,7 +152,7 @@ export async function setTaskStatus(
     });
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-task-status-${id}-${idStamp(now)}`,
+      id: `mutation-task-status-${id}-${mutationStamp(now)}`,
       kind: "task.status",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "task.status_changed", task: id, from: task.status, to, actor, ts }],
@@ -176,7 +176,7 @@ export async function reopenTask(
     const updated = TaskSchema.parse({ ...task, status: to, closed_at: null, updated_at: ts });
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-task-reopen-${id}-${idStamp(now)}`,
+      id: `mutation-task-reopen-${id}-${mutationStamp(now)}`,
       kind: "task.reopen",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "task.reopened", task: id, from: task.status, to, actor, ts }],
@@ -251,7 +251,7 @@ export async function addTaskCommits(
     const updated = { ...taskWithCommits(task, refs), updated_at: ts };
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-task-commits-${id}-${idStamp(now)}`,
+      id: `mutation-task-commits-${id}-${mutationStamp(now)}`,
       kind: "task.commits_attached",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }],
@@ -410,7 +410,7 @@ export async function finishTask(
     };
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-finish-${id}-${idStamp(now)}`,
+      id: `mutation-finish-${id}-${mutationStamp(now)}`,
       kind: "task.finish",
       writes: [
         ...(claim

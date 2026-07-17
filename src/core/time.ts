@@ -28,6 +28,16 @@ export function idStamp(d: Date = new Date()): string {
 }
 
 /**
+ * Unique suffix for durable mutation journal ids. Human-facing record ids use
+ * second-resolution `idStamp`, but journal ids must never collide when the
+ * same record is mutated more than once in a second: recovery de-duplicates
+ * events by this id.
+ */
+export function mutationStamp(d: Date = new Date()): string {
+  return `${idStamp(d)}-${randomUUID().slice(0, 8)}`;
+}
+
+/**
  * Sanitize a string for safe use as an id / filename component: only
  * [A-Za-z0-9._-] survive, preventing path separators and traversal
  * (e.g. an agent named "../../foo" cannot escape the messages dir).
@@ -52,3 +62,5 @@ export function byCreatedAtThenId(
   if (!Number.isNaN(ta) && !Number.isNaN(tb) && ta !== tb) return ta - tb;
   return a.id.localeCompare(b.id);
 }
+
+import { randomUUID } from "node:crypto";

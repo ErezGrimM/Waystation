@@ -1,7 +1,7 @@
 {
   "id": "task-audit-lifecycle-surfaces",
   "title": "Verify lifecycle parity across CLI, MCP, and dashboard",
-  "status": "ready",
+  "status": "done",
   "priority": 2,
   "scope": "scope-cli",
   "path_hints": [
@@ -12,15 +12,17 @@
     "test/mcp.test.ts",
     "test/"
   ],
-  "prompts": ["prompt-waystation-v1"],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
   "dependencies": [
     "task-audit-lifecycle-cli-surface",
     "task-audit-lifecycle-mcp-surface",
     "task-audit-lifecycle-dashboard-surface"
   ],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T16:37:46+03:00",
-  "closed_at": null,
+  "updated_at": "2026-07-17T08:42:03+03:00",
+  "closed_at": "2026-07-17T08:42:03+03:00",
   "description": "Integration gate for the independently implemented CLI, MCP, and dashboard lifecycle surfaces. Prove that all three remain thin wrappers over the same core readiness, resolution, recovery, and mutation contracts and that equivalent operations produce equivalent canonical effects.",
   "acceptance": [
     "CLI, MCP, and dashboard expose the agreed task and issue lifecycle operations as thin wrappers over core functions.",

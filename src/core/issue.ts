@@ -9,7 +9,7 @@ import {
   readJsonFile,
   withLedgerLock,
 } from "./store.ts";
-import { nowIso, safeIdPart } from "./time.ts";
+import { mutationStamp, nowIso, safeIdPart } from "./time.ts";
 
 export interface CreateIssueInput {
   id?: string;
@@ -57,7 +57,7 @@ export async function updateIssue(
     });
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-issue-update-${id}-${safeIdPart(ts)}`,
+      id: `mutation-issue-update-${id}-${mutationStamp(now)}`,
       kind: "issue.update",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "issue.updated", issue: id, actor, ts }],
@@ -87,7 +87,7 @@ export async function closeIssue(
     });
     applyMutationIntentUnlocked(root, {
       version: 1,
-      id: `mutation-issue-close-${id}-${safeIdPart(ts)}`,
+      id: `mutation-issue-close-${id}-${mutationStamp(now)}`,
       kind: "issue.close",
       writes: [mutationWrite(root, file, updated)],
       events: [{ type: "issue.closed", issue: id, actor, ts }],

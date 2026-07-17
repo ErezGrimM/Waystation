@@ -29,7 +29,13 @@ import {
   postMessage,
   threadMessages,
 } from "../src/core/messages.ts";
-import { claimTask, finishTask, MutationError, releaseTask } from "../src/core/mutate.ts";
+import {
+  claimTask,
+  finishTask,
+  MutationError,
+  releaseTask,
+  setTaskStatus,
+} from "../src/core/mutate.ts";
 import { activeClaimOverlaps } from "../src/core/overlap.ts";
 import { LedgerResolutionError, resolveLedgerRoot } from "../src/core/paths.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
@@ -211,6 +217,22 @@ describe("mutation intent recovery", () => {
     const root = fixtureRoot([{ ...D }]);
     writeFileSync(join(root, ".waystation", "mutation-intent.json"), "not json");
     expect(validateLedger(root).errors.map((d) => d.code)).toContain("mutation_intent_invalid");
+  });
+
+  test("same-kind mutations in one second retain distinct journal events", async () => {
+    const root = fixtureRoot([{ ...D, id: "task-fast-status", status: "todo" }]);
+    const now = new Date("2026-07-06T10:00:00.000Z");
+    await setTaskStatus(root, "task-fast-status", "ready", "tester", now);
+    await setTaskStatus(root, "task-fast-status", "wont_do", "tester", now);
+    const events = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8")
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => JSON.parse(line) as { type: string; mutation: string });
+    expect(events.map((event) => event.type)).toEqual([
+      "task.status_changed",
+      "task.status_changed",
+    ]);
+    expect(new Set(events.map((event) => event.mutation)).size).toBe(2);
   });
 });
 

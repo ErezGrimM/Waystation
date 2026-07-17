@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-audit-lifecycle-surfaces` [p2] — Verify lifecycle parity across CLI, MCP, and dashboard
+- `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
 
 ## Coordination warnings
 _none_
