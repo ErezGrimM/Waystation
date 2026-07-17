@@ -17,4 +17,3 @@ Three dashboard cleanup items from the audit:
 - react\-router\-dom is in devDependencies in package\.json\.
 - /api/events sends periodic SSE comments as heartbeat every 15 seconds\.
 - Dashboard tests still pass\.
-

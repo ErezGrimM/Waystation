@@ -12,4 +12,3 @@ Audit the generated Markdown and context artifacts for stale content, unsafe Mar
 - Tests cover at least one generated Markdown case with punctuation or Markdown\-sensitive imported text\.
 - waystation report \-\-views and waystation validate are clean\.
 - bun test, typecheck, biome check, and rebuilt binary smoke checks are green if code changes are made\.
-

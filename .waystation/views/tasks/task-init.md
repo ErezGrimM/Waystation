@@ -12,4 +12,3 @@ Spec §21 item 1: there is no \`waystation init\` — the ledger was hand\-boots
 - Init writes a project\.initialized event\.
 - After init, \`waystation validate\` passes on the empty ledger\.
 - bun:test covers a fresh init and the already\-initialized case\.
-

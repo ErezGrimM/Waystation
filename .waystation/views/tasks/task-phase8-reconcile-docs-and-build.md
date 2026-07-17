@@ -12,4 +12,3 @@ Close the gap between the completed ledger and stale human\-facing documentation
 - Generated reports/context/task views are refreshed from the current ledger\.
 - waystation\.exe is rebuilt from src/cli/index\.ts and responds to \-\-version\.
 - bun test, typecheck, biome check, waystation validate, and binary smoke checks are clean\.
-

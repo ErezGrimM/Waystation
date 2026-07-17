@@ -16,4 +16,3 @@ Give parallel agents a shared async inbox without a sidecar service, chat server
 - bun:test covers posting, project\-channel \+ claimed\-thread broadcast, own\-message exclusion, and inbox filtering by recipient \+ since\-cursor\.
 - DEFERRED to the MCP phase: expose post\_message and get\_inbox as MCP tools over the same core logic\.
 - DEFERRED to task\-error\-envelope: return message results/errors via the CommandResult envelope\.
-

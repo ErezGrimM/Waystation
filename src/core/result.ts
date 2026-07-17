@@ -74,6 +74,30 @@ export const CODES = {
     hint: "Finish the blockers, or move the task back to todo/blocked until it is intentionally ready.",
     retryable: false,
   },
+  path_hint_escapes_project: {
+    severity: "warning",
+    message: "A literal relative path hint escapes the caller project root.",
+    hint: "Use a path relative to, and contained by, the caller project root.",
+    retryable: false,
+  },
+  path_hint_missing: {
+    severity: "warning",
+    message: "A literal relative path hint does not currently exist.",
+    hint: "This is advisory for planned files; otherwise correct the path hint.",
+    retryable: false,
+  },
+  generated_artifact_stale: {
+    severity: "error",
+    message: "A tracked generated artifact is missing or stale.",
+    hint: "Run `waystation sync` (add `--views` for task views), then commit the result.",
+    retryable: false,
+  },
+  canonical_changed_during_sync: {
+    severity: "error",
+    message: "Canonical ledger state changed during synchronization.",
+    hint: "Retry sync after concurrent ledger mutations finish.",
+    retryable: true,
+  },
   cycle: {
     severity: "error",
     message: "Circular task dependency.",

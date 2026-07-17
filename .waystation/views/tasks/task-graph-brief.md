@@ -13,4 +13,3 @@ Wire the Graphify enrichment from task\-graph\-core into all surfacing layers: b
 - All layers degrade gracefully when graph data is absent — sections are simply omitted\.
 - bun:test: CLI integration test renders brief with graph data; dashboard API returns enriched brief; MCP tool returns enriched brief\.
 - typecheck, biome check, and waystation validate all clean\.
-

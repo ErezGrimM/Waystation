@@ -14,4 +14,3 @@ Add conservative warnings for likely collisions between active claims\. Compare 
 - Warnings explain that path\-hint overlap is advisory and may be a false positive\.
 - Tests cover exact file overlap, directory\-prefix overlap, same\-scope warning, and no\-overlap cases\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

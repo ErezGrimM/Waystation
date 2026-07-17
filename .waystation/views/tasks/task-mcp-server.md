@@ -16,4 +16,3 @@ Expose the core ledger over MCP stdio \(spec §14\) so coding agents can drive W
 - Tool input schemas use zod raw shapes \(as in test/mcp\.test\.ts registerTool\)\.
 - bun:test: a Client over InMemoryTransport lists the tools, calls get\_next\_task, and calls claim\_task \(verifying the task moved to in\_progress \+ a claim exists\)\. Extend test/mcp\.test\.ts\.
 - typecheck \(tsc \-\-noEmit\), biome check, and \`waystation validate\` all clean; full \`bun test\` green\.
-

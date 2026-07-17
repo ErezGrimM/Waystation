@@ -12,4 +12,3 @@ Add typed MCP tools for the finalized task and issue lifecycle operations and sh
 - Server startup resolves and discloses the selected ledger root without contaminating stdio protocol output\.
 - MCP tests invoke every new tool across success and representative coded failure paths\.
 - The MCP layer never writes canonical JSON directly\.
-

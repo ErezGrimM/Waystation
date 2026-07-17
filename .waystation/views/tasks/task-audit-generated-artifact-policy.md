@@ -13,4 +13,3 @@ Decide the repository policy for generated STATUS, context, and task\-view Markd
 - Ignore rules, documentation, and the existing tracked\-file set agree with the decision\.
 - The decision provides concrete requirements to task\-audit\-project\-validation\-sync and does not implement a competing sync path\.
 - No canonical JSON is reclassified as disposable or generated\.
-

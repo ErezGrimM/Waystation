@@ -13,4 +13,3 @@ Define a repeatable fresh\-clone smoke test for Waystation\. The goal is to prov
 - The flow includes at least one CLI command against a temporary or existing ledger that proves the binary starts\.
 - Any assumptions about PATH, ignored artifacts, or local\-only files are called out\.
 - The checklist is linked from the release packaging docs or README\.
-

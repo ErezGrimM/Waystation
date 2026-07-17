@@ -45,6 +45,15 @@ function markdownListItem(value: string): string {
   return markdownText(value).replace(/\n/g, "\n  ");
 }
 
+/** Normalize generated Markdown to LF line endings and exactly one final LF. */
+export function generatedMarkdown(content: string): string {
+  return `${content.replace(/\r\n?/g, "\n").replace(/\n+$/g, "")}\n`;
+}
+
+function sortedTasks(root?: string): TaskRecord[] {
+  return loadTasks(root).sort((left, right) => left.id.localeCompare(right.id));
+}
+
 /** Rebuild the disposable SQLite index from all canonical record types. */
 export async function reindex(root?: string): Promise<CommandResult<IndexCounts>> {
   const paths = ledgerPaths(root);
@@ -65,15 +74,18 @@ function line(t: TaskRecord): string {
 }
 
 function overlapLines(root: string): string[] {
-  return activeClaimOverlaps(root).map(
-    (overlap) => `- \`${overlap.task}\` / \`${overlap.otherTask}\` — ${overlap.reason} (advisory)`,
-  );
+  return activeClaimOverlaps(root)
+    .map(
+      (overlap) =>
+        `- \`${overlap.task}\` / \`${overlap.otherTask}\` — ${overlap.reason} (advisory)`,
+    )
+    .sort();
 }
 
 /** STATUS.md content, generated from the ledger. */
 export function generateStatus(root?: string): string {
   const projectRoot = ledgerPaths(root).root;
-  const tasks = loadTasks(root);
+  const tasks = sortedTasks(root);
   const ready = readyTasks(tasks);
   const byId = indexById(tasks);
   const readiness = new Map(tasks.map((task) => [task.id, taskReadiness(task, byId)]));
@@ -85,9 +97,9 @@ export function generateStatus(root?: string): string {
   const backlog = tasks.filter((t) => t.status === "todo");
   const done = tasks.filter((t) => t.status === "done");
   const wontDo = tasks.filter((t) => t.status === "wont_do");
-  const openIssues = loadIssues(root).filter(
-    (i) => !["closed", "fixed", "verified", "wont_fix", "duplicate"].includes(i.status),
-  );
+  const openIssues = loadIssues(root)
+    .filter((i) => !["closed", "fixed", "verified", "wont_fix", "duplicate"].includes(i.status))
+    .sort((left, right) => left.id.localeCompare(right.id));
 
   const s: string[] = [GENERATED_HEADER, "", "# Waystation Status", ""];
   const section = (title: string, rows: string[]) => {
@@ -110,13 +122,13 @@ export function generateStatus(root?: string): string {
     ),
   );
   section("Coordination warnings", overlapLines(projectRoot));
-  return `${s.join("\n")}\n`;
+  return generatedMarkdown(s.join("\n"));
 }
 
 /** active-work.md content, generated from the ledger. */
 export function generateActiveWork(root?: string): string {
   const projectRoot = ledgerPaths(root).root;
-  const tasks = loadTasks(root);
+  const tasks = sortedTasks(root);
   const ready = readyTasks(tasks);
   const inProgress = tasks.filter((t) => t.status === "in_progress");
   const warnings = overlapLines(projectRoot);
@@ -130,12 +142,12 @@ export function generateActiveWork(root?: string): string {
   s.push("## Coordination warnings");
   s.push(warnings.length ? warnings.join("\n") : "_none_");
   s.push("");
-  return `${s.join("\n")}\n`;
+  return generatedMarkdown(s.join("\n"));
 }
 
 /** blocked.md content: tasks that cannot start because a dependency is unmet. */
 export function generateBlocked(root?: string): string {
-  const tasks = loadTasks(root);
+  const tasks = sortedTasks(root);
   const byId = indexById(tasks);
   const blocked = tasks
     .map((task) => ({ task, readiness: taskReadiness(task, byId) }))
@@ -152,22 +164,85 @@ export function generateBlocked(root?: string): string {
     blocked.length ? blocked.join("\n") : "_none_",
     "",
   ];
-  return `${s.join("\n")}\n`;
+  return generatedMarkdown(s.join("\n"));
+}
+
+function generateTaskView(task: TaskRecord, byId: ReadonlyMap<string, TaskRecord>): string {
+  const readiness = taskReadiness(task, byId);
+  return generatedMarkdown(
+    [
+      GENERATED_HEADER,
+      "",
+      `# ${markdownText(task.id)} — ${markdownText(task.title)}`,
+      `status: ${task.status}  priority: ${task.priority}  scope: ${task.scope ?? "-"}`,
+      `readiness: ${readiness.state}  reason: ${readiness.reason}`,
+      ...(readiness.blockers.length
+        ? [`readiness_blockers: ${readiness.blockers.map(markdownText).join(", ")}`]
+        : []),
+      ...(task.commits.length ? [`commits: ${task.commits.map(markdownText).join(", ")}`] : []),
+      "",
+      markdownBlock(task.description),
+      "",
+      "## Acceptance",
+      ...task.acceptance.map((criterion) => `- ${markdownListItem(criterion)}`),
+    ].join("\n"),
+  );
+}
+
+export interface GeneratedArtifact {
+  /** Path relative to `.waystation`, always using forward slashes. */
+  relative: string;
+  file: string;
+  content: string;
+  kind: "default" | "task_view";
+}
+
+/** Deterministic in-memory output used by both writers and freshness validation. */
+export function expectedGeneratedArtifacts(root?: string, views = false): GeneratedArtifact[] {
+  const paths = ledgerPaths(root);
+  const artifacts: GeneratedArtifact[] = [
+    {
+      relative: "reports/STATUS.md",
+      file: join(paths.ledger, "reports", "STATUS.md"),
+      content: generateStatus(root),
+      kind: "default",
+    },
+    {
+      relative: "context/active-work.md",
+      file: join(paths.ledger, "context", "active-work.md"),
+      content: generateActiveWork(root),
+      kind: "default",
+    },
+    {
+      relative: "context/blocked.md",
+      file: join(paths.ledger, "context", "blocked.md"),
+      content: generateBlocked(root),
+      kind: "default",
+    },
+  ];
+  if (!views) return artifacts;
+
+  const tasks = sortedTasks(root);
+  const byId = indexById(tasks);
+  for (const task of tasks) {
+    artifacts.push({
+      relative: `views/tasks/${task.id}.md`,
+      file: join(paths.ledger, "views", "tasks", `${task.id}.md`),
+      content: generateTaskView(task, byId),
+      kind: "task_view",
+    });
+  }
+  return artifacts;
 }
 
 /** Write STATUS.md + context files from the ledger. Never touches summary.md. */
 export function generateReports(root?: string): string[] {
-  const paths = ledgerPaths(root);
-  mkdirSync(join(paths.ledger, "reports"), { recursive: true });
-  mkdirSync(join(paths.ledger, "context"), { recursive: true });
   const written: string[] = [];
-  const write = (file: string, content: string) => {
-    writeText(file, content);
-    written.push(file);
-  };
-  write(join(paths.ledger, "reports", "STATUS.md"), generateStatus(root));
-  write(join(paths.ledger, "context", "active-work.md"), generateActiveWork(root));
-  write(join(paths.ledger, "context", "blocked.md"), generateBlocked(root));
+  for (const artifact of expectedGeneratedArtifacts(root)) {
+    mkdirSync(join(artifact.file, ".."), { recursive: true });
+    writeText(artifact.file, artifact.content);
+    written.push(artifact.file);
+  }
   return written;
 }
 
@@ -176,11 +251,14 @@ export function generateTaskViews(root?: string): number {
   const paths = ledgerPaths(root);
   const dir = join(paths.ledger, "views", "tasks");
   mkdirSync(dir, { recursive: true });
-  const tasks = loadTasks(root);
-  const byId = indexById(tasks);
+  const artifacts = expectedGeneratedArtifacts(root, true).filter(
+    (artifact) => artifact.kind === "task_view",
+  );
 
   // Prune stale view files no longer backed by a current task (idempotency).
-  const current = new Set(tasks.map((t) => `${t.id}.md`));
+  const current = new Set(
+    artifacts.map((artifact) => artifact.relative.slice(artifact.relative.lastIndexOf("/") + 1)),
+  );
   try {
     for (const f of readdirSync(dir)) {
       if (f.endsWith(".md") && !current.has(f)) rmSync(join(dir, f));
@@ -189,26 +267,6 @@ export function generateTaskViews(root?: string): number {
     // dir may not exist yet; nothing to prune
   }
 
-  for (const t of tasks) {
-    const readiness = taskReadiness(t, byId);
-    const md = [
-      GENERATED_HEADER,
-      "",
-      `# ${markdownText(t.id)} — ${markdownText(t.title)}`,
-      `status: ${t.status}  priority: ${t.priority}  scope: ${t.scope ?? "-"}`,
-      `readiness: ${readiness.state}  reason: ${readiness.reason}`,
-      ...(readiness.blockers.length
-        ? [`readiness_blockers: ${readiness.blockers.map(markdownText).join(", ")}`]
-        : []),
-      ...(t.commits.length ? [`commits: ${t.commits.map(markdownText).join(", ")}`] : []),
-      "",
-      markdownBlock(t.description),
-      "",
-      "## Acceptance",
-      ...t.acceptance.map((a) => `- ${markdownListItem(a)}`),
-      "",
-    ].join("\n");
-    writeText(join(dir, `${t.id}.md`), `${md}\n`);
-  }
-  return tasks.length;
+  for (const artifact of artifacts) writeText(artifact.file, artifact.content);
+  return artifacts.length;
 }

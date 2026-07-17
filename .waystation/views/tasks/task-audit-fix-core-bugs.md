@@ -20,4 +20,3 @@ Fix four correctness bugs identified in the code audit:
 - No dead void import remains in messages\.ts\.
 - mutate\.ts error message does not contain '\(as JSON\)'\.
 - All existing tests still pass\.
-

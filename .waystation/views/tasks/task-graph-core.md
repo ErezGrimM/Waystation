@@ -14,4 +14,3 @@ Build a core module that reads Graphify output \(graph\.json, concepts, file met
 - Path to graph output is configurable via \.waystation/config\.json \(graph\_path field, defaults to graphify\-out/\)\.
 - bun:test: loads mock graph data, verifies brief enrichment when graph is present; verifies brief is unaffected when graph is missing\.
 - typecheck, biome check, and waystation validate all clean\.
-

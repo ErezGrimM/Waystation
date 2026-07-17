@@ -17,4 +17,3 @@ Two store/validate items from the audit:
 - validate\.ts detects duplicate message ids\.
 - writeJsonAtomic uses an ascending counter \(not Math\.random\(\)\) for temp file suffixes\.
 - All tests pass\.
-

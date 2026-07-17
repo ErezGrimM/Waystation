@@ -14,4 +14,3 @@ Expose Phase 6 git/worktree context through the local dashboard and MCP server\.
 - No endpoint creates branches, creates worktrees, pushes, pulls, or opens PRs\.
 - Tests cover dashboard API and MCP tool responses\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

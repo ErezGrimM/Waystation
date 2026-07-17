@@ -12,4 +12,3 @@ Add the mutation half of the skeleton — the first commands that write\. This f
 - A second active claim on the same task is rejected \(no force flag in V1\)\.
 - Writes go through a single core write path shared with future CLI/dashboard/MCP callers \(spec §12\), are atomic, and hold the write lock\.
 - bun:test covers a claim/finish round trip and the double\-claim rejection; events\.jsonl remains valid JSONL after mutations\.
-

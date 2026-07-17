@@ -11,4 +11,3 @@ The project has no version control, which is the single biggest risk now that th
 - \.gitignore already excludes node\_modules, \.agents, dist, and \.waystation/\*\.sqlite — confirm it is correct\.
 - An initial commit captures the current tree \(code, docs, \.waystation ledger\)\.
 - Do NOT commit node\_modules, the bun\-skills under \.agents/, or the SQLite index\.
-

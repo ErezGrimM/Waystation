@@ -37,13 +37,16 @@ export function App() {
 
   const doReindex = useCallback(async () => {
     setReindexMsg("Reindexing...");
-    const r = await api<{ tasks: number; issues: number; claims: number; messages: number }>(
-      "/api/reindex",
-      { method: "POST" },
-    );
+    const r = await api<{
+      tasks: number;
+      issues: number;
+      claims_total: number;
+      claims_active: number;
+      messages: number;
+    }>("/api/reindex", { method: "POST" });
     if (r.ok && r.data) {
       setReindexMsg(
-        `Done: ${r.data.tasks} tasks, ${r.data.issues} issues, ${r.data.claims} claims, ${r.data.messages} msgs`,
+        `Done: ${r.data.tasks} tasks, ${r.data.issues} issues, ${r.data.claims_total} claims (${r.data.claims_active} active), ${r.data.messages} msgs`,
       );
     } else {
       setReindexMsg(r.errors?.[0]?.message ?? "Failed");

@@ -14,4 +14,3 @@ Converge the code onto docs/error\-philosophy\.md\. Introduce a CommandResult en
 - The bun:sqlite \-\> node:sqlite fallback emits a warning rather than being silent\.
 - A code catalog exists and a bun:test asserts every emitted code is catalogued; codes are lower\_snake\_case and stable\.
 - CLI exit codes: 0 when ok \(warnings allowed\), 1 when errors is non\-empty\.
-

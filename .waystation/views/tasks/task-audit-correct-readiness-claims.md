@@ -14,4 +14,3 @@ Establish one authoritative lifecycle/readiness model\. Canonical status remains
 - claimTask evaluates readiness inside withLedgerLock and rejected claims write no task, claim, or event changes\.
 - Briefs, generated reports, validation, in\-memory queries, and index\-backed queries treat wont\_do dependencies consistently\.
 - Table\-driven tests cover every task status, missing dependencies, done/wont\_do dependencies, and concurrent selection\-versus\-claim changes\.
-

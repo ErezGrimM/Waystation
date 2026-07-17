@@ -12,4 +12,3 @@ validate does not yet check message records\. Add message validation: schema, a 
 - A message whose thread is neither \`project\` nor an existing task/issue is flagged\.
 - New codes are added to the CODES catalog; the coverage test still passes\.
 - bun:test covers dangling in\_reply\_to and orphan thread\.
-

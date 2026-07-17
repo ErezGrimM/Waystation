@@ -13,4 +13,3 @@ Add \`waystation gh import\` and \`waystation gh export\` CLI commands as thin w
 - Missing GITHUB\_TOKEN produces a clear error message\.
 - bun:test: CLI integration test calls gh import with mock server, verifies \-\-json envelope\.
 - typecheck, biome check, and waystation validate all clean\.
-

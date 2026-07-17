@@ -12,4 +12,3 @@ Extend the single task schema from task\-skeleton\-task\-next into zod schemas f
 - Validation supports text output and \`\-\-json\`\.
 - Running validate against the current \.waystation/ ledger passes \(or reports only known, intended gaps\)\.
 - bun:test covers at least duplicate\-id, missing\-reference, and circular\-dependency detection\.
-

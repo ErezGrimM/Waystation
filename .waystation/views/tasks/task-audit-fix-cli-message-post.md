@@ -10,4 +10,3 @@ The \`message post\` CLI command \(src/cli/index\.ts:403\-427\) has its own try/
 - message post uses runMutation like other write commands\.
 - message post supports \-\-json flag\.
 - Errors are surfaced as coded diagnostics, not raw stack traces\.
-

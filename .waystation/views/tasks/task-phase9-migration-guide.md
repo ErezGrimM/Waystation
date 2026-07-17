@@ -12,4 +12,3 @@ Document how humans and LLM agents should migrate tasks/issues/comments from oth
 - The guide includes a review checklist and commands to reindex, validate, regenerate reports, and inspect samples\.
 - README links to the migration guide\.
 - waystation validate is clean after adding the guide task and docs\.
-

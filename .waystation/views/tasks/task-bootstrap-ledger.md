@@ -10,4 +10,3 @@ Create the initial hand\-written Waystation project ledger so Waystation can be 
 - \.waystation/config\.json exists\.
 - Initial scopes, prompts, tasks, events, reports, and context files exist\.
 - The task list describes the V1 implementation path\.
-

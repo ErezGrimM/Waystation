@@ -14,4 +14,3 @@ Stop treating an unrelated directory as an empty Waystation project and add an e
 - A claim written from worktree B into a ledger rooted elsewhere records worktree B and its branch while locking and writing only the selected ledger\.
 - A concurrent two\-worktree test targeting one ledger proves exactly one same\-task claim succeeds\.
 - ADR\-0003 and user documentation distinguish checkout\-local default behavior from opt\-in shared\-ledger coordination\.
-

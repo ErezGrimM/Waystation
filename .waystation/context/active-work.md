@@ -6,8 +6,7 @@
 _none_
 
 ## Ready
-- `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
+- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
 
 ## Coordination warnings
 _none_
-

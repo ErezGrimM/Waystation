@@ -36,6 +36,7 @@ import { loadTasks, RecordError } from "../core/records.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import type { IssueRecord, TaskStatus } from "../core/schema.ts";
 import { loadIssues } from "../core/store.ts";
+import { syncLedger } from "../core/sync.ts";
 import { nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
 import { backendWarnings } from "../index/ledgerIndex.ts";
@@ -628,9 +629,15 @@ program
 program
   .command("validate")
   .description("Validate the ledger (schemas, references, cycles, claims, events)")
+  .option("--project", "also validate caller-project paths and generated report freshness")
+  .option("--views", "also freshness-check generated task views (implies --project)")
   .option("--json", "output JSON")
-  .action((opts: { json?: boolean }) => {
-    const res = validateLedger(findProjectRoot());
+  .action((opts: { project?: boolean; views?: boolean; json?: boolean }) => {
+    const res = validateLedger(findProjectRoot(), {
+      project: opts.project || opts.views,
+      projectRoot: process.cwd(),
+      views: opts.views,
+    });
     if (opts.json) {
       process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
     } else if (res.ok && res.warnings.length === 0) {
@@ -653,7 +660,7 @@ program
       const c = res.data;
       if (c) {
         process.stdout.write(
-          `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims} claims, ${c.messages} messages\n`,
+          `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims_total} claims (${c.claims_active} active), ${c.messages} messages\n`,
         );
       }
     });
@@ -675,6 +682,26 @@ program
     }
     emitResult(okResult({ written }), opts.json, () => {
       for (const f of written) process.stdout.write(`generated ${f}\n`);
+    });
+  });
+
+program
+  .command("sync")
+  .description("Validate, reindex, regenerate reports, and verify project freshness")
+  .option("--views", "also regenerate and validate views/tasks/*.md")
+  .option("--json", "output JSON")
+  .action(async (opts: { views?: boolean; json?: boolean }) => {
+    const res = await syncLedger(findProjectRoot(), {
+      projectRoot: process.cwd(),
+      views: opts.views,
+    });
+    emitResult(res, opts.json, () => {
+      const data = res.data;
+      if (!data) return;
+      process.stdout.write(
+        `synced ${data.index.tasks} tasks, ${data.index.issues} issues, ${data.index.claims_total} claims (${data.index.claims_active} active), ${data.index.messages} messages\n`,
+      );
+      for (const file of data.written) process.stdout.write(`generated ${file}\n`);
     });
   });
 

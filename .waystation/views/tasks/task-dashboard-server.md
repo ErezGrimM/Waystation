@@ -16,4 +16,3 @@ Build the dashboard API server: a Hono app embedded in Bun\.serve that exposes R
 - Dependencies added: hono \(runtime\), vite \+ @vitejs/plugin\-react \(dev\)\.
 - bun:test: Hono test client calls GET /api/status, GET /api/tasks, POST /api/issues, and verifies SSE events on write\.
 - typecheck \(tsc \-\-noEmit\), biome check, and \`waystation validate\` all clean; full \`bun test\` green\.
-

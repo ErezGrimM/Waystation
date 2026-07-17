@@ -13,4 +13,3 @@ Close the Phase 6 loop by documenting what git/worktree integration does and doe
 - Generated reports/context are refreshed if needed\.
 - Out\-of\-scope automation remains explicit: no automatic branch/worktree/PR creation in V1\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

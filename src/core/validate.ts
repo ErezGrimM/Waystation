@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { expectedGeneratedArtifacts } from "./generate.ts";
 import { activeClaimOverlaps } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
@@ -13,6 +14,15 @@ import {
   TaskRecord,
 } from "./schema.ts";
 import { indexById, taskReadiness } from "./tasks.ts";
+
+export interface ValidateOptions {
+  /** Enable caller-filesystem and generated-artifact checks. */
+  project?: boolean;
+  /** Invocation project root used to resolve literal relative path hints. */
+  projectRoot?: string;
+  /** Include optional generated task views in freshness checks. */
+  views?: boolean;
+}
 
 /** True if a record file exists for `id` in `dir` as either JSON or YAML. */
 function recordExists(dir: string, id: string): boolean {
@@ -76,8 +86,84 @@ function findCycle(tasks: TaskRecord[]): string[] | null {
   return null;
 }
 
+function isLiteralRelativePathHint(pathHint: string): boolean {
+  const hasGlobSyntax = ["?", "*", "[", "]", "{", "}"].some((token) => pathHint.includes(token));
+  return pathHint.trim().length > 0 && !isAbsolute(pathHint) && !hasGlobSyntax;
+}
+
+function addProjectPathDiagnostics(
+  diags: Diagnostic[],
+  tasks: TaskRecord[],
+  projectRoot: string,
+): void {
+  const base = resolve(projectRoot);
+  for (const task of tasks) {
+    for (const pathHint of task.path_hints) {
+      if (!isLiteralRelativePathHint(pathHint)) continue;
+      const candidate = resolve(base, pathHint);
+      const fromBase = relative(base, candidate);
+      const escapes = fromBase === ".." || fromBase.startsWith(`..${sep}`) || isAbsolute(fromBase);
+      if (escapes) {
+        diags.push(
+          diag("path_hint_escapes_project", {
+            message: `${task.id} path hint escapes the project root: ${pathHint}`,
+            details: { task: task.id, path_hint: pathHint, project_root: base },
+          }),
+        );
+      } else if (!existsSync(candidate)) {
+        diags.push(
+          diag("path_hint_missing", {
+            message: `${task.id} path hint does not exist: ${pathHint}`,
+            details: { task: task.id, path_hint: pathHint, project_root: base },
+          }),
+        );
+      }
+    }
+  }
+}
+
+function addGeneratedArtifactDiagnostics(diags: Diagnostic[], root: string, views: boolean): void {
+  const artifacts = expectedGeneratedArtifacts(root, views);
+  for (const artifact of artifacts) {
+    const actual = existsSync(artifact.file) ? readFileSync(artifact.file, "utf8") : null;
+    if (actual === artifact.content) continue;
+    diags.push(
+      diag("generated_artifact_stale", {
+        message: `${artifact.relative} is ${actual === null ? "missing" : "stale"}`,
+        details: {
+          artifact: artifact.relative,
+          reason: actual === null ? "missing" : "content_mismatch",
+        },
+      }),
+    );
+  }
+
+  if (!views) return;
+  const viewDir = join(ledgerPaths(root).ledger, "views", "tasks");
+  const expected = new Set(
+    artifacts
+      .filter((artifact) => artifact.kind === "task_view")
+      .map((artifact) => artifact.relative.split("/").at(-1)),
+  );
+  let names: string[] = [];
+  try {
+    names = readdirSync(viewDir).filter((name) => name.endsWith(".md"));
+  } catch {
+    // Missing expected views were already reported above.
+  }
+  for (const name of names.sort()) {
+    if (expected.has(name)) continue;
+    diags.push(
+      diag("generated_artifact_stale", {
+        message: `views/tasks/${name} has no canonical task`,
+        details: { artifact: `views/tasks/${name}`, reason: "unexpected" },
+      }),
+    );
+  }
+}
+
 /** Validate the whole ledger; returns a CommandResult (spec §18, §18.1). */
-export function validateLedger(root?: string): CommandResult<null> {
+export function validateLedger(root?: string, options: ValidateOptions = {}): CommandResult<null> {
   const paths = ledgerPaths(root);
   const diags: Diagnostic[] = [];
   const tasks: TaskRecord[] = [];
@@ -506,6 +592,15 @@ export function validateLedger(root?: string): CommandResult<null> {
           details: overlap as unknown as Record<string, unknown>,
         }),
       );
+    }
+  }
+
+  if (options.project) {
+    addProjectPathDiagnostics(diags, tasks, options.projectRoot ?? paths.root);
+    // Rendering loads schema-authoritative records, so only attempt freshness
+    // comparison when canonical validation is otherwise safe to consume.
+    if (toResult(null, diags).ok) {
+      addGeneratedArtifactDiagnostics(diags, paths.root, options.views ?? false);
     }
   }
 

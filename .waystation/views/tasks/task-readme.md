@@ -11,4 +11,3 @@ The repo has no README\. Capture how to run it \(Bun at C:\\bun, not on PATH; \`
 - It documents the src/ layout and the \.waystation/ ledger structure\.
 - It states the core principles \(JSON canonical, SQLite index, one write path, generated Markdown\) and links docs/roadmap\.md, docs/error\-philosophy\.md, and agentledger\-spec\.md\.
 - A new contributor can go from clone to green \`bun test\` using only the README\.
-

@@ -1885,7 +1885,13 @@ describe("ledger index (all record types)", () => {
     await postMessage(root, { thread: "task-d", from: "coder", body: "hi" }, now, "zzz1");
 
     const c1 = await reindex(root);
-    expect(c1.data).toEqual({ tasks: 2, issues: 1, claims: 1, messages: 1 });
+    expect(c1.data).toEqual({
+      tasks: 2,
+      issues: 1,
+      claims_total: 1,
+      claims_active: 1,
+      messages: 1,
+    });
     const c2 = await reindex(root); // rebuild over the same file
     expect(c2.data).toEqual(c1.data);
   });

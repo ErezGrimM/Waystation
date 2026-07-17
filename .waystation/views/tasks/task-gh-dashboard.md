@@ -14,4 +14,3 @@ Add Import and Export buttons to the dashboard Issues page\. Import pulls issues
 - After import/export, the issues list refreshes to show new records\.
 - No new dependencies; uses existing Bun\.fetch\.
 - typecheck, biome check, and waystation validate all clean\.
-

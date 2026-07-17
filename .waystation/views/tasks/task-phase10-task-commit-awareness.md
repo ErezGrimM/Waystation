@@ -16,4 +16,3 @@ Make task completion traceable to git commits\. Add a first\-class way for task 
 - task show, brief output, generated task views, and relevant status/report surfaces display commit references\.
 - Tests cover schema/validation, CLI finish behavior, and at least one dashboard or MCP surfacing path\.
 - bun test, typecheck, biome check, waystation validate, and rebuilt binary smoke checks are green\.
-

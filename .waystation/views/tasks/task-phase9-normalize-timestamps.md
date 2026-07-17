@@ -12,4 +12,3 @@ Review legacy ledger records that use UTC\-Z timestamps while newer records use 
 - No unrelated ledger fields are changed during normalization\.
 - waystation validate is clean after the change\.
 - bun test, typecheck, biome check, and rebuilt binary smoke checks are green if code changes are made\.
-

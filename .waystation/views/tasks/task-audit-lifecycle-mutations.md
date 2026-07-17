@@ -17,4 +17,3 @@ Remove the need for routine hand edits of canonical task and issue JSON\. Add pa
 - Issue update and close operations use the recoverable mutation path, update timestamps/resolution consistently, and append audited events\.
 - Existing issue fixtures and rich unknown fields survive load\-update\-write round trips without data loss\.
 - Every accepted or rejected mutation has tests for locking, recovery, claim coherence, events, diagnostics, and unchanged\-ledger failure behavior\.
-

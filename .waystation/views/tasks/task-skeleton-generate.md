@@ -14,4 +14,3 @@ Close the generated\-artifacts layer\. Add \`waystation reindex\` to rebuild the
 - summary\.md is NOT overwritten by generation \(it holds hand\-authored architecture/spike notes\); if generated at all it must use a separate file or a clearly delimited managed block\.
 - One\-way JSON\-\>Markdown record views under views/\*\*/\*\.md are generated; generation is never reversed\.
 - bun:test covers an index rebuild producing stable query results and STATUS/active\-work generation matching the ledger\.
-

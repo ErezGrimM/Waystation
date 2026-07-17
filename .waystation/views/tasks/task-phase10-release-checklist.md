@@ -2,8 +2,7 @@
 
 # task\-phase10\-release\-checklist — Document release checklist and version bump procedure
 status: ready  priority: 2  scope: scope-cli
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-audit\-project\-validation\-sync
+readiness: actionable  reason: declared_ready
 
 Create a clear release checklist for Waystation so a local agent or human can bump versions, rebuild the executable, run verification, refresh generated artifacts, and prepare a commit without relying on chat history\.
 
@@ -13,4 +12,3 @@ Create a clear release checklist for Waystation so a local agent or human can bu
 - The checklist explains when to rebuild waystation\.exe and how to handle the ignored binary artifact\.
 - The checklist references Waystation validation, report/view regeneration, and task commit\-reference dogfooding\.
 - Docs are consistent with AGENTS\.md and do not duplicate contradictory commands\.
-

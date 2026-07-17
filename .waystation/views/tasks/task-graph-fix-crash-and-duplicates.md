@@ -21,4 +21,3 @@ Plus two dead\-code items:
 - Add test: findImpactHints deduplicates when path\_hints overlap\.
 - All existing tests still pass\.
 - typecheck, biome check, and waystation validate all clean\.
-

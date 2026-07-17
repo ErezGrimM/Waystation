@@ -11,4 +11,3 @@ Integration gate for the independently implemented CLI, MCP, and dashboard lifec
 - Parity tests show equivalent canonical JSON, events, timestamps, and diagnostic codes for the same operation through CLI, MCP, and dashboard\.
 - Parity tests cover claim\-dependent transitions, recovery diagnostics, missing ledgers, unmet dependencies, duplicates, reopen, and issue close\.
 - No CLI, MCP, dashboard route, or client writes canonical JSON directly\.
-

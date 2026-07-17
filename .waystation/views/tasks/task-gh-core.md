@@ -14,4 +14,3 @@ Build the core GitHub Issues integration module\. Import fetches issues from the
 - Token via GITHUB\_TOKEN env var; if missing, returns a coded diagnostic \(no\_github\_token\)\. All API calls use Bun\.fetch — no new dependencies\.
 - bun:test: import creates issue records from a mock GitHub API response; export generates correct API payloads from ledger issues; missing token returns diagnostic\.
 - typecheck, biome check, and waystation validate all clean\.
-

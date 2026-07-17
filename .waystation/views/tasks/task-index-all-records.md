@@ -11,4 +11,3 @@ Today the index covers tasks only\. Extend reindex and the index to issues, clai
 - inbox and thread queries can be served from the index\.
 - Deleting index\.sqlite and rebuilding yields equivalent query results\.
 - bun:test covers a rebuild across record types\.
-

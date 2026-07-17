@@ -12,4 +12,3 @@ Implement the core feature: a task\-scoped brief that gives an agent only the co
 - \`\-\-json\` is supported\.
 - Brief budget values \(small/medium/large/full\) are accepted; the smallest still includes goal, blockers, and next action\.
 - bun:test covers scoped inclusion/exclusion for at least one task\.
-

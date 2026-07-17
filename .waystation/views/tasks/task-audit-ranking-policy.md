@@ -13,4 +13,3 @@ Resolve the lower\-priority question of how equal\-priority actionable tasks sho
 - If explicit rank is accepted, a new implementation task is created with schema, mutation, CLI, MCP, dashboard, migration, and deterministic\-test acceptance criteria\.
 - The decision records why no deferred status is added unless todo\-as\-backlog proves insufficient after the readiness correction\.
 - This decision runs after and does not block the correction release; the umbrella milestone waits for the decision record\.
-

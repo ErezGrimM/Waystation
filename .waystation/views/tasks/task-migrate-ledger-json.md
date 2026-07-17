@@ -12,4 +12,3 @@ decision\-record\-format makes JSON the canonical on\-disk format, but the exist
 - No canonical \*\.yaml files remain under \.waystation/ \(except any intentionally kept human\-authored notes\)\.
 - Records still validate against the zod schemas once the CLI exists, or against the spec §6 shapes in the interim\.
 - Any doc or task referencing \*\.yaml ledger paths is updated to \*\.json\.
-

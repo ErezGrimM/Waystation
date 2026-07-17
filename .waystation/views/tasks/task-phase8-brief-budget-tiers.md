@@ -12,4 +12,3 @@ The brief command accepts a budget option, but currently behaves as one fixed ou
 - MCP and dashboard brief surfaces pass budget through to the shared core implementation without duplicating logic\.
 - Tests cover at least one truncation/omission difference between tiers and the invalid\-budget path\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

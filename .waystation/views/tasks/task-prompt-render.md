@@ -12,4 +12,3 @@ Spec §21 item 10 / §11: prompts are loaded but there is no command to select a
 - \`prompt render \-\-task \<id\> \-\-agent \<a\>\` selects applicable prompts by applies\_to and substitutes \{\{variables\}\}\.
 - Selection precedence and variable substitution are unit\-tested\.
 - bun:test covers selection by agent/scope/task and one substitution\.
-

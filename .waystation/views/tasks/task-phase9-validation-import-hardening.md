@@ -12,4 +12,3 @@ Strengthen validation and import\-facing rules for records produced by migration
 - GitHub/import mapping edge cases are reviewed and documented or tested where appropriate\.
 - docs/migration\-guide\.md reflects any new validation rules an LLM or human migrator must follow\.
 - bun test, typecheck, biome check, waystation validate, and rebuilt binary smoke checks are green\.
-

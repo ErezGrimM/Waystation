@@ -13,4 +13,3 @@ Add concrete examples for launching Waystation's MCP server from source and from
 - The examples explain expected working directory and ledger discovery behavior\.
 - The examples mention the available MCP capabilities at a high level and point to validation/smoke checks\.
 - Commands are Windows\-friendly and avoid assuming Bun is on PATH\.
-

@@ -11,4 +11,3 @@ Create the initial project skeleton and CLI entrypoint for Waystation in Bun \+ 
 - bun:test and Biome \(lint/format\) are configured\.
 - A placeholder CLI runs locally \(e\.g\. waystation \-\-version\)\.
 - The project has test, typecheck \(tsc \-\-noEmit\), and lint/check scripts\.
-

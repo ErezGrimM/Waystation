@@ -11,4 +11,3 @@ Before building the MCP server \(Phase 4\), verify the one unproven dependency: 
 - A minimal McpServer with one registered tool can be constructed\.
 - A client connected via an in\-memory transport can list the tool and call it, getting the expected result\.
 - A bun:test covers the round trip; typecheck and biome stay clean\.
-

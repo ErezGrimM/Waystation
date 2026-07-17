@@ -13,4 +13,3 @@ Clarify how compiled Waystation binaries should be named, stored, copied, and ha
 - Artifact naming guidance distinguishes latest local builds from versioned release bundles\.
 - The existing local skill/package convention is documented without requiring project\-specific paths like DuckBrain\.
 - The guidance includes a simple copy/install example for another local project\.
-

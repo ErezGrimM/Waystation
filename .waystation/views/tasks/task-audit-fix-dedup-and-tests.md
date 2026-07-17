@@ -21,4 +21,3 @@ Four code quality items from the audit:
 - skeleton\.test\.ts has no duplicate loadClaims import\.
 - generate\.ts uses loadIssues from store\.ts instead of loadIssuesLite\.
 - All tests pass, typecheck clean, biome clean\.
-

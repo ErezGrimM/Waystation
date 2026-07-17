@@ -13,4 +13,3 @@ Use the core git\-state helper when a task is claimed so active claims can carry
 - Existing claim records with null branch/worktree remain valid\.
 - Tests cover derived git context, explicit overrides, non\-git fallback, and event details\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

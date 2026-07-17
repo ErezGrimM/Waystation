@@ -12,4 +12,3 @@ Make it clear how a user or agent should install and run Waystation locally\. Co
 - The docs explain when to rebuild waystation\.exe and what smoke checks to run\.
 - Any package metadata changes are justified by the documented workflow\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

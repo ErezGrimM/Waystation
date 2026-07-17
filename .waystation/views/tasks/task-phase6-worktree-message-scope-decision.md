@@ -12,4 +12,3 @@ Resolve the Phase 6 open boundary: messages are currently scoped to the project 
 - The decision explicitly covers separate worktrees, normal branches in one checkout, merge behavior, and whether any shared message location is introduced\.
 - If behavior changes, follow\-up tasks are added for implementation; if checkout\-local messaging remains, docs explain the limitation\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

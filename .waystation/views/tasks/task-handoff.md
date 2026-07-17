@@ -11,4 +11,3 @@ Spec §21 item 11 / §6\.7: the handoff record type is specced but has no comman
 - \`handoff create\` writes a handoff record through the write path and appends handoff\.created\.
 - \`handoff show \<id\>\` prints a handoff \(text \+ \-\-json via the CommandResult envelope\)\.
 - bun:test covers create \+ show and a handoff for a missing task\.
-

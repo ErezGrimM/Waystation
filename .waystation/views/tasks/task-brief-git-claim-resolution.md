@@ -13,4 +13,3 @@ Implement the spec §10 brief resolution step that uses current branch/worktree 
 - The rendered brief includes branch/worktree context when present\.
 - Tests cover exact match, ambiguous match, no match, and the existing \-\-task path\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

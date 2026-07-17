@@ -12,4 +12,3 @@ Review the current one\-file\-per\-message layout against the worktree messaging
 - If the decision is migrate, a separate implementation task is created with schema, validation, migration, and test acceptance criteria\.
 - Existing message post/list/inbox behavior remains valid after the decision task\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

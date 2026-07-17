@@ -20,7 +20,8 @@ export interface LedgerData {
 export interface IndexCounts {
   tasks: number;
   issues: number;
-  claims: number;
+  claims_total: number;
+  claims_active: number;
   messages: number;
 }
 
@@ -103,7 +104,8 @@ export function counts(data: LedgerData): IndexCounts {
   return {
     tasks: data.tasks.length,
     issues: data.issues.length,
-    claims: data.claims.length,
+    claims_total: data.claims.length,
+    claims_active: data.claims.filter((claim) => claim.status === "active").length,
     messages: data.messages.length,
   };
 }

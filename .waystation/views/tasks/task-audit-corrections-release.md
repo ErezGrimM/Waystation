@@ -15,4 +15,3 @@ Complete the compatibility and release work for the operational audit correction
 - graphify update \. is run and the resulting graph confirms all surfaces depend on shared core readiness, resolution, and mutation paths\.
 - The version is bumped consistently in package\.json, CLI, and MCP according to project policy; waystation\.exe is rebuilt and smoke\-tested\.
 - Completion messages, task finish operations, reindexing, report generation, validation, and commit follow the dogfooding workflow; push is required only when an authenticated remote is available\.
-

@@ -12,4 +12,3 @@ Milestone record for the correction program derived from hands\-on Waystation v0
 - Every OA finding in docs/operational\-audit\-corrections\-plan\.md is fixed or has a documented, evidence\-backed decision and linked verification result\.
 - Waystation's own ledger, generated reports, documentation, binary, and graph agree on the released behavior\.
 - A fresh agent can use task next, claim, lifecycle mutations, shared\-root selection, sync, validate, and briefs without relying on tribal knowledge or direct canonical JSON edits\.
-

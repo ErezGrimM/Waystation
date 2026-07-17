@@ -12,4 +12,3 @@ Add scriptable CLI wrappers for the finalized core task and issue lifecycle oper
 - Every command uses the shared root resolver and core mutation inputs/functions and returns cataloged diagnostics\.
 - CLI tests cover successful operations, invalid patches/transitions, unmet dependencies, claim conflicts, missing ledgers, and recovery diagnostics\.
 - The CLI never writes canonical JSON directly\.
-

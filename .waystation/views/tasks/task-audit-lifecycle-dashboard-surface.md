@@ -12,4 +12,3 @@ Add dashboard API and UI controls for the finalized task and issue lifecycle ope
 - Controls disable or explain invalid actions and render coded CommandResult errors safely\.
 - Dashboard tests cover API mutation effects, client error states, root disclosure, and representative invalid transitions\.
 - Neither dashboard server routes nor client code writes canonical JSON directly\.
-

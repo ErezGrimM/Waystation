@@ -13,4 +13,3 @@ Create a durable, hand\-authored Markdown plan for the v0\.0\.3 operational audi
 - Each implementation phase links to its canonical Waystation task id and accurately reflects the dependency graph\.
 - The document states that Waystation task records—not the Markdown checklist—are authoritative for progress\.
 - The ledger is reindexed, reports/views regenerated, and waystation validate remains clean after the documentation task is finished\.
-

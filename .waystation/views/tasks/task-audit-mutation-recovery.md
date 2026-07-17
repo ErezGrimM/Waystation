@@ -14,4 +14,3 @@ Close the remaining high\-priority crash\-consistency gap from audit H4 before a
 - Claim, release, finish, issue creation, handoff creation, and message posting use the recoverable primitive or have a documented proof that a single write is sufficient\.
 - Crash\-injection tests interrupt each multi\-write operation after every durable boundary and prove recovery leaves coherent records, claims, events, and timestamps\.
 - Validation reports unrecoverable or malformed mutation intent with coded diagnostics and no raw stack leakage\.
-

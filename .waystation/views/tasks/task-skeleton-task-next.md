@@ -12,4 +12,3 @@ The first and defining vertical slice\. Build the thinnest thread that touches e
 - A bun:sqlite index is created and queried as part of resolving \`next\` \(even if minimal\); deleting the index and re\-running still works\.
 - \`\-\-json\` is supported on the command\.
 - bun:test covers: next\-selection with dependency filtering, and one intentionally\-invalid task record rejected by zod\.
-

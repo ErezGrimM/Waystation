@@ -13,4 +13,3 @@ Add shared core git\-state detection for Phase 6\. V1 should read local git stat
 - The implementation does not create branches, create worktrees, push, pull, or touch remotes\.
 - Tests cover a normal repository, a non\-git directory, and detached/unknown branch behavior where feasible\.
 - bun test, typecheck, biome check, and waystation validate are clean\.
-

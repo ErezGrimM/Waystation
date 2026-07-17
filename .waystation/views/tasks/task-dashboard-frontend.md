@@ -21,4 +21,3 @@ Build the Vite \+ React SPA served by the dashboard Hono server\. Pages: Dashboa
 - Production build: \`vite build\` outputs to src/dashboard/client/dist/, Hono serves it\.
 - Dev mode: \`waystation dashboard \-\-dev\` starts Vite HMR \+ Hono proxy\.
 - typecheck, biome check, and \`waystation validate\` all clean; full \`bun test\` green\.
-

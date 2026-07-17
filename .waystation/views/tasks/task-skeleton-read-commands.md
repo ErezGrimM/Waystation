@@ -12,4 +12,3 @@ Widen the read side of the skeleton by reusing the loader, schema, and index fro
 - Both commands support \`\-\-json\`\.
 - No new storage or index layer is introduced — these commands reuse the core built in task\-skeleton\-task\-next\.
 - bun:test covers list output and show\-by\-id including the not\-found case\.
-
