@@ -2,8 +2,7 @@
 
 # task\-phase10\-mcp\-launch\-examples — Document MCP launch examples for source and compiled modes
 status: ready  priority: 3  scope: scope-cli
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-phase10\-release\-checklist
+readiness: actionable  reason: declared_ready
 
 Add concrete examples for launching Waystation's MCP server from source and from the compiled executable so another agent can connect without reading implementation files\.
 

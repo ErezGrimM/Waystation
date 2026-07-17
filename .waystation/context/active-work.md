@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-- `task-phase10-release-checklist` [p2] — Document release checklist and version bump procedure
+_none_
 
 ## Ready
-_none_
+- `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
 
 ## Coordination warnings
 _none_

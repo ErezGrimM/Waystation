@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-release-checklist-codex-20260718-015042-p4da",
+  "thread": "task-phase10-release-checklist",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done in 92aea7c. Added the ordered release/version checklist, two-commit task closure flow, ignored binary/index handling, source sync/project validation, fresh-clone updates, and reconciled AGENTS.md, README, and Phase 10 roadmap. Checks: 207 tests pass, typecheck clean, Biome clean, sync/project validation 0 errors; 7 pre-existing dependency/path-hint warnings remain documented.",
+  "in_reply_to": null,
+  "created_at": "2026-07-18T01:50:42+03:00"
+}
