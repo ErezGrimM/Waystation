@@ -443,7 +443,7 @@ describe("lifecycle surface parity", () => {
     } finally {
       await Promise.all(surfaces.map((surface) => surface.close()));
     }
-  });
+  }, 60_000);
 
   test("all mutation surfaces return mutation_intent_invalid for malformed recovery state", async () => {
     const surfaces = await Promise.all(

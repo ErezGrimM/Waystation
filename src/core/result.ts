@@ -301,6 +301,12 @@ export const CODES = {
     hint: "Use one of: small, medium, large, full.",
     retryable: false,
   },
+  graph_data_invalid: {
+    severity: "warning",
+    message: "Graphify data is malformed or incompatible; graph enrichment was skipped.",
+    hint: "Regenerate graphify-out/graph.json with a supported Graphify version or inspect the diagnostic details.",
+    retryable: false,
+  },
   invalid_commit_ref: {
     severity: "error",
     message: "Invalid commit reference.",

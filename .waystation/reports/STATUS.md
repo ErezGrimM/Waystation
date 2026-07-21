@@ -6,7 +6,7 @@
 - `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
 
 ## In progress
-_none_
+- `task-graphify-brief-enrichment-correctness` [p1] — Make Graphify brief enrichment compatible, relevant, and deterministic
 
 ## Review
 _none_

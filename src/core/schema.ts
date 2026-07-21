@@ -17,6 +17,20 @@ export const RecordId = z
   .regex(RECORD_ID_RE, "must be filesystem-safe: [A-Za-z0-9._-], no slashes or '..'");
 export type RecordId = z.infer<typeof RecordId>;
 
+export const BriefBudgetValue = z.enum(["small", "medium", "large", "full"]);
+
+export const ProjectConfig = z
+  .object({
+    defaults: z
+      .object({
+        brief_budget: BriefBudgetValue.default("medium"),
+      })
+      .passthrough()
+      .default({ brief_budget: "medium" }),
+  })
+  .passthrough();
+export type ProjectConfig = z.infer<typeof ProjectConfig>;
+
 const ProjectOrRecordId = z.union([z.literal("project"), RecordId]);
 
 const COMMIT_REF_RE = /^[A-Fa-f0-9]{7,64}$/;

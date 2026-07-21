@@ -6,7 +6,7 @@ import { type ActiveClaimOverlap, overlapsForTask } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { loadTasks } from "./records.ts";
 import { type CommandResult, diag, okResult, toResult } from "./result.ts";
-import type { TaskRecord } from "./schema.ts";
+import { ProjectConfig, type TaskRecord } from "./schema.ts";
 import { activeClaimForTask, loadClaims } from "./store.ts";
 import { type TaskReadiness, taskReadiness } from "./tasks.ts";
 
@@ -57,6 +57,17 @@ export function parseBriefBudget(value: string | undefined | null): CommandResul
   ]);
 }
 
+export function configuredBriefBudget(root: string): BriefBudget {
+  const file = ledgerPaths(root).config;
+  if (!existsSync(file)) return "medium";
+  try {
+    const parsed = ProjectConfig.safeParse(JSON.parse(readFileSync(file, "utf8")));
+    return parsed.success ? parsed.data.defaults.brief_budget : "medium";
+  } catch {
+    return "medium";
+  }
+}
+
 /** Read the `rules` array from a scope record (JSON), if present. */
 function scopeRules(root: string, scope: string | null | undefined): string[] {
   if (!scope) return [];
@@ -91,7 +102,12 @@ function computeNextAction(task: TaskRecord, readiness: TaskReadiness, claimed: 
 }
 
 /** Build a task-scoped brief (spec §10) with deterministic section tiers. */
-export function buildBrief(root: string, taskId: string, budget: BriefBudget = "medium"): Brief {
+export function buildBriefResult(
+  root: string,
+  taskId: string,
+  budget?: BriefBudget,
+): CommandResult<Brief> {
+  const resolvedBudget = budget ?? configuredBriefBudget(root);
   const tasks = loadTasks(root);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const task = byId.get(taskId);
@@ -106,9 +122,10 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
   const claim = activeClaimForTask(root, taskId);
   const coordinationWarnings = overlapsForTask(root, taskId);
 
-  const includeMedium = budget === "medium" || budget === "large" || budget === "full";
-  const includeLarge = budget === "large" || budget === "full";
-  const includeFull = budget === "full";
+  const includeMedium =
+    resolvedBudget === "medium" || resolvedBudget === "large" || resolvedBudget === "full";
+  const includeLarge = resolvedBudget === "large" || resolvedBudget === "full";
+  const includeFull = resolvedBudget === "full";
 
   const graphResult = includeLarge ? loadGraphData(root) : okResult(null);
   const enrichment =
@@ -121,8 +138,8 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
         })
       : { relatedFiles: [], concepts: [], impactHints: [] };
 
-  return {
-    budget,
+  const brief: Brief = {
+    budget: resolvedBudget,
     task: {
       id: task.id,
       title: task.title,
@@ -153,6 +170,15 @@ export function buildBrief(root: string, taskId: string, budget: BriefBudget = "
     concepts: includeLarge ? enrichment.concepts : [],
     impactHints: includeFull ? enrichment.impactHints : [],
   };
+  return okResult(brief, graphResult.warnings);
+}
+
+/** Backwards-compatible Brief-returning API. Surfaces can use buildBriefResult
+ * to preserve best-effort enrichment warnings in their CommandResult envelope. */
+export function buildBrief(root: string, taskId: string, budget?: BriefBudget): Brief {
+  const result = buildBriefResult(root, taskId, budget);
+  if (!result.data) throw new Error(`could not build brief: ${taskId}`);
+  return result.data;
 }
 
 /** Resolve a task id from the current git branch/worktree claim.

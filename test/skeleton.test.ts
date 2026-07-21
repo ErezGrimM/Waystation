@@ -2250,8 +2250,12 @@ describe("graph enrichment", () => {
       }),
     );
 
-    const brief = buildBrief(root, "task-overlap");
+    const brief = buildBrief(root, "task-overlap", "full");
     const uniqueHints = new Set(brief.impactHints ?? []);
     expect((brief.impactHints ?? []).length).toBe(uniqueHints.size);
+    expect(brief.impactHints).toEqual([
+      "src/core/brief.ts depends on: src/core/tasks.ts",
+      "src/core/tasks.ts is depended on by: src/core/brief.ts",
+    ]);
   });
 });

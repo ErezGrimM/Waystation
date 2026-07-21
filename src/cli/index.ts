@@ -2,7 +2,8 @@
 import { Command } from "commander";
 import { ZodError } from "zod";
 import {
-  buildBrief,
+  buildBriefResult,
+  configuredBriefBudget,
   parseBriefBudget,
   renderBrief,
   resolveTaskFromGitClaim,
@@ -48,7 +49,7 @@ program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
   .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
-  .version("0.0.3");
+  .version("0.1.0");
 
 // Keep root selection in the core resolver, but make the CLI's explicit flag
 // available to every subcommand without duplicating root plumbing.
@@ -582,11 +583,11 @@ program
     "Generate a task-scoped context brief (auto-detects task from git claim if --task is omitted)",
   )
   .option("--task <id>", "task id (auto-detected from current git branch claim if omitted)")
-  .option("--budget <budget>", "small|medium|large|full", "medium")
+  .option("--budget <budget>", "small|medium|large|full (defaults to project config)")
   .option("--json", "output JSON")
-  .action((opts: { task?: string; budget: string; json?: boolean }) => {
+  .action((opts: { task?: string; budget?: string; json?: boolean }) => {
     const root = findProjectRoot();
-    const budget = parseBriefBudget(opts.budget);
+    const budget = parseBriefBudget(opts.budget ?? configuredBriefBudget(root));
     if (!budget.ok || !budget.data) {
       emitResult(budget as CommandResult<unknown>, opts.json, () => {});
       return;
@@ -594,8 +595,10 @@ program
 
     if (opts.task) {
       try {
-        const brief = buildBrief(root, opts.task, budget.data);
-        emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
+        const result = buildBriefResult(root, opts.task, budget.data);
+        emitResult(result, opts.json, () => {
+          if (result.data) process.stdout.write(renderBrief(result.data));
+        });
       } catch (e) {
         const code =
           e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
@@ -615,8 +618,10 @@ program
     }
 
     try {
-      const brief = buildBrief(root, resolved.data, budget.data);
-      emitResult(okResult(brief), opts.json, () => process.stdout.write(renderBrief(brief)));
+      const result = buildBriefResult(root, resolved.data, budget.data);
+      emitResult(result, opts.json, () => {
+        if (result.data) process.stdout.write(renderBrief(result.data));
+      });
     } catch (e) {
       const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
       const res = toResult(null, [

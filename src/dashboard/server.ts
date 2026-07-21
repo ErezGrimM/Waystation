@@ -1,6 +1,6 @@
 import { join, resolve, sep } from "node:path";
 import { Hono } from "hono";
-import { buildBrief, parseBriefBudget } from "../core/brief.ts";
+import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
 import { reindex } from "../core/generate.ts";
 import { exportGitHubIssues, importGitHubIssues } from "../core/gh.ts";
@@ -257,10 +257,9 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
 
   app.get("/api/tasks/:id/brief", (c) => {
     try {
-      const budget = parseBriefBudget(c.req.query("budget"));
+      const budget = parseBriefBudget(c.req.query("budget") ?? configuredBriefBudget(root));
       if (!budget.ok || !budget.data) return json(budget);
-      const brief = buildBrief(root, c.req.param("id"), budget.data);
-      return json(okResult(brief));
+      return json(buildBriefResult(root, c.req.param("id"), budget.data));
     } catch (e) {
       return json(catchDiag(e, "no_such_task"));
     }

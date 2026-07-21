@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { buildBrief, parseBriefBudget } from "../core/brief.ts";
+import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../core/brief.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { closeIssue, createIssue, updateIssue } from "../core/issue.ts";
@@ -44,7 +44,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.0.3" },
+    { name: "waystation", version: "0.1.0" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -129,15 +129,17 @@ function buildServerAtRoot(root: string): McpServer {
       description: "Generate a task-scoped context brief",
       inputSchema: {
         task: z.string().describe("task id"),
-        budget: z.string().optional().describe("small|medium|large|full (default: medium)"),
+        budget: z
+          .string()
+          .optional()
+          .describe("small|medium|large|full (defaults to the project configuration)"),
       },
     },
     async ({ task, budget }) => {
       try {
-        const parsedBudget = parseBriefBudget(budget);
+        const parsedBudget = parseBriefBudget(budget ?? configuredBriefBudget(root));
         if (!parsedBudget.ok || !parsedBudget.data) return toContent(parsedBudget);
-        const brief = buildBrief(root, task, parsedBudget.data);
-        return toContent(okResult(brief));
+        return toContent(buildBriefResult(root, task, parsedBudget.data));
       } catch (e) {
         return toContent(toResult(null, [catchDiag(e, "no_such_task")]));
       }

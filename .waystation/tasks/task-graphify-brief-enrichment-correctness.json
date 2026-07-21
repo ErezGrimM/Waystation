@@ -1,0 +1,35 @@
+{
+  "id": "task-graphify-brief-enrichment-correctness",
+  "title": "Make Graphify brief enrichment compatible, relevant, and deterministic",
+  "status": "in_progress",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/graph.ts",
+    "src/core/brief.ts",
+    "src/core/result.ts",
+    "src/core/schema.ts",
+    "src/cli/index.ts",
+    "test/skeleton.test.ts"
+  ],
+  "prompts": [],
+  "dependencies": [],
+  "created_at": "2026-07-21T00:00:00+03:00",
+  "updated_at": "2026-07-21T23:42:59+03:00",
+  "closed_at": null,
+  "description": "Fix Graphify-based brief enrichment so current Graphify output is accepted and task-specific results are safe, relevant, deterministic, and efficient. Empty source paths currently match every hint; insertion order controls truncation; symbol nodes duplicate file-level output; Graphify 0.9.23 links/null/community fields are rejected silently; impact wording ignores undirected graphs; and the configured defaults.brief_budget is not honored when callers omit a budget.",
+  "acceptance": [
+    "Accept Graphify graphs with either edges or links, nullable optional fields, missing concepts, community metadata, and directed metadata.",
+    "Malformed or schema-incompatible graph data returns an explicit warning diagnostic while missing graph data still degrades cleanly.",
+    "Blank source paths never match hints or appear in related files or impact hints.",
+    "Match normalized hints with path-boundary semantics, deduplicate by canonical file, rank exact and directory matches before connected files, and truncate only after deterministic ranking.",
+    "Graph traversal uses node and adjacency indexes rather than repeated full-array scans.",
+    "Impact output deduplicates files, excludes self-file edges, and uses neutral language for undirected graphs.",
+    "Concepts can be derived from current Graphify node community metadata when no top-level concepts array exists.",
+    "buildBrief honors defaults.brief_budget when no explicit budget is supplied, while explicit caller budgets continue to override it.",
+    "Regression tests cover empty paths, duplicate symbols, shuffled arrays, links/null compatibility, post-ranking truncation, overlapping hints, directed and undirected wording, diagnostics, and configured budgets.",
+    "All tests, typecheck, Biome check, graphify update, compiled binary build, and ledger validation pass."
+  ],
+  "commits": [],
+  "notes": "Reported from DuckBrain using Waystation 0.0.3 and Graphify 0.9.23. Treat graph context as deterministic best-effort enrichment; canonical task records remain unchanged."
+}
