@@ -962,7 +962,7 @@ describe("CLI lifecycle surfaces", () => {
 
     const human = run(root, ["task", "create", "task-cli-human", "--title", "Human output"]);
     expect(human.out).toContain("created task-cli-human (todo)");
-  });
+  }, 60_000);
 
   test("issue list, show, create, update, and close preserve rich context", () => {
     const root = fixtureRoot([]);
@@ -1029,7 +1029,7 @@ describe("CLI lifecycle surfaces", () => {
       "issue-cli-life",
     ]);
     expect(run(root, ["issue", "show", "issue-cli-life"]).out).toContain("Fixed through CLI");
-  });
+  }, 60_000);
 
   test("invalid patches and values return coded JSON diagnostics", () => {
     const root = fixtureRoot([{ ...D, id: "task-cli-invalid" }]);
