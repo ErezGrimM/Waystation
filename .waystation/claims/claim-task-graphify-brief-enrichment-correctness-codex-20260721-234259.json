@@ -2,10 +2,10 @@
   "id": "claim-task-graphify-brief-enrichment-correctness-codex-20260721-234259",
   "task": "task-graphify-brief-enrichment-correctness",
   "agent": "codex",
-  "status": "active",
+  "status": "completed",
   "branch": "main",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-07-21T23:42:59+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-07-22T00:12:41+03:00"
 }

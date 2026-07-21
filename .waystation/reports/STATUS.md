@@ -6,7 +6,7 @@
 - `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
 
 ## In progress
-- `task-graphify-brief-enrichment-correctness` [p1] — Make Graphify brief enrichment compatible, relevant, and deterministic
+_none_
 
 ## Review
 _none_
@@ -56,6 +56,7 @@ _none_
 - `task-graph-brief` [p2] — Wire Graphify enrichment into brief, CLI, MCP, and dashboard
 - `task-graph-core` [p2] — Graphify context enrichment core module
 - `task-graph-fix-crash-and-duplicates` [p1] — Fix loadGraphData crash on malformed JSON and deduplicate impact hints
+- `task-graphify-brief-enrichment-correctness` [p1] — Make Graphify brief enrichment compatible, relevant, and deterministic
 - `task-handoff` [p2] — Implement handoff create/show
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement \`waystation init\`
