@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
+- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 
 ## Coordination warnings
 _none_

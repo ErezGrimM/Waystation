@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
+- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 
 ## In progress
 _none_
@@ -15,7 +15,7 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
+_none_
 
 ## Backlog (todo)
 _none_
@@ -38,6 +38,7 @@ _none_
 - `task-audit-lifecycle-surfaces` [p2] — Verify lifecycle parity across CLI, MCP, and dashboard
 - `task-audit-mutation-recovery` [p1] — Make multi\-file mutations crash\-recoverable
 - `task-audit-project-validation-sync` [p2] — Add semantic project validation and deterministic sync
+- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
 - `task-audit-shared-ledger-resolution` [p1] — Make ledger resolution explicit and support shared worktree coordination
 - `task-bootstrap-ledger` [p1] — Bootstrap Waystation ledger files
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim

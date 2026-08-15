@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-ranking-policy-opencode-20260815-232044",
+  "task": "task-audit-ranking-policy",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-15T23:20:44+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-15T23:24:45+03:00"
+}
