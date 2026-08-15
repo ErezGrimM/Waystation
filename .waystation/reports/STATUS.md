@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
+_none_
 
 ## In progress
 _none_
@@ -63,6 +63,7 @@ _none_
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
 - `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
+- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 - `task-operational-audit-plan-document` [p1] — Write the operational audit correction implementation plan
 - `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
 - `task-phase10-fresh-clone-smoke` [p2] — Add fresh\-clone smoke test checklist

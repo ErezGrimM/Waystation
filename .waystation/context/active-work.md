@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
+_none_
 
 ## Coordination warnings
 _none_

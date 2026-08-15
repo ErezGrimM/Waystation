@@ -1,0 +1,10 @@
+{
+  "id": "message-task-operational-audit-corrections-opencode-20260815-233043-8tdr",
+  "thread": "task-operational-audit-corrections",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Milestone closure verification complete. All 13 OA findings covered: OA-01/02/03 (d658715), OA-04/05 (143d4b1), OA-06 (7bb4ad5 + ADR-0006), OA-07/08 (0aaacd1 + ADR-0007), OA-09 (cli 844b32e, mcp 9dfca30, dash 620b648, parity 76daf1e), OA-10/12 (2d76633), OA-11 (ea74db7 + ADR-0005), OA-13 (f6b9860 + ADR-0008 + decision record). Verify matrix green: 226 tests, tsc + biome clean, sync --views and validate --project --views clean (fixed two stale legacy path hints via task update so closure is warning-free). Smoke battery passed: fresh ledger end-to-end (next/claim/set-status guard/finish/brief/validate), unrelated dir returns ledger_not_found, two real git worktrees share one explicit ledger with distinct recorded git context and no duplicate claims (task_already_claimed), MCP initialize handshake 0.3.0, dashboard HTTP 200 on / and /api/tasks. Binary rebuilt, graphify updated, docs/binary/graph agree. Closing milestone.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T23:30:43+03:00"
+}
