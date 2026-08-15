@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
+- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
 
 ## In progress
 _none_
@@ -15,7 +15,6 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
 - `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 
 ## Backlog (todo)
@@ -25,6 +24,7 @@ _none_
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints
 - `task-agent-messaging` [p2] — Agent messaging: shared async inbox via message records
 - `task-audit-correct-readiness-claims` [p1] — Correct task readiness and claim invariants
+- `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
 - `task-audit-fix-cli-message-post` [p2] — Fix CLI message post to use structured error handling
 - `task-audit-fix-core-bugs` [p1] — Fix core correctness bugs found in code audit
 - `task-audit-fix-dashboard-cleanup` [p3] — Clean up dashboard: dead pages, dep placement, SSE heartbeat

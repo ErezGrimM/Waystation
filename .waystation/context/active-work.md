@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
+- `task-audit-ranking-policy` [p4] — Decide equal\-priority task ranking policy
 
 ## Coordination warnings
 _none_

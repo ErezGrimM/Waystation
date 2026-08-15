@@ -1,7 +1,7 @@
 {
   "id": "task-audit-corrections-release",
   "title": "Migrate, document, verify, and release operational audit corrections",
-  "status": "ready",
+  "status": "done",
   "priority": 2,
   "scope": "scope-cli",
   "path_hints": [
@@ -17,11 +17,15 @@
     "waystation.exe",
     "graphify-out/"
   ],
-  "prompts": ["prompt-waystation-v1"],
-  "dependencies": ["task-phase10-binary-distribution-notes"],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-phase10-binary-distribution-notes"
+  ],
   "created_at": "2026-07-16T15:47:47+03:00",
-  "updated_at": "2026-07-16T16:37:46+03:00",
-  "closed_at": null,
+  "updated_at": "2026-08-15T23:19:36+03:00",
+  "closed_at": "2026-08-15T23:19:36+03:00",
   "description": "Complete the compatibility and release work for the operational audit corrections. Provide a way to identify dependency-satisfied todo tasks for intentional promotion, reconcile every lifecycle and shared-ledger document, regenerate derived state, run full source and binary verification, update the knowledge graph, and publish the required version bump.",
   "acceptance": [
     "A migration audit command or documented query lists dependency-satisfied todo tasks without promoting them automatically, and the program's own task DAG reaches this release gate without hand-editing statuses.",
@@ -32,6 +36,8 @@
     "The version is bumped consistently in package.json, CLI, and MCP according to project policy; waystation.exe is rebuilt and smoke-tested.",
     "Completion messages, task finish operations, reindexing, report generation, validation, and commit follow the dogfooding workflow; push is required only when an authenticated remote is available."
   ],
-  "commits": [],
+  "commits": [
+    "d445cfb"
+  ],
   "notes": "This is the release gate, not a place to hide unfinished implementation. Do not mark it done until every dependency and complete build/verify checklist is green."
 }

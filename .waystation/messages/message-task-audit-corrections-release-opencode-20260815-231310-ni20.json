@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-corrections-release-opencode-20260815-231310-ni20",
+  "thread": "task-audit-corrections-release",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting the release gate. Phase 1: migration audit query + readiness truth. Phase 2: reconcile AGENTS.md/README/spec/migration-guide/roadmap/ADR-0003/CLI-help/MCP/dashboard. Phase 3: full verify matrix + graphify + version bump 0.3.0 + rebuild + smoke.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T23:13:10+03:00"
+}

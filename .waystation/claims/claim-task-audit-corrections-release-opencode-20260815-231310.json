@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-audit-corrections-release-opencode-20260815-231310",
+  "task": "task-audit-corrections-release",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-15T23:13:10+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-15T23:19:36+03:00"
+}

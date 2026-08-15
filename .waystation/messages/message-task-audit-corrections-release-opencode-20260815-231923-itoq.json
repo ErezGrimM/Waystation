@@ -1,0 +1,10 @@
+{
+  "id": "message-task-audit-corrections-release-opencode-20260815-231923-itoq",
+  "thread": "task-audit-corrections-release",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Release gate complete. Implemented waystation task audit (core fn auditPromotableTasks + CLI) with tests; reconciled readiness/actionable wording across AGENTS.md, README, agentledger-spec §6.2, migration-guide, roadmap (phases 9/10 marked DONE), ADR-0003 (already consistent), CLI help, and MCP get_next_task description. Ledger audit: zero todo tasks, no promotion needed. Verify matrix green (223 tests, tsc, biome, validate). graphify update run, graph confirms shared core readiness/resolution/mutation paths. Version bumped 0.2.0 -> 0.3.0 in all three authorities, binary rebuilt + smoke-tested.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T23:19:23+03:00"
+}

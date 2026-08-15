@@ -2,5 +2,4 @@
 
 # Blocked
 
-- `task-audit-ranking-policy` — waiting on: task-audit-corrections-release
 - `task-operational-audit-corrections` — waiting on: task-audit-ranking-policy
