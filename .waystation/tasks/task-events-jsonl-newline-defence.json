@@ -1,0 +1,32 @@
+{
+  "id": "task-events-jsonl-newline-defence",
+  "title": "Defend events.jsonl appends against missing trailing newline",
+  "status": "done",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/repair.ts",
+    "src/core/result.ts",
+    "src/cli/index.ts",
+    "test/"
+  ],
+  "prompts": [],
+  "dependencies": [],
+  "created_at": "2026-08-15T12:00:00+03:00",
+  "updated_at": "2026-08-15T18:46:58+03:00",
+  "closed_at": "2026-08-15T18:46:58+03:00",
+  "description": "When a process appends an event to .waystation/events.jsonl and the previous writer left no trailing newline, the new JSON object is concatenated onto the last line, producing a line with two }{-joined objects. validate then reports `events.jsonl line N: invalid JSON`. Observed in production on 2026-08-15 (lines 250, 253, 257) after events written by different agents/CLI versions; one 16:09 event was itself left unterminated, triggering the next writer's concatenation.\n\nRequirements:\n- appendEventUnlocked must guarantee the previous content ends with \\n before writing the new line (read-last-byte check; never rely on the previous writer).\n- Event writes must themselves end with a trailing newline.\n- Make the invalid_jsonl diagnostic hint actionable (suggest the repair command).\n- Add `waystation repair` (core fn in src/core/repair.ts): detect }{-concatenated lines in events.jsonl, byte-level split at each }{ boundary, rewrite with consistent trailing newlines, report what it fixed. Idempotent, safe, no event loss.\n- Regression tests: (a) append to unterminated file produces two valid lines + validate passes; (b) CLI-written events leave file ending with \\n; (c) repair on seeded concatenated file restores N+1 lines + validate passes; (d) repair is a no-op on a clean ledger.\n- Audit other line-append surfaces (messages, claims, anything JSONL) and apply the same defence; do not change the event schema or existing line formats.",
+  "acceptance": [
+    "appendEventUnlocked appends a leading newline when the existing events.jsonl content is non-empty and does not end with \\n; existing valid content is never modified.",
+    "Every event written via the CLI/core path leaves events.jsonl ending with \\n.",
+    "validate's invalid_jsonl hint suggests running `waystation repair`.",
+    "waystation repair splits }{-concatenated events.jsonl lines at each }{ boundary, restores one line per event, ends the file with \\n, and reports fixed lines; a no-op on a clean ledger.",
+    "All four regression tests pass; full test suite, typecheck, and biome check are clean.",
+    "No other JSONL/line-append surfaces exist unguarded (audit done); event schema and line formats unchanged."
+  ],
+  "commits": [
+    "9daa8ec42ac96e21d72069b764442f87bc54d26c"
+  ],
+  "notes": "Bug verified 3x in production (DuckBrain ledger, 2026-08-15). Only append surface is appendEventUnlocked in src/core/store.ts (messages/claims/handoffs/issues are per-record JSON files via writeJsonAtomic, not line appends; init.ts writes an empty events file). Repair must run under the ledger lock (withLedgerLock) so a recovered mutation intent appends through the same defended path."
+}

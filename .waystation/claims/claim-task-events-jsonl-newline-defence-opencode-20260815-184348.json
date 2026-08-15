@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-events-jsonl-newline-defence-opencode-20260815-184348",
+  "task": "task-events-jsonl-newline-defence",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-15T18:43:48+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-15T18:46:58+03:00"
+}

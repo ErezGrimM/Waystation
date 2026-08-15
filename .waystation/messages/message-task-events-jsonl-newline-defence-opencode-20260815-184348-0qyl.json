@@ -1,0 +1,10 @@
+{
+  "id": "message-task-events-jsonl-newline-defence-opencode-20260815-184348-0qyl",
+  "thread": "task-events-jsonl-newline-defence",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting work on this. Plan: defend appendEventUnlocked with read-last-byte check, add src/core/repair.ts + waystation repair CLI command, update invalid_jsonl hint, add 4 regression tests in test/skeleton.test.ts.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T18:43:48+03:00"
+}

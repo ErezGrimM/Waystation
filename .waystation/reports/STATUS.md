@@ -48,6 +48,7 @@ _none_
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
 - `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
 - `task-error-envelope` [p2] — Adopt the structured error envelope \(CommandResult / Diagnostic\)
+- `task-events-jsonl-newline-defence` [p1] — Defend events\.jsonl appends against missing trailing newline
 - `task-gh-cli` [p2] — GitHub Issues CLI commands \(import/export\)
 - `task-gh-core` [p2] — GitHub Issues import/export core module \(API \+ field mapping\)
 - `task-gh-dashboard` [p3] — GitHub Issues import/export buttons on dashboard Issues page

@@ -1,0 +1,10 @@
+{
+  "id": "message-task-events-jsonl-newline-defence-opencode-20260815-184658-7i30",
+  "thread": "task-events-jsonl-newline-defence",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Implementation commit 9daa8ec42ac96e21d72069b764442f87bc54d26c (fix: defend events.jsonl appends). Verified: 220 tests pass, typecheck/biome clean, sync+validate clean, binary smoke-tested (append defence + repair split + idempotency).",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T18:46:58+03:00"
+}
