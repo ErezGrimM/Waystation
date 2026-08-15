@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-mcp-launch-examples-opencode-20260815-185858-znn6",
+  "thread": "task-phase10-mcp-launch-examples",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. docs/mcp.md + README pointer, commit ba9ed3dc7002ed3198bea0e8b87f28cedba14921. Verified both launch modes via stdio initialize handshake, and discovery from a subdirectory, --root, and WAYSTATION_ROOT. 220 tests, typecheck, biome all green.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T18:58:58+03:00"
+}

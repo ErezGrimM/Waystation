@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-mcp-launch-examples-opencode-20260815-185700-quii",
+  "thread": "task-phase10-mcp-launch-examples",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting work on MCP launch examples (source + compiled modes). Will verify both modes launch, then document in README/docs.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T18:57:00+03:00"
+}

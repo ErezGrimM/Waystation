@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-phase10-mcp-launch-examples-opencode-20260815-185659",
+  "task": "task-phase10-mcp-launch-examples",
+  "agent": "opencode",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-15T18:56:59+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-15T18:58:58+03:00"
+}

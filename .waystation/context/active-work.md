@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-phase10-mcp-launch-examples` [p3] — Document MCP launch examples for source and compiled modes
+- `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
 
 ## Coordination warnings
 _none_
