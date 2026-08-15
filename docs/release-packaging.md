@@ -2,7 +2,8 @@
 
 Phase 10 is about making Waystation easy to rebuild, verify, and hand to another
 local agent or project. This page records the repeatable local checks; it is not
-a hosted release process.
+a hosted release process. For artifact naming and the local distribution bundle
+convention, see [docs/binary-distribution.md](binary-distribution.md).
 
 ## Release Checklist
 

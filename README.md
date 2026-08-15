@@ -98,7 +98,9 @@ $bun = "C:\bun\bin\bun.exe"
 Rebuild `waystation.exe` after any change under `src/`, `package.json`, or
 `bun.lock`, and before asking another agent to rely on the compiled CLI. For
 docs-only or ledger-only changes, a rebuild is optional unless you want to
-refresh the handoff artifact.
+refresh the handoff artifact. See [docs/binary-distribution.md](docs/binary-distribution.md)
+for artifact naming, the local distribution bundle convention, and copying the
+binary to another local project.
 
 Minimum binary smoke checks:
 
@@ -242,6 +244,7 @@ not on PATH, or use `.\waystation.exe` after rebuilding.
 - [docs/roadmap.md](docs/roadmap.md) — phased plan and current state
 - [docs/error-philosophy.md](docs/error-philosophy.md) — error/diagnostic model
 - [docs/mcp.md](docs/mcp.md) — MCP stdio server launch modes, discovery, and client setup
+- [docs/binary-distribution.md](docs/binary-distribution.md) — binary artifact naming and local distribution
 - [docs/migration-guide.md](docs/migration-guide.md) — migrating from other task systems
 - [docs/release-packaging.md](docs/release-packaging.md) — release checklist, version bumps, binary handling, and fresh-clone smoke checks
 - [agentledger-spec.md](agentledger-spec.md) — full specification
