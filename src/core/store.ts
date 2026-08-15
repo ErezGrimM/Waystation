@@ -1,11 +1,13 @@
 import {
   closeSync,
   existsSync,
+  fstatSync,
   fsyncSync,
   mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
+  readSync,
   renameSync,
   unlinkSync,
   writeSync,
@@ -150,6 +152,24 @@ function renameWithRetry(tmp: string, file: string): void {
 const sleepBuffer = new Int32Array(new SharedArrayBuffer(4));
 
 /**
+ * True if the file is empty or its last byte is a line terminator (LF or CR).
+ * Used to defend appends: a previous writer may have left the file
+ * unterminated, and concatenating onto that line corrupts it.
+ */
+function endsWithNewline(file: string): boolean {
+  const fd = openSync(file, "r");
+  try {
+    const size = fstatSync(fd).size;
+    if (size === 0) return true;
+    const last = Buffer.alloc(1);
+    readSync(fd, last, 0, 1, size - 1);
+    return last[0] === 0x0a || last[0] === 0x0d;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+/**
  * Append one event line to events.jsonl. Uses a single O_APPEND write + fsync
  * so the line is written atomically and durably. Callers that already hold the
  * ledger lock (mutations) should use this directly; standalone callers should
@@ -165,6 +185,11 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   const isNew = !existsSync(paths.events);
   const fd = openSync(paths.events, "a");
   try {
+    if (!isNew && !endsWithNewline(paths.events)) {
+      // The previous writer left the file unterminated; terminate it before
+      // appending so the new event never concatenates onto the last line.
+      writeSync(fd, "\n");
+    }
     writeSync(fd, line);
     fsyncSync(fd);
   } finally {

@@ -40,10 +40,12 @@ import { activeClaimOverlaps } from "../src/core/overlap.ts";
 import { LedgerResolutionError, resolveLedgerRoot } from "../src/core/paths.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
 import { loadTasks, RecordError } from "../src/core/records.ts";
+import { repairEventsJsonl } from "../src/core/repair.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
 import {
   activeClaimForTask,
+  appendEvent,
   loadClaims,
   loadIssues,
   sweepTmpDirs,
@@ -233,6 +235,118 @@ describe("mutation intent recovery", () => {
       "task.status_changed",
     ]);
     expect(new Set(events.map((event) => event.mutation)).size).toBe(2);
+  });
+});
+
+describe("events.jsonl newline defence", () => {
+  const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
+
+  test("append to a file whose last byte is not a newline yields two valid lines", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const events = join(root, ".waystation", "events.jsonl");
+    writeFileSync(
+      events,
+      `${JSON.stringify({ type: "seed.one", n: 1 })}\n${JSON.stringify({ type: "seed.two", n: 2 })}`,
+    );
+    await appendEvent(root, { type: "seed.three", n: 3 });
+    const lines = readFileSync(events, "utf8")
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line) as { n: number });
+    expect(lines.map((event) => event.n)).toEqual([1, 2, 3]);
+    expect(readFileSync(events, "utf8").endsWith("\n")).toBe(true);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
+  test("CLI-written events leave the file ending with a newline", () => {
+    const root = fixtureRoot([{ ...D, id: "task-msg-newline", status: "todo" }]);
+    const p = Bun.spawnSync({
+      cmd: [
+        process.execPath,
+        "run",
+        cli,
+        "message",
+        "post",
+        "--thread",
+        "task-msg-newline",
+        "--from",
+        "tester",
+        "--kind",
+        "note",
+        "--body",
+        "hello",
+      ],
+      cwd: root,
+    });
+    expect(p.exitCode).toBe(0);
+    const raw = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8");
+    expect(raw.endsWith("\n")).toBe(true);
+    for (const line of raw.split("\n").filter((l) => l.trim())) {
+      expect(() => JSON.parse(line)).not.toThrow();
+    }
+  });
+
+  test("repair splits concatenated lines and validate passes", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const events = join(root, ".waystation", "events.jsonl");
+    writeFileSync(
+      events,
+      `${JSON.stringify({ type: "seed.one", n: 1 })}\n${JSON.stringify({ type: "seed.two", n: 2 })}${JSON.stringify({ type: "seed.three", n: 3 })}\n`,
+    );
+    expect(validateLedger(root).ok).toBe(false);
+    const res = await repairEventsJsonl(root);
+    expect(res.ok).toBe(true);
+    expect(res.data?.rewritten).toBe(true);
+    expect(res.data?.fixedLines).toBe(1);
+    expect(res.data?.finalLines).toBe(3);
+    expect(res.data?.newlineFixed).toBe(false);
+    const lines = readFileSync(events, "utf8")
+      .split("\n")
+      .filter((line) => line.trim());
+    expect(lines).toHaveLength(3);
+    for (const line of lines) {
+      expect(() => JSON.parse(line)).not.toThrow();
+    }
+    expect(readFileSync(events, "utf8").endsWith("\n")).toBe(true);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
+  test("repair splits every }{-boundary in a multi-concatenated line", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const events = join(root, ".waystation", "events.jsonl");
+    writeFileSync(
+      events,
+      `${JSON.stringify({ type: "seed.one", n: 1 })}${JSON.stringify({ type: "seed.two", n: 2 })}${JSON.stringify({ type: "seed.three", n: 3 })}`,
+    );
+    const res = await repairEventsJsonl(root);
+    expect(res.data?.fixedLines).toBe(1);
+    expect(res.data?.finalLines).toBe(3);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
+  test("repair adds a missing trailing newline without splitting", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const events = join(root, ".waystation", "events.jsonl");
+    writeFileSync(events, JSON.stringify({ type: "seed.one", n: 1 }));
+    const res = await repairEventsJsonl(root);
+    expect(res.data?.rewritten).toBe(true);
+    expect(res.data?.fixedLines).toBe(0);
+    expect(res.data?.newlineFixed).toBe(true);
+    expect(readFileSync(events, "utf8").endsWith("\n")).toBe(true);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
+  test("repair is a no-op on a clean ledger", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    await appendEvent(root, { type: "clean.one" });
+    await appendEvent(root, { type: "clean.two" });
+    const before = readFileSync(join(root, ".waystation", "events.jsonl"), "utf8");
+    const res = await repairEventsJsonl(root);
+    expect(res.ok).toBe(true);
+    expect(res.data?.rewritten).toBe(false);
+    expect(res.data?.fixedLines).toBe(0);
+    expect(res.data?.finalLines).toBe(2);
+    expect(readFileSync(join(root, ".waystation", "events.jsonl"), "utf8")).toBe(before);
   });
 });
 

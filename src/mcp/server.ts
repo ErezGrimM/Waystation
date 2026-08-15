@@ -44,7 +44,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.1.0" },
+    { name: "waystation", version: "0.2.0" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 

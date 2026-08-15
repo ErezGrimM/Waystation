@@ -34,6 +34,7 @@ import {
 import { findProjectRoot, LedgerResolutionError, ledgerPaths } from "../core/paths.ts";
 import { getPrompt, loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
+import { repairEventsJsonl } from "../core/repair.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import type { IssueRecord, TaskStatus } from "../core/schema.ts";
 import { loadIssues } from "../core/store.ts";
@@ -49,7 +50,7 @@ program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
   .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
-  .version("0.1.0");
+  .version("0.2.0");
 
 // Keep root selection in the core resolver, but make the CLI's explicit flag
 // available to every subcommand without duplicating root plumbing.
@@ -668,6 +669,26 @@ program
           `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims_total} claims (${c.claims_active} active), ${c.messages} messages\n`,
         );
       }
+    });
+  });
+
+program
+  .command("repair")
+  .description("Repair events.jsonl: split }{-concatenated lines, normalize trailing newlines")
+  .option("--json", "output JSON")
+  .action(async (opts: { json?: boolean }) => {
+    const res = await repairEventsJsonl(findProjectRoot());
+    emitResult(res, opts.json, () => {
+      const r = res.data;
+      if (!r) return;
+      if (!r.rewritten) {
+        process.stdout.write("events.jsonl is clean; nothing to repair.\n");
+        return;
+      }
+      const details = [`${r.finalLines} event line(s)`];
+      if (r.fixedLines > 0) details.unshift(`split ${r.fixedLines} line(s)`);
+      if (r.newlineFixed) details.push("added trailing newline");
+      process.stdout.write(`repaired events.jsonl: ${details.join(", ")}\n`);
     });
   });
 

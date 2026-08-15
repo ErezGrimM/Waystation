@@ -119,7 +119,7 @@ export const CODES = {
   invalid_jsonl: {
     severity: "error",
     message: "Invalid JSON line in the event log.",
-    hint: "Fix the offending events.jsonl line.",
+    hint: "Run `waystation repair` to split }{-concatenated lines, or fix the offending line manually.",
     retryable: false,
   },
   missing_scope: {
