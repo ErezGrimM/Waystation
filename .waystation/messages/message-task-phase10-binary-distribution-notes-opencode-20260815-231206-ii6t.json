@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-binary-distribution-notes-opencode-20260815-231206-ii6t",
+  "thread": "task-phase10-binary-distribution-notes",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. docs/binary-distribution.md + cross-links, commit e4ee32f9ecb018bd0fd9d451e7b1d4714f117c7a. Covers canonical build command, ignored artifacts, latest-vs-versioned naming, generic skill/package convention (no consumer paths), and a verified copy/install example. 220 tests, typecheck, biome green.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T23:12:06+03:00"
+}

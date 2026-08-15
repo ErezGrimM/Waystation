@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
+- `task-audit-corrections-release` [p2] — Migrate, document, verify, and release operational audit corrections
 
 ## Coordination warnings
 _none_

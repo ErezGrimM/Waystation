@@ -1,0 +1,10 @@
+{
+  "id": "message-task-phase10-binary-distribution-notes-opencode-20260815-231048-xoyx",
+  "thread": "task-phase10-binary-distribution-notes",
+  "from_agent": "opencode",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting. Will document canonical build command, ignored-artifact convention, latest-vs-versioned naming, the local skill/package convention, and a generic copy/install example in docs/binary-distribution.md, cross-linked from release-packaging.md and README.",
+  "in_reply_to": null,
+  "created_at": "2026-08-15T23:10:48+03:00"
+}

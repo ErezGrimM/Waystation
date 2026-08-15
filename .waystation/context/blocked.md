@@ -2,6 +2,5 @@
 
 # Blocked
 
-- `task-audit-corrections-release` — waiting on: task-phase10-binary-distribution-notes
 - `task-audit-ranking-policy` — waiting on: task-audit-corrections-release
 - `task-operational-audit-corrections` — waiting on: task-audit-ranking-policy
