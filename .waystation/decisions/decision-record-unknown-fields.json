@@ -1,0 +1,18 @@
+{
+  "id": "decision-record-unknown-fields",
+  "title": "Preserve unknown TaskRecord fields via schema passthrough",
+  "status": "accepted",
+  "scope": "scope-core",
+  "task": "task-record-unknown-fields",
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "decided_by": "Erez",
+  "context": "Audit finding #6: TaskRecord was a strict z.object with no passthrough, unlike IssueRecord, so unknown fields on hand-authored or future records were silently stripped on the first mutation round-trip.",
+  "decision": "Add .passthrough() to the TaskRecord object schema, matching IssueRecord. Unknown fields are preserved as-is on read and through every mutation; the schema stays strict on all declared fields (types, ids, timestamps). No record migration required.",
+  "consequences": [
+    "Extra task fields survive mutation round-trips; no silent data loss.",
+    "TaskRecord and IssueRecord behave consistently.",
+    "A misspelled unknown field is carried along instead of flagged; mitigate with validate checks on known fields.",
+    "No migration needed: existing records have no unknown fields."
+  ],
+  "adr": "adr/ADR-0009-unknown-taskrecord-fields.md"
+}

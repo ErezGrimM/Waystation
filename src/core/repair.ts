@@ -95,7 +95,7 @@ export async function repairEventsJsonl(root: string): Promise<CommandResult<Rep
       file,
       originalLines: body.length,
       fixedLines,
-      finalLines: rebuilt.filter((line) => line.trim()).length,
+      finalLines: rebuilt.length,
       newlineFixed,
       rewritten,
     });

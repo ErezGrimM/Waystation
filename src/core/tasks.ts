@@ -59,16 +59,20 @@ export function isActionable(
 /**
  * Sort key: lower priority number first; among equal priorities, earlier
  * `created_at` first (records missing `created_at` sort as earliest); `id` is
- * the final unique tiebreak. ADR-0008.
+ * the final unique tiebreak. ADR-0008. `created_at` is compared by real
+ * instant via `Date.parse` (offset-aware), never lexically, so records
+ * authored under different timezone offsets order correctly.
  */
 export function byPriorityThenCreatedAtThenId(
   a: Pick<TaskRecord, "id" | "priority"> & { created_at?: string | null },
   b: Pick<TaskRecord, "id" | "priority"> & { created_at?: string | null },
 ): number {
   if (a.priority !== b.priority) return a.priority - b.priority;
-  const aCreated = a.created_at ?? "";
-  const bCreated = b.created_at ?? "";
-  if (aCreated !== bCreated) return aCreated < bCreated ? -1 : 1;
+  const aInstant = a.created_at ? Date.parse(a.created_at) : NaN;
+  const bInstant = b.created_at ? Date.parse(b.created_at) : NaN;
+  const aRank = Number.isNaN(aInstant) ? Number.NEGATIVE_INFINITY : aInstant;
+  const bRank = Number.isNaN(bInstant) ? Number.NEGATIVE_INFINITY : bInstant;
+  if (aRank !== bRank) return aRank - bRank;
   return a.id.localeCompare(b.id);
 }
 

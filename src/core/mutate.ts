@@ -16,7 +16,7 @@ import {
   withLedgerLock,
 } from "./store.ts";
 import { indexById, taskReadiness } from "./tasks.ts";
-import { idStamp, mutationStamp, nowIso, safeIdPart } from "./time.ts";
+import { mutationStamp, nowIso, safeIdPart } from "./time.ts";
 
 export class MutationError extends Error {
   readonly code: string;
@@ -148,7 +148,7 @@ export async function setTaskStatus(
       ...task,
       status: to,
       updated_at: ts,
-      closed_at: to === "wont_do" ? ts : task.closed_at,
+      closed_at: to === "wont_do" || to === "done" ? ts : task.closed_at,
     });
     applyMutationIntentUnlocked(root, {
       version: 1,
@@ -298,7 +298,7 @@ export async function claimTask(
     // context, while the lock and records remain rooted at the selected ledger.
     const context = claimGitContext(gitContext?.caller ?? root, gitContext);
     const claim: ClaimRecord = {
-      id: `claim-${safeIdPart(id)}-${safeIdPart(agent)}-${idStamp(now)}`,
+      id: `claim-${safeIdPart(id)}-${safeIdPart(agent)}-${mutationStamp(now)}`,
       task: id,
       agent,
       status: "active",

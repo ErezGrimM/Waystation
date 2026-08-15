@@ -99,11 +99,11 @@ export async function closeIssue(
 function issueFile(root: string, id: string): string {
   const dir = resolve(issueDir(root));
   if (!isSafeRecordId(id)) {
-    throw new Error(`invalid issue id: ${id}`);
+    throw new MutationError(`invalid issue id: ${id}`, "schema_invalid");
   }
   const file = resolve(dir, `${id}.json`);
   if (file !== dir && !file.startsWith(`${dir}${sep}`)) {
-    throw new Error(`invalid issue id: ${id}`);
+    throw new MutationError(`invalid issue id: ${id}`, "schema_invalid");
   }
   return file;
 }

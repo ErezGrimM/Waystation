@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+import { ZodError, z } from "zod";
 import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../core/brief.ts";
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
@@ -21,7 +21,7 @@ import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, type Diagnostic, diag, okResult, toResult } from "../core/result.ts";
 import { RecordId, TaskRecord as TaskSchema, TaskStatus } from "../core/schema.ts";
-import { loadIssues } from "../core/store.ts";
+import { LockError, loadIssues } from "../core/store.ts";
 import { nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
 
@@ -34,6 +34,11 @@ function catchDiag(e: unknown, fallbackCode: string = "unexpected_error"): Diagn
     return diag(e.code as never, { message: e.message });
   }
   if (e instanceof RecordError) return diag(e.code as never);
+  if (e instanceof LockError) return diag(e.code as never);
+  if (e instanceof ZodError) {
+    const message = e.issues[0]?.message ?? "Invalid command input.";
+    return diag("schema_invalid", { message: `Invalid command input: ${message}` });
+  }
   return diag(fallbackCode as never);
 }
 
@@ -472,7 +477,7 @@ function buildServerAtRoot(root: string): McpServer {
     {
       description: "Create a new issue record in the ledger",
       inputSchema: {
-        id: z.string().optional().describe("issue id (auto-generated if omitted)"),
+        id: RecordId.optional().describe("issue id (auto-generated if omitted)"),
         title: z.string().describe("issue title"),
         status: z.string().optional().describe("status (default: open)"),
         severity: z.string().optional().describe("e.g. low, medium, high, critical"),

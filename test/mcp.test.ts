@@ -707,6 +707,55 @@ describe("mcp tools: remaining coverage (M13)", () => {
     await server.close();
   });
 
+  test("create_issue with an unsafe id is rejected by the schema, not unexpected_error", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // The SDK validates against the tool's inputSchema (RecordId) before the
+    // handler runs, so a traversal id is rejected without reaching core.
+    const res = await client.callTool({
+      name: "create_issue",
+      arguments: { id: "../../escape", title: "Bad" },
+    });
+    expect(res.isError).toBe(true);
+
+    // close_issue declares RecordId too; an unsafe id cannot reach core either.
+    const res2 = await client.callTool({
+      name: "close_issue",
+      arguments: { id: "../evil", resolution: "x" },
+    });
+    expect(res2.isError).toBe(true);
+
+    await client.close();
+    await server.close();
+  });
+
+  test("post_message with an invalid kind maps to schema_invalid, not unexpected_error", async () => {
+    const server = buildServer(root);
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    const client = new Client({ name: "test", version: "0.0.1" });
+    await client.connect(ct);
+
+    // kind is a free-form string at the schema, so a bogus kind reaches the
+    // handler where postMessage's MessageSchema.parse throws a ZodError. Our
+    // catchDiag must map that to schema_invalid.
+    const res = await client.callTool({
+      name: "post_message",
+      arguments: { thread: "project", from: "agent-a", kind: "bogus", body: "hi" },
+    });
+    const text = (res.content as Array<{ type: string; text: string }>)[0]!.text;
+    const result: any = JSON.parse(text);
+    expect(result.ok).toBe(false);
+    expect(result.errors[0].code).toBe("schema_invalid");
+
+    await client.close();
+    await server.close();
+  });
+
   test("add_task_commit attaches commit references", async () => {
     const server = buildServer(root);
     const [ct, st] = InMemoryTransport.createLinkedPair();

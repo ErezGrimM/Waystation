@@ -1,0 +1,25 @@
+{
+  "id": "task-handoff-id-collision",
+  "title": "Fix handoff id collision on same-second creation",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/handoff.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: handoff ids are `handoff-<task>-<from>-<idStamp(now)>` (src/core/handoff.ts:47) with second-resolution `idStamp`. Two handoffs for the same task from the same agent within one second collide and the second silently overwrites the first (writes go to `handoffs/<id>.json`). Fix: add a unique suffix (e.g. reuse `mutationStamp`'s random suffix or `postMessage`'s pattern).",
+  "acceptance": [
+    "A test creates two handoffs for the same task/from within the same wall-clock second and asserts both records exist with distinct ids.",
+    "Handoff id uniqueness does not rely on wall-clock resolution alone.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #2 (medium-low). Same root cause as task-claim-id-collision."
+}

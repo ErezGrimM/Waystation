@@ -1,0 +1,25 @@
+{
+  "id": "task-dashboard-lexical-sorts",
+  "title": "Make dashboard timestamp sorts offset-aware",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-dashboard",
+  "path_hints": [
+    "src/dashboard/server.ts",
+    "test/dashboard.test.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: GET /api/tasks (src/dashboard/server.ts:178-186) sorts by `created_at` and GET /api/claims (src/dashboard/server.ts:501) by `claimed_at` using `.localeCompare` on raw timestamp strings, which mis-orders records across differing timezone offsets (same class as task-ranking-offset-aware). Replace with offset-aware comparison (reuse `byCreatedAtThenId`-style parsing or the shared comparator where applicable).",
+  "acceptance": [
+    "`/api/tasks` sort=created_at and `/api/claims` sort by `claimed_at` order by real instant for records with differing timezone offsets.",
+    "Title/priority/id sorts and asc/desc behavior are unchanged.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #13 (cosmetic)."
+}

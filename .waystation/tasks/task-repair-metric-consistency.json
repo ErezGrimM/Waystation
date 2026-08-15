@@ -1,0 +1,25 @@
+{
+  "id": "task-repair-metric-consistency",
+  "title": "Align repair finalLines with physical line count",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/repair.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: `repairEventsJsonl` reports `finalLines` as the count of non-empty rebuilt lines (src/core/repair.ts:98) while the file actually contains `rebuilt.length` physical lines (any empty lines included). Cosmetic metric inconsistency in the `waystation repair` summary. Align the reported metric with the physical line count (or document why non-empty is the contract).",
+  "acceptance": [
+    "`finalLines` in the repair result matches the physical line count of the rewritten events.jsonl.",
+    "Existing repair behavior (split concatenated lines, trailing-newline normalization) is unchanged.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #11 (cosmetic)."
+}

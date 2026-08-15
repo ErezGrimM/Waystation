@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { emitMutationEvent, onMutationEvent } from "../src/core/events.ts";
+import { postMessage } from "../src/core/messages.ts";
 import { firstError } from "../src/dashboard/client/src/api.ts";
 import { claimDisabledReason } from "../src/dashboard/client/src/lifecycle.ts";
 import { createApp } from "../src/dashboard/server.ts";
@@ -81,6 +82,115 @@ describe("dashboard API server", () => {
     const res = await app.request("/api/tasks?status=in_progress");
     const body = await res.json();
     expect(body.data.length).toBe(0);
+  });
+
+  test("GET /api/tasks sort=created_at orders by real instant across offsets", async () => {
+    const root = join(process.cwd(), ".waystation-test-dashboard-sorts");
+    rmSync(root, { recursive: true, force: true });
+    mkdirSync(root, { recursive: true });
+    const ledger = join(root, ".waystation");
+    mkdirSync(join(ledger, "tasks"), { recursive: true });
+    mkdirSync(join(ledger, "claims"), { recursive: true });
+
+    const base = {
+      title: "Sort task",
+      status: "todo",
+      priority: 3,
+      dependencies: [],
+      prompts: [],
+      path_hints: [],
+      acceptance: [],
+      description: "",
+    };
+    // 12:00+03:00 is 09:00Z; 10:00+00:00 is 10:00Z. Lexically the +00:00
+    // timestamp sorts first; by real instant the +03:00 task is earlier.
+    writeFileSync(
+      join(ledger, "tasks", "task-z.json"),
+      JSON.stringify({
+        ...base,
+        id: "task-z",
+        created_at: "2026-07-06T12:00:00+03:00",
+        updated_at: "2026-07-06T12:00:00+03:00",
+      }),
+    );
+    writeFileSync(
+      join(ledger, "tasks", "task-a.json"),
+      JSON.stringify({
+        ...base,
+        id: "task-a",
+        created_at: "2026-07-06T10:00:00+00:00",
+        updated_at: "2026-07-06T10:00:00+00:00",
+      }),
+    );
+
+    try {
+      const app = createApp(root);
+      const asc = await app.request("/api/tasks?sort=created_at&order=asc");
+      const ascBody = await asc.json();
+      expect(ascBody.data.map((t: { id: string }) => t.id)).toEqual(["task-z", "task-a"]);
+
+      const desc = await app.request("/api/tasks?sort=created_at&order=desc");
+      const descBody = await desc.json();
+      expect(descBody.data.map((t: { id: string }) => t.id)).toEqual(["task-a", "task-z"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("GET /api/claims orders by claimed_at real instant across offsets", async () => {
+    const root = join(process.cwd(), ".waystation-test-dashboard-claims-sort");
+    rmSync(root, { recursive: true, force: true });
+    mkdirSync(root, { recursive: true });
+    const ledger = join(root, ".waystation");
+    mkdirSync(join(ledger, "tasks"), { recursive: true });
+    mkdirSync(join(ledger, "claims"), { recursive: true });
+    writeFileSync(
+      join(ledger, "tasks", "task-x.json"),
+      JSON.stringify({
+        id: "task-x",
+        title: "X",
+        status: "in_progress",
+        priority: 3,
+        dependencies: [],
+        prompts: [],
+        path_hints: [],
+        acceptance: [],
+        created_at: "2026-07-06T12:00:00+03:00",
+        updated_at: "2026-07-06T12:00:00+03:00",
+        description: "",
+      }),
+    );
+    writeFileSync(
+      join(ledger, "claims", "claim-late.json"),
+      JSON.stringify({
+        id: "claim-late",
+        task: "task-x",
+        agent: "agent-a",
+        status: "active",
+        claimed_at: "2026-07-06T12:00:00+03:00",
+      }),
+    );
+    writeFileSync(
+      join(ledger, "claims", "claim-early.json"),
+      JSON.stringify({
+        id: "claim-early",
+        task: "task-x",
+        agent: "agent-b",
+        status: "active",
+        claimed_at: "2026-07-06T10:00:00+00:00",
+      }),
+    );
+
+    try {
+      const app = createApp(root);
+      const res = await app.request("/api/claims");
+      const body = await res.json();
+      expect(body.ok).toBe(true);
+      // Desc by default: the later instant (claim-early, 10:00Z) sorts first.
+      expect(body.data.map((c: { id: string }) => c.id)).toEqual(["claim-early", "claim-late"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   test("GET /api/tasks/:id returns a single task", async () => {
@@ -381,6 +491,31 @@ describe("dashboard API server", () => {
     expect(text).toContain("task.claimed");
   });
 
+  // task-sse-event-coverage: a mutation through the core write path (not a
+  // dashboard route) must still broadcast to the SSE stream, because the hub
+  // emit lives in appendEventUnlocked, not in the dashboard wrappers.
+  test("a direct core mutation broadcasts to the SSE stream", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/events");
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+
+    await postMessage(testRoot, {
+      thread: "task-direct-core",
+      from: "sse-core",
+      body: "direct core call",
+    });
+
+    let text = "";
+    for (let i = 0; i < 20 && !text.includes('"type":"message.posted"'); i++) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      text += typeof value === "string" ? value : decoder.decode(value);
+    }
+    await reader.cancel();
+    expect(text).toContain("message.posted");
+  });
+
   test("POST /api/git/commit rejects files outside the current status selection", async () => {
     const app = createApp(testRoot);
     const res = await app.request("/api/git/commit", {
@@ -391,6 +526,18 @@ describe("dashboard API server", () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.errors[0].message).toContain("invalid file selection");
+  });
+
+  test("POST /api/git/commit rejects a commit with no selected files (no blind git add -A)", async () => {
+    const app = createApp(testRoot);
+    const res = await app.request("/api/git/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "no files" }),
+    });
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.errors[0].message).toContain("no files selected");
   });
 
   test("POST /api/git/commit can link the created commit to a task", async () => {

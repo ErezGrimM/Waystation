@@ -1,0 +1,26 @@
+{
+  "id": "task-claim-id-collision",
+  "title": "Fix claim id collision on same-second re-claim",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/mutate.ts",
+    "src/core/time.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: claim ids are `claim-<task>-<agent>-<idStamp(now)>` (src/core/mutate.ts:301) and `idStamp` is second-resolution (src/core/time.ts:23). A `claim -> release -> claim` cycle on the same task/agent within one second reuses the id, and the second claim OVERWRITES the released claim record file (src/core/store.ts:323-325), losing the release marker. The event log stays intact but the canonical claim record is silently destroyed. Fix: make claim ids collision-proof across same-second re-claims (e.g. reuse `mutationStamp`'s random suffix, or add a unique suffix like `postMessage` does).",
+  "acceptance": [
+    "A test performs claim -> release -> claim on the same task and agent within the same wall-clock second and asserts both claim records exist and the first is `released`.",
+    "Claim id uniqueness does not rely on wall-clock resolution alone.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #2 (medium). Related same-root-cause task: task-handoff-id-collision."
+}

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import lockfile from "proper-lockfile";
 import {
   buildBrief,
   parseBriefBudget,
@@ -46,6 +47,7 @@ import type { TaskRecord } from "../src/core/schema.ts";
 import {
   activeClaimForTask,
   appendEvent,
+  LockError,
   loadClaims,
   loadIssues,
   sweepTmpDirs,
@@ -127,9 +129,18 @@ describe("audit fixes", () => {
 
   test("a path-y issue id is rejected before writing outside issues", async () => {
     const root = fixtureRoot([D]);
+    // Rejection must be a coded MutationError (surfaces map .code), never a
+    // raw Error that degrades to unexpected_error (audit finding #9).
     await expect(createIssue(root, { id: "../tasks/task-d", title: "bad" })).rejects.toThrow(
       "invalid issue id",
     );
+    try {
+      await createIssue(root, { id: "../tasks/task-d", title: "bad" });
+      expect.unreachable();
+    } catch (e) {
+      expect(e).toBeInstanceOf(MutationError);
+      expect((e as MutationError).code).toBe("schema_invalid");
+    }
   });
 });
 
@@ -242,6 +253,24 @@ describe("mutation intent recovery", () => {
     ]);
     expect(new Set(events.map((event) => event.mutation)).size).toBe(2);
   });
+
+  test("setTaskStatus closes a task transitioned to done", async () => {
+    const root = fixtureRoot([{ ...D, id: "task-review-done", status: "review" }]);
+    const now = new Date("2026-07-06T10:00:00.000Z");
+    const done = await setTaskStatus(root, "task-review-done", "done", "tester", now);
+    expect(done.status).toBe("done");
+    expect(done.closed_at).not.toBeNull();
+    expect(done.closed_at).toBe(done.updated_at);
+  });
+
+  test("unknown TaskRecord fields survive a mutation round-trip (passthrough)", async () => {
+    const root = fixtureRoot([{ ...D, notes: "has extra field below", custom_field: 42 }]);
+    const now = new Date("2026-07-06T10:00:00.000Z");
+    const updated = await setTaskStatus(root, "task-d", "blocked", "tester", now);
+    expect((updated as TaskRecord & { custom_field?: unknown }).custom_field).toBe(42);
+    const reloaded = loadTasks(root).find((t) => t.id === "task-d");
+    expect((reloaded as TaskRecord & { custom_field?: unknown }).custom_field).toBe(42);
+  });
 });
 
 describe("events.jsonl newline defence", () => {
@@ -342,6 +371,26 @@ describe("events.jsonl newline defence", () => {
     expect(validateLedger(root).ok).toBe(true);
   });
 
+  test("repair finalLines is the physical line count, empty lines included", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const events = join(root, ".waystation", "events.jsonl");
+    // A blank line between events is preserved verbatim by repair. No trailing
+    // newline forces a rewrite so we can inspect the reported metric.
+    writeFileSync(
+      events,
+      `${JSON.stringify({ type: "seed.one", n: 1 })}\n\n${JSON.stringify({ type: "seed.two", n: 2 })}`,
+    );
+    const res = await repairEventsJsonl(root);
+    expect(res.ok).toBe(true);
+    expect(res.data?.rewritten).toBe(true);
+    expect(res.data?.fixedLines).toBe(0);
+    expect(res.data?.finalLines).toBe(3);
+    const lines = readFileSync(events, "utf8").split("\n");
+    expect(lines).toContain("");
+    expect(lines.filter((l) => l.trim())).toHaveLength(2);
+    expect(validateLedger(root).ok).toBe(true);
+  });
+
   test("repair is a no-op on a clean ledger", async () => {
     const root = fixtureRoot([{ ...D }]);
     await appendEvent(root, { type: "clean.one" });
@@ -392,6 +441,37 @@ describe("git state", () => {
     writeFileSync(join(root, ".dotfile"), "two");
     const res = getGitState(root);
     expect(res.data?.status.files.map((f) => f.file)).toContain(".dotfile");
+  });
+
+  test("changed counts a staged+unstaged file once (MM / AM)", () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-git-mm-"));
+    tmpRoots.push(root);
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    writeFileSync(join(root, "tracked.txt"), "one");
+    Bun.spawnSync(["git", "add", "tracked.txt"], { cwd: root });
+    Bun.spawnSync(
+      ["git", "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-qm", "init"],
+      { cwd: root },
+    );
+    // Stage a modification, then edit again => "MM" porcelain status.
+    writeFileSync(join(root, "tracked.txt"), "two");
+    Bun.spawnSync(["git", "add", "tracked.txt"], { cwd: root });
+    writeFileSync(join(root, "tracked.txt"), "three");
+    // A new file staged then modified => "AM" porcelain status.
+    writeFileSync(join(root, "added.txt"), "a");
+    Bun.spawnSync(["git", "add", "added.txt"], { cwd: root });
+    writeFileSync(join(root, "added.txt"), "b");
+
+    const res = getGitState(root);
+    expect(res.ok).toBe(true);
+    const status = res.data?.status;
+    expect(status?.files.map((f) => `${f.status}:${f.file}`)).toContain("MM:tracked.txt");
+    expect(status?.files.map((f) => `${f.status}:${f.file}`)).toContain("AM:added.txt");
+    // Two distinct changed files, even though each matches both buckets.
+    expect(status?.staged).toBe(2);
+    expect(status?.unstaged).toBe(2);
+    expect(status?.changed).toBe(2);
+    expect(status?.untracked).toBe(0);
   });
 
   test("CLI git status returns the CommandResult envelope", () => {
@@ -529,6 +609,48 @@ describe("init", () => {
     const res = await initLedger(root);
     expect(res.data?.created).toBe(false);
     expect(res.warnings.map((w) => w.code)).toContain("already_initialized");
+  });
+
+  // Audit finding #16: --force is a config reset, NEVER a wipe. Pin it.
+  test("init --force resets config but preserves records and events", async () => {
+    const root = mkdtempSync(join(tmpdir(), "waystation-init-force-"));
+    tmpRoots.push(root);
+    await initLedger(root, { project: "first" });
+
+    const ledger = join(root, ".waystation");
+    const tasksDir = join(ledger, "tasks");
+    writeFileSync(
+      join(tasksDir, "task-keep.json"),
+      JSON.stringify({
+        id: "task-keep",
+        title: "Must survive force",
+        status: "ready",
+        priority: 2,
+        dependencies: [],
+        prompts: [],
+        path_hints: [],
+        acceptance: [],
+        created_at: "2026-08-15T10:00:00+03:00",
+        updated_at: "2026-08-15T10:00:00+03:00",
+        description: "survivor",
+      }),
+    );
+    const eventsBefore = readFileSync(join(ledger, "events.jsonl"), "utf8");
+
+    const res = await initLedger(root, { project: "second", force: true });
+    expect(res.ok).toBe(true);
+    expect(res.data?.created).toBe(true);
+    expect(res.data?.project).toBe("second");
+
+    // Config was rewritten with the new project id...
+    const config = JSON.parse(readFileSync(join(ledger, "config.json"), "utf8"));
+    expect(config.project_id).toBe("second");
+    // ...but existing records and event history are preserved, not wiped.
+    expect(existsSync(join(tasksDir, "task-keep.json"))).toBe(true);
+    const eventsAfter = readFileSync(join(ledger, "events.jsonl"), "utf8");
+    expect(eventsAfter.startsWith(eventsBefore)).toBe(true);
+    expect(eventsAfter).toContain("project.initialized");
+    expect(validateLedger(root).ok).toBe(true);
   });
 });
 
@@ -765,6 +887,29 @@ describe("bun:sqlite index", () => {
     expect(readyTasks(tasks).map((t) => t.id)).toEqual(["task-ns", "task-sa"]);
   });
 
+  test("equal-priority tasks order by real instant across timezone offsets", () => {
+    const earlierUtc = {
+      id: "task-a",
+      title: "A",
+      status: "ready",
+      priority: 2,
+      dependencies: [],
+      created_at: "2026-07-06T10:00:00+00:00",
+    };
+    const laterOffset = {
+      id: "task-z",
+      title: "Z",
+      status: "ready",
+      priority: 2,
+      dependencies: [],
+      created_at: "2026-07-06T12:00:00+03:00",
+    };
+    // +03:00 12:00 is 09:00 UTC: earlier than 10:00 UTC despite the lexically
+    // larger timestamp string.
+    const tasks = loadTasks(fixtureRoot([earlierUtc, laterOffset]));
+    expect(readyTasks(tasks).map((t) => t.id)).toEqual(["task-z", "task-a"]);
+  });
+
   test("index-backed ordering matches in-memory for the created_at tiebreak", async () => {
     const records = [
       { id: "task-p", title: "P", status: "ready", priority: 1, dependencies: [] },
@@ -831,6 +976,30 @@ describe("bun:sqlite index", () => {
     expect(existsSync(join(tasksDir, "task-d.json"))).toBe(true);
   });
 
+  // Audit finding #14: the sweep must also cover the ledger root (orphaned
+  // mutation-intent.json tmp) and the derived artifact dirs (writeText temps).
+  test("sweepTmpDirs removes orphans in the ledger root and derived dirs", () => {
+    const root = fixtureRoot([D]);
+    const ledger = join(root, ".waystation");
+    const reports = join(ledger, "reports");
+    const context = join(ledger, "context");
+    const viewsTasks = join(ledger, "views", "tasks");
+    for (const dir of [reports, context, viewsTasks]) {
+      mkdirSync(dir, { recursive: true });
+    }
+    const orphans = [
+      join(ledger, "mutation-intent.json.9999.1.tmp"),
+      join(reports, "STATUS.md.9999.1.tmp"),
+      join(context, "active-work.md.9999.1.tmp"),
+      join(viewsTasks, "task-d.md.9999.1.tmp"),
+    ];
+    for (const file of orphans) writeFileSync(file, "orphan");
+
+    sweepTmpDirs(root);
+
+    for (const file of orphans) expect(existsSync(file)).toBe(false);
+  });
+
   // H7: the single write lock must serialize concurrent claims on one task.
   test("concurrent claims on one task: exactly one wins", async () => {
     const root = fixtureRoot([{ ...D }]);
@@ -848,6 +1017,24 @@ describe("bun:sqlite index", () => {
     }
     // The ledger ends with exactly one active claim on disk.
     expect(loadClaims(root).filter((c) => c.status === "active").length).toBe(1);
+  });
+
+  test("lock contention surfaces as a coded lock_contended error", async () => {
+    const root = fixtureRoot([{ ...D }]);
+    const ledger = join(root, ".waystation");
+    mkdirSync(ledger, { recursive: true });
+    const held = await lockfile.lock(ledger, {
+      realpath: false,
+      stale: 60_000,
+      retries: 0,
+    });
+    try {
+      const reason = await withLedgerLock(root, () => undefined).catch((e) => e);
+      expect(reason).toBeInstanceOf(LockError);
+      expect((reason as LockError).code).toBe("lock_contended");
+    } finally {
+      await held();
+    }
   });
 
   test("claim rejects todo and dependency-blocked ready tasks without ledger writes", async () => {
@@ -2036,6 +2223,20 @@ describe("generate", () => {
     expect(res.data?.tasks).toBe(2);
     expect(existsSync(join(root, ".waystation", "index.sqlite"))).toBe(true);
   });
+
+  test("concurrent locked index rebuilds do not corrupt the index", async () => {
+    const root = fixtureRoot([A, D]);
+    // Mirrors the CLI/dashboard reindex paths, which now build under the lock.
+    const settled = await Promise.allSettled([
+      withLedgerLock(root, () => reindex(root)),
+      withLedgerLock(root, () => reindex(root)),
+    ]);
+    expect(settled.every((r) => r.status === "fulfilled")).toBe(true);
+    const db = await buildTaskIndex(join(root, ".waystation", "index.sqlite"), loadTasks(root));
+    const ids = readyFromIndex(db).map((t) => t.id);
+    db.close();
+    expect(ids).toEqual(readyTasks(loadTasks(root)).map((t) => t.id));
+  });
 });
 
 describe("messages / inbox", () => {
@@ -2158,6 +2359,8 @@ describe("ledger index (all record types)", () => {
 });
 
 describe("github import/export", () => {
+  const cli = fileURLToPath(new URL("../src/cli/index.ts", import.meta.url));
+
   test("importGitHubIssues returns no_github_token when token is empty", async () => {
     const root = fixtureRoot([D]);
     const result = await importGitHubIssues(root, "owner/repo", "");
@@ -2203,6 +2406,50 @@ describe("github import/export", () => {
       expect(loadIssues(root).find((i) => i.id === "gh-42")?.type).toBe("bug");
       expect(loadIssues(root).find((i) => i.id === "gh-42")?.severity).toBe("high");
       expect(loadIssues(root).some((i) => i.id === "gh-43")).toBe(false);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  test("importGitHubIssues skips existing issues without force and refreshes them with force", async () => {
+    const root = fixtureRoot([]);
+    const issuesDir = join(root, ".waystation", "issues");
+    mkdirSync(issuesDir, { recursive: true });
+    writeFileSync(
+      join(issuesDir, "gh-42.json"),
+      JSON.stringify({ id: "gh-42", title: "Old title", status: "open" }),
+    );
+
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      new Response(
+        JSON.stringify([
+          {
+            number: 42,
+            title: "New title",
+            state: "closed",
+            body: "Updated body",
+            labels: [{ name: "bug" }],
+          },
+        ]),
+        { status: 200 },
+      )) as unknown as typeof fetch;
+    try {
+      // Without force the existing record is skipped.
+      const skipped = await importGitHubIssues(root, "owner/repo", "tok");
+      expect(skipped.ok).toBe(true);
+      expect(skipped.data?.ids).toEqual([]);
+      expect(loadIssues(root).find((i) => i.id === "gh-42")?.title).toBe("Old title");
+
+      // With force the existing record is refreshed from GitHub.
+      const forced = await importGitHubIssues(root, "owner/repo", "tok", true);
+      expect(forced.ok).toBe(true);
+      expect(forced.data?.ids).toEqual(["gh-42"]);
+      const refreshed = loadIssues(root).find((i) => i.id === "gh-42");
+      expect(refreshed?.title).toBe("New title");
+      expect(refreshed?.status).toBe("closed");
+      expect(refreshed?.description).toBe("Updated body");
+      expect(refreshed?.type).toBe("bug");
     } finally {
       globalThis.fetch = origFetch;
     }
@@ -2353,6 +2600,17 @@ describe("github import/export", () => {
     } finally {
       globalThis.fetch = origFetch;
     }
+  });
+
+  test("gh import --help lists the --force flag", async () => {
+    const root = fixtureRoot([D]);
+    const process = Bun.spawnSync({
+      cmd: [globalThis.process.execPath, "run", cli, "gh", "import", "--help"],
+      cwd: root,
+    });
+    const help = `${process.stdout.toString()}\n${process.stderr.toString()}`;
+    expect(help).toContain("--force");
+    expect(help).toContain("overwrite existing gh-<number>");
   });
 });
 

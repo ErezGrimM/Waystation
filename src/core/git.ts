@@ -48,8 +48,14 @@ function statusSummary(cwd: string): GitStatusSummary {
   const staged = lines.filter((line) => /^[MADRC]/.test(line) || /^[MADRC] [MADRC]/.test(line));
   const unstaged = lines.filter((line) => /^.[MADRC]/.test(line));
   const untracked = lines.filter((line) => line.startsWith("??"));
+  // A file can appear in both buckets (e.g. "MM" = staged + unstaged edit).
+  // Count distinct paths so `changed` never double-counts one file.
+  const changedFiles = new Set([
+    ...staged.map((line) => line.slice(3)),
+    ...unstaged.map((line) => line.slice(3)),
+  ]);
   return {
-    changed: staged.length + unstaged.length,
+    changed: changedFiles.size,
     staged: staged.length,
     unstaged: unstaged.length,
     untracked: untracked.length,

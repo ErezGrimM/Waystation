@@ -1,4 +1,4 @@
-import { createIssue } from "./issue.ts";
+import { createIssue, updateIssue } from "./issue.ts";
 import { type CommandResult, diag, okResult, toResult } from "./result.ts";
 import type { IssueRecord } from "./schema.ts";
 import { loadIssues } from "./store.ts";
@@ -133,6 +133,7 @@ export async function importGitHubIssues(
   root: string,
   repo: string,
   token: string,
+  force: boolean = false,
 ): Promise<CommandResult<{ imported: number; ids: string[] }>> {
   if (!token) {
     return toResult<{ imported: number; ids: string[] }>(null, [diag("no_github_token")]);
@@ -152,19 +153,26 @@ export async function importGitHubIssues(
       const ghIssue = parseGitHubIssue(r);
       if (!ghIssue) continue;
       const id = `gh-${ghIssue.number}`;
-      if (existing.has(id)) continue;
 
       const { type, severity } = extractLabels(ghIssue);
-
-      await createIssue(root, {
-        id,
+      const fields = {
         title: ghIssue.title,
         status: ghIssue.state === "open" ? "open" : "closed",
         severity,
         type,
         description: ghIssue.body ?? undefined,
-      });
+      };
 
+      if (existing.has(id)) {
+        if (!force) continue;
+        // --force refreshes the existing record from GitHub instead of
+        // skipping it (audit finding #10).
+        await updateIssue(root, id, fields);
+        created.push(id);
+        continue;
+      }
+
+      await createIssue(root, { id, ...fields });
       existing.add(id);
       created.push(id);
     }

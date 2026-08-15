@@ -1,0 +1,26 @@
+{
+  "id": "task-git-status-changed-count",
+  "title": "Fix git status changed count double-counting",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/git.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: `statusSummary` (src/core/git.ts:48-53) counts a `MM`-style porcelain line (staged + unstaged modifications) in BOTH the staged and unstaged buckets, so `changed = staged.length + unstaged.length` double-counts such files. Fix the `changed` aggregate to count distinct files.",
+  "acceptance": [
+    "`changed` equals the number of distinct changed files (a single `MM` entry counts once).",
+    "`staged`, `unstaged`, and `untracked` bucket counts are unchanged.",
+    "A unit test covers the `MM`/`AM` double-status porcelain case.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #12 (cosmetic)."
+}

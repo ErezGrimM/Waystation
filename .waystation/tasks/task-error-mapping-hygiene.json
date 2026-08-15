@@ -1,0 +1,26 @@
+{
+  "id": "task-error-mapping-hygiene",
+  "title": "Fix MCP and issue-path error mapping gaps",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/mcp/server.ts",
+    "src/core/issue.ts",
+    "test/mcp.test.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: (a) MCP `catchDiag` (src/mcp/server.ts:32-38) does not map `ZodError` to `schema_invalid`, unlike CLI `diagnosticFor` (src/cli/index.ts:1044-1047) — e.g. an invalid `post_message` kind returns `unexpected_error`. (b) `issueFile` (src/core/issue.ts:99-109) throws raw `Error` for unsafe ids instead of `MutationError`/a coded diagnostic, so invalid ids surface as `unexpected_error` at every surface. Fix both: add ZodError mapping in `catchDiag`, and make the unsafe-issue-id path throw a coded error.",
+  "acceptance": [
+    "An MCP call with an invalid enum/kind (e.g. a bad `post_message` kind or `create_task` status) returns `schema_invalid`, not `unexpected_error`.",
+    "`createIssue`/`updateIssue`/`closeIssue` with an unsafe id (e.g. containing slashes or `..`) returns a coded diagnostic (`schema_invalid` or `invalid_transition`), not `unexpected_error`, across CLI, MCP, and dashboard.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #9 (low)."
+}

@@ -27,9 +27,9 @@ import { loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
 import { loadTasks, RecordError } from "../core/records.ts";
 import { type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import type { TaskStatus } from "../core/schema.ts";
-import { loadClaims, loadIssues } from "../core/store.ts";
+import { LockError, loadClaims, loadIssues, withLedgerLock } from "../core/store.ts";
 import { indexById, nextTask, taskReadiness } from "../core/tasks.ts";
-import { nowIso } from "../core/time.ts";
+import { byInstantThenId } from "../core/time.ts";
 import { validateLedger } from "../core/validate.ts";
 
 function json(result: CommandResult): Response {
@@ -50,6 +50,9 @@ function catchDiag(e: unknown, fallbackCode: string = "unexpected_error") {
     console.error("[waystation] record error:", e.message);
     return toResult(null, [diag(e.code as never)]);
   }
+  if (e instanceof LockError) {
+    return toResult(null, [diag(e.code as never)]);
+  }
   console.error("[waystation] unexpected error:", e);
   return toResult(null, [diag(fallbackCode as never)]);
 }
@@ -66,8 +69,10 @@ function fileWithin(baseDir: string, fullPath: string): string | null {
   return target;
 }
 
-function emit(type: string, data: Record<string, unknown>) {
-  emitMutationEvent({ type, ...data, ts: nowIso() });
+function emitMutationSummary(type: string, data: Record<string, unknown>) {
+  // gh import/export are dashboard-level summary events, not journal events;
+  // journaled mutations already broadcast from the core write path.
+  emitMutationEvent({ type, ...data });
 }
 
 function gitStatusFiles(root: string): string[] {
@@ -176,10 +181,10 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
             cmp = a.title.localeCompare(b.title);
             break;
           case "updated_at":
-            cmp = (a.updated_at ?? "").localeCompare(b.updated_at ?? "");
+            cmp = byInstantThenId(a, b, "updated_at");
             break;
           default:
-            cmp = (a.created_at ?? "").localeCompare(b.created_at ?? "");
+            cmp = byInstantThenId(a, b, "created_at");
         }
         if (cmp === 0) cmp = a.id.localeCompare(b.id);
         return order === "asc" ? cmp : -cmp;
@@ -212,7 +217,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<CreateTaskInput & { actor?: string }>();
       const { actor = "dashboard", ...input } = body;
       const task = await createTask(root, input, actor);
-      emit("task.created", { task: task.id, actor });
       return json(okResult(task));
     } catch (e) {
       return json(catchDiag(e));
@@ -224,7 +228,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<TaskPatch & { actor?: string }>();
       const { actor = "dashboard", ...patch } = body;
       const task = await updateTask(root, c.req.param("id"), patch, actor);
-      emit("task.updated", { task: task.id, actor });
       return json(okResult(task));
     } catch (e) {
       return json(catchDiag(e));
@@ -236,7 +239,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<{ status: TaskStatus; actor?: string }>();
       const actor = body.actor ?? "dashboard";
       const task = await setTaskStatus(root, c.req.param("id"), body.status, actor);
-      emit("task.status_changed", { task: task.id, status: task.status, actor });
       return json(okResult(task));
     } catch (e) {
       return json(catchDiag(e));
@@ -248,7 +250,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<{ status: "todo" | "ready"; actor?: string }>();
       const actor = body.actor ?? "dashboard";
       const task = await reopenTask(root, c.req.param("id"), body.status, actor);
-      emit("task.reopened", { task: task.id, status: task.status, actor });
       return json(okResult(task));
     } catch (e) {
       return json(catchDiag(e));
@@ -269,7 +270,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
     try {
       const body = await c.req.json<{ agent: string }>();
       const claim = await claimTask(root, c.req.param("id"), body.agent);
-      emit("task.claimed", { task: c.req.param("id"), claim: claim.id, agent: body.agent });
       return json(okResult(claim));
     } catch (e) {
       return json(catchDiag(e));
@@ -280,7 +280,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
     try {
       const body = await c.req.json<{ agent: string }>();
       await releaseTask(root, c.req.param("id"), body.agent);
-      emit("task.released", { task: c.req.param("id"), agent: body.agent });
       return json(okResult({ released: c.req.param("id") }));
     } catch (e) {
       return json(catchDiag(e));
@@ -294,7 +293,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
         commits: body.commits ?? [],
         commitHead: body.commitHead,
       });
-      emit("task.finished", { task: c.req.param("id"), agent: body.agent });
       return json(okResult({ finished: c.req.param("id") }));
     } catch (e) {
       return json(catchDiag(e));
@@ -334,7 +332,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
     try {
       const body = await c.req.json();
       const issue = await createIssue(root, body);
-      emit("issue.created", { issue: issue.id, title: body.title });
       return json(okResult(issue));
     } catch (e) {
       return json(catchDiag(e));
@@ -346,7 +343,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<UpdateIssueInput & { actor?: string }>();
       const { actor = "dashboard", ...patch } = body;
       const issue = await updateIssue(root, c.req.param("id"), patch, actor);
-      emit("issue.updated", { issue: issue.id, actor });
       return json(okResult(issue));
     } catch (e) {
       return json(catchDiag(e));
@@ -358,7 +354,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const body = await c.req.json<{ resolution: string; actor?: string }>();
       const actor = body.actor ?? "dashboard";
       const issue = await closeIssue(root, c.req.param("id"), body.resolution, actor);
-      emit("issue.closed", { issue: issue.id, actor });
       return json(okResult(issue));
     } catch (e) {
       return json(catchDiag(e));
@@ -373,7 +368,7 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const token = process.env.GITHUB_TOKEN ?? "";
       const result = await importGitHubIssues(root, body.repo, token);
       if (result.ok) {
-        emit("gh.imported", { repo: body.repo, count: result.data?.imported ?? 0 });
+        emitMutationSummary("gh.imported", { repo: body.repo, count: result.data?.imported ?? 0 });
       }
       return json(result);
     } catch (e) {
@@ -387,7 +382,7 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       const token = process.env.GITHUB_TOKEN ?? "";
       const result = await exportGitHubIssues(root, body.repo, token);
       if (result.ok) {
-        emit("gh.exported", { repo: body.repo, count: result.data?.exported ?? 0 });
+        emitMutationSummary("gh.exported", { repo: body.repo, count: result.data?.exported ?? 0 });
       }
       return json(result);
     } catch (e) {
@@ -426,7 +421,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
         kind: body.kind as never,
         body: body.body,
       });
-      emit("message.posted", { message: m.id, thread: body.thread, from: body.from });
       return json(okResult(m));
     } catch (e) {
       return json(catchDiag(e));
@@ -484,7 +478,6 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
         to: body.to ?? null,
         summary: body.summary,
       });
-      emit("handoff.created", { handoff: h.id, task: body.task, from: body.from, to: body.to });
       return json(okResult(h));
     } catch (e) {
       return json(catchDiag(e));
@@ -498,7 +491,7 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
       let claims = loadClaims(root);
       const status = c.req.query("status");
       if (status) claims = claims.filter((cl) => cl.status === status);
-      claims.sort((a, b) => b.claimed_at.localeCompare(a.claimed_at));
+      claims.sort((a, b) => -byInstantThenId(a, b, "claimed_at"));
       return json(okResult(claims));
     } catch (e) {
       return json(catchDiag(e));
@@ -577,16 +570,13 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
           );
         }
       } else {
-        const add = Bun.spawnSync(["git", "add", "-A"], { cwd: root });
-        if (add.exitCode !== 0) {
-          return json(
-            toResult(null, [
-              diag("unexpected_error" as never, {
-                message: add.stderr.toString().trim() || "git add failed",
-              }),
-            ]),
-          );
-        }
+        return json(
+          toResult(null, [
+            diag("unexpected_error" as never, {
+              message: "no files selected; choose files to commit (blind git add -A is disabled)",
+            }),
+          ]),
+        );
       }
       const proc = Bun.spawnSync(["git", "commit", "-m", body.message], { cwd: root });
       const out = proc.stdout.toString().trim();
@@ -611,7 +601,7 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
 
   app.post("/api/reindex", async (_c) => {
     try {
-      const result = await reindex(root);
+      const result = await withLedgerLock(root, () => reindex(root));
       return json(result);
     } catch (e) {
       return json(catchDiag(e));

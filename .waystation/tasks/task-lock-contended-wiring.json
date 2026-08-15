@@ -1,0 +1,29 @@
+{
+  "id": "task-lock-contended-wiring",
+  "title": "Wire lock contention to the lock_contended code",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/result.ts",
+    "src/cli/index.ts",
+    "src/mcp/server.ts",
+    "src/dashboard/server.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: the code catalog defines `lock_contended` (src/core/result.ts:222, retryable: true) but nothing ever emits it. When `proper-lockfile.lock` in `withLedgerLock` (src/core/store.ts:306-310) exhausts its retries it throws a raw Error, which surfaces as `unexpected_error` (retryable: false) in CLI/MCP/dashboard. The intended retry guidance is dead. Fix: catch the lock-acquisition failure in `withLedgerLock` (or the surface error mappers) and emit `lock_contended`.",
+  "acceptance": [
+    "A lock-contention timeout surfaces as a diagnostic with code `lock_contended` and `retryable: true` in all three surfaces (CLI, MCP, dashboard), not `unexpected_error`.",
+    "The fix does not mask genuine unexpected errors.",
+    "A test simulates lock contention (held lock + short/forced failure) and asserts the `lock_contended` code.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #3 (medium). Touches src/core/store.ts, which is also touched by task-sse-event-coverage and task-sweep-tmp-coverage; coordinate."
+}

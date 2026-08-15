@@ -10,7 +10,7 @@ import {
   readJsonFile,
   withLedgerLock,
 } from "./store.ts";
-import { idStamp, nowIso, safeIdPart } from "./time.ts";
+import { mutationStamp, nowIso, safeIdPart } from "./time.ts";
 
 function handoffsDir(root?: string): string {
   return join(ledgerPaths(root).ledger, "handoffs");
@@ -44,7 +44,7 @@ export async function createHandoff(
     if (!task) throw new MutationError(`no such task: ${input.task}`, "no_such_task");
     const ts = nowIso(now);
     const record = HandoffSchema.parse({
-      id: `handoff-${safeIdPart(input.task)}-${safeIdPart(input.from)}-${idStamp(now)}`,
+      id: `handoff-${safeIdPart(input.task)}-${safeIdPart(input.from)}-${mutationStamp(now)}`,
       task: input.task,
       from_agent: input.from,
       to_agent: input.to ?? null,

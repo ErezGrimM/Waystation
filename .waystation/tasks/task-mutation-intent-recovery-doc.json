@@ -1,0 +1,27 @@
+{
+  "id": "task-mutation-intent-recovery-doc",
+  "title": "Document manual recovery of a corrupt mutation intent",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-core",
+  "path_hints": [
+    "docs/",
+    "src/core/store.ts",
+    "src/core/validate.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: when `mutation-intent.json` is malformed or unsafe, `recoverMutationIntentUnlocked` (src/core/store.ts:266-286) throws `mutation_intent_invalid` on every lock acquisition, bricking ALL writes until the file is manually removed. This fail-safe is correct but currently only discoverable from the error hint. Document the manual-repair procedure (validate flags the file; inspect the ledger backup; remove/replace the intent) in the docs referenced by the hint.",
+  "acceptance": [
+    "The `mutation_intent_invalid` hint points at a documented manual-repair procedure.",
+    "The procedure is written up in docs/ (e.g. docs/error-philosophy.md or a dedicated page) with concrete steps and safety notes.",
+    "No code behavior changes are required unless the documentation exposes a gap.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #17 (operational). Fail-safe design is sound; this is a documentation task."
+}

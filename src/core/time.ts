@@ -63,4 +63,25 @@ export function byCreatedAtThenId(
   return a.id.localeCompare(b.id);
 }
 
+/**
+ * Offset-aware comparator over an arbitrary instant field, falling back to a
+ * unique id tiebreak. Unparseable or missing timestamps sort first. Use this
+ * instead of `.localeCompare` on raw ISO strings so records authored under
+ * different timezone offsets order by real instant (audit M8, dashboard #13).
+ */
+export function byInstantThenId(
+  a: { id: string } & Record<string, unknown>,
+  b: { id: string } & Record<string, unknown>,
+  field: string,
+): number {
+  const rawA = a[field];
+  const rawB = b[field];
+  const aInstant = typeof rawA === "string" ? Date.parse(rawA) : NaN;
+  const bInstant = typeof rawB === "string" ? Date.parse(rawB) : NaN;
+  const aRank = Number.isNaN(aInstant) ? Number.NEGATIVE_INFINITY : aInstant;
+  const bRank = Number.isNaN(bInstant) ? Number.NEGATIVE_INFINITY : bInstant;
+  if (aRank !== bRank) return aRank - bRank;
+  return a.id.localeCompare(b.id);
+}
+
 import { randomUUID } from "node:crypto";

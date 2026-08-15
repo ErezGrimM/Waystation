@@ -37,7 +37,7 @@ import { loadTasks, RecordError } from "../core/records.ts";
 import { repairEventsJsonl } from "../core/repair.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import type { IssueRecord, TaskStatus } from "../core/schema.ts";
-import { loadIssues } from "../core/store.ts";
+import { LockError, loadIssues, withLedgerLock } from "../core/store.ts";
 import { syncLedger } from "../core/sync.ts";
 import { auditPromotableTasks, nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
@@ -64,7 +64,10 @@ program
   .command("init")
   .description("Scaffold a new .waystation/ ledger in the current directory")
   .option("--project <id>", "project id (default: folder name)")
-  .option("--force", "reinitialize even if a ledger exists")
+  .option(
+    "--force",
+    "re-scaffold an existing ledger: rewrites config.json and recreates missing directories; records, messages, and event history are PRESERVED (not a wipe)",
+  )
   .option("--json", "output JSON")
   .action(async (opts: { project?: string; force?: boolean; json?: boolean }) => {
     const res = await initLedger(process.cwd(), { project: opts.project, force: opts.force });
@@ -88,7 +91,8 @@ task
       process.stdout.write(t ? `${t.id}  [p${t.priority}]  ${t.title}\n` : "No ready tasks.\n");
 
     if (opts.fromIndex) {
-      const db = await buildTaskIndex(ledgerPaths().index, tasks);
+      const root = findProjectRoot();
+      const db = await withLedgerLock(root, () => buildTaskIndex(ledgerPaths(root).index, tasks));
       const ready = readyFromIndex(db);
       const warnings = backendWarnings(db.backend);
       db.close();
@@ -681,7 +685,8 @@ program
   .description("Rebuild the SQLite index from canonical records")
   .option("--json", "output JSON")
   .action(async (opts: { json?: boolean }) => {
-    const res = await reindex(findProjectRoot());
+    const root = findProjectRoot();
+    const res = await withLedgerLock(root, () => reindex(root));
     emitResult(res, opts.json, () => {
       const c = res.data;
       if (c) {
@@ -719,13 +724,16 @@ program
   )
   .option("--views", "also regenerate views/tasks/*.md")
   .option("--json", "output JSON")
-  .action((opts: { views?: boolean; json?: boolean }) => {
+  .action(async (opts: { views?: boolean; json?: boolean }) => {
     const root = findProjectRoot();
-    const written = generateReports(root);
-    if (opts.views) {
-      const n = generateTaskViews(root);
-      written.push(`views/tasks/ (${n} files)`);
-    }
+    // Under the lock like syncLedger: writeText temps in reports/, context/,
+    // and views/ are swept by locked writers, so an unlocked report could
+    // have its live temps deleted mid-write (audit finding #14 follow-up).
+    const written = await withLedgerLock(root, () => {
+      const files = generateReports(root);
+      if (opts.views) files.push(`views/tasks/ (${generateTaskViews(root)} files)`);
+      return files;
+    });
     emitResult(okResult({ written }), opts.json, () => {
       for (const f of written) process.stdout.write(`generated ${f}\n`);
     });
@@ -1041,6 +1049,9 @@ function diagnosticFor(error: unknown) {
   if (error instanceof RecordError || error instanceof LedgerResolutionError) {
     return diag(error.code as never);
   }
+  if (error instanceof LockError) {
+    return diag(error.code as never);
+  }
   if (error instanceof ZodError) {
     const message = error.issues[0]?.message ?? "Invalid command input.";
     return diag("schema_invalid", { message: `Invalid command input: ${message}` });
@@ -1106,7 +1117,7 @@ gh.command("import")
   .description("Import issues from a GitHub repository into the ledger")
   .requiredOption("--repo <repo>", "repository (owner/name)")
   .option("--json", "output JSON")
-  .option("--force", "overwrite existing records")
+  .option("--force", "overwrite existing gh-<number> records with current GitHub state")
   .action(async (opts: { repo: string; json?: boolean; force?: boolean }) => {
     const root = findProjectRoot();
     const token = process.env.GITHUB_TOKEN ?? "";
@@ -1116,7 +1127,7 @@ gh.command("import")
       return;
     }
     const { importGitHubIssues } = await import("../core/gh.ts");
-    const result = await importGitHubIssues(root, opts.repo, token);
+    const result = await importGitHubIssues(root, opts.repo, token, opts.force ?? false);
     emitResult(result, opts.json, () => {
       const d = result.data;
       if (d) {

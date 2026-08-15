@@ -228,7 +228,7 @@ export const CODES = {
   mutation_intent_invalid: {
     severity: "error",
     message: "The pending mutation journal is malformed or unsafe.",
-    hint: "Restore or remove mutation-intent.json only after inspecting the ledger backup.",
+    hint: "Follow the manual-repair procedure in docs/error-philosophy.md (inspect mutation-intent.json, then restore or remove it).",
     retryable: false,
   },
   claim_status_divergence: {

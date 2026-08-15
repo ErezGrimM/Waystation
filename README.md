@@ -139,6 +139,12 @@ the available tools, client configuration examples, and smoke checks.
 ## CLI
 
 ```sh
+# initialize a ledger in the current directory
+waystation init [--project <id>] [--force]
+# --force re-scaffolds an existing ledger: it rewrites config.json and
+# recreates missing directories. Records, messages, and event history are
+# PRESERVED — it is a config reset, never a wipe.
+
 # tasks
 waystation task next|ready|list|show <id>
 waystation task audit          # dependency-satisfied todo tasks (promote intentionally)
@@ -163,9 +169,12 @@ waystation mcp
 waystation dashboard [--dev] [--port 8787]
 
 # optional GitHub Issues integration
-waystation gh import --repo <owner/name>
+waystation gh import --repo <owner/name> [--force]
 waystation gh export --repo <owner/name>
 ```
+
+`gh import` skips issues that already exist locally; `gh import --force`
+refreshes existing `gh-<number>` records with their current GitHub state.
 
 Invoke via `bun run src/cli/index.ts <...>`, `.\waystation.exe <...>` after a
 compiled build, or a `waystation` bin from `package.json` in an environment that

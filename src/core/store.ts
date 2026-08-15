@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import lockfile from "proper-lockfile";
+import { emitMutationEvent } from "./events.ts";
 import { ledgerPaths } from "./paths.ts";
 import { RecordError } from "./records.ts";
 import {
@@ -49,10 +50,12 @@ let tempFileCounter = 0;
  * once per process on first lock acquisition (audit M4).
  */
 /**
- * Delete every `*.tmp` file in the ledger's record directories. Callers MUST
- * hold the ledger lock: because all writes funnel through the lock, any `*.tmp`
- * present while it is held is genuinely orphaned, never a live writer's
- * in-flight temp.
+ * Delete every `*.tmp` file in the ledger's record directories plus the ledger
+ * root and the derived artifact directories. Callers MUST hold the ledger
+ * lock: because all writes funnel through the lock, any `*.tmp` present while
+ * it is held is genuinely orphaned, never a live writer's in-flight temp
+ * (this includes `mutation-intent.json.tmp` in the ledger root and the
+ * Markdown temps under reports/, context/, and views/ — audit finding #14).
  */
 export function sweepTmpDirs(root: string): void {
   const paths = ledgerPaths(root);
@@ -62,6 +65,15 @@ export function sweepTmpDirs(root: string): void {
     paths.messages,
     join(paths.ledger, "issues"),
     join(paths.ledger, "handoffs"),
+    // Orphaned mutation-intent.json.<pid>.<counter>.tmp after a crash
+    // between temp write and rename lives in the ledger root itself.
+    paths.ledger,
+    // writeText (generate.ts) leaves <name>.md.<pid>.<counter>.tmp temps in
+    // the derived artifact directories.
+    join(paths.ledger, "reports"),
+    join(paths.ledger, "context"),
+    join(paths.ledger, "views"),
+    join(paths.ledger, "views", "tasks"),
   ];
   for (const dir of dirs) {
     let entries: string[];
@@ -196,6 +208,10 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
     closeSync(fd);
   }
   if (isNew) fsyncDir(paths.ledger);
+  // Publish to the in-process mutation hub so live surfaces (dashboard SSE)
+  // observe mutations from EVERY surface, not just dashboard-origin ones. The
+  // hub broadcast is best-effort and must never throw out of the write path.
+  emitMutationEvent(event);
 }
 
 export interface MutationIntent {
@@ -297,17 +313,36 @@ export async function appendEvent(root: string, event: Record<string, unknown>):
 }
 
 /**
+ * A coded error for ledger lock acquisition failure. `lock_contended` is
+ * retryable by design, and each surface maps it to the catalog entry instead
+ * of surfacing the raw lockfile error as `unexpected_error`.
+ */
+export class LockError extends Error {
+  readonly code = "lock_contended";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "LockError";
+  }
+}
+
+/**
  * Run a mutation while holding a single ledger-wide write lock (spec §12).
  * The CLI, dashboard, and MCP layers must all funnel writes through here.
  */
 export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
   const paths = ledgerPaths(root);
   mkdirSync(paths.ledger, { recursive: true });
-  const release = await lockfile.lock(paths.ledger, {
-    realpath: false,
-    retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },
-    stale: 60_000,
-  });
+  let release: () => Promise<void>;
+  try {
+    release = await lockfile.lock(paths.ledger, {
+      realpath: false,
+      retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },
+      stale: 60_000,
+    });
+  } catch (err) {
+    throw new LockError(`could not acquire ledger write lock: ${(err as Error).message}`);
+  }
   try {
     // Sweep under the lock: all writes funnel through here, so any *.tmp
     // present now is genuinely orphaned (a concurrent writer's live temp can
@@ -322,10 +357,6 @@ export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T):
 
 export function claimFile(root: string, id: string): string {
   return join(ledgerPaths(root).claims, `${id}.json`);
-}
-
-export function writeClaim(root: string, claim: ClaimRecord): void {
-  writeJsonAtomic(claimFile(root, claim.id), claim);
 }
 
 /** Load and validate all claim records. */

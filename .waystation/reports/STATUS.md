@@ -18,7 +18,24 @@ _none_
 _none_
 
 ## Backlog (todo)
-_none_
+- `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
+- `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
+- `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
+- `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
+- `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
+- `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
+- `task-handoff-id-collision` [p3] — Fix handoff id collision on same\-second creation
+- `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
+- `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
+- `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
+- `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
+- `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
+- `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
+- `task-remove-writeclaim-dead-code` [p4] — Remove the unused writeClaim helper
+- `task-repair-metric-consistency` [p4] — Align repair finalLines with physical line count
+- `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
+- `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
+- `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
 
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints

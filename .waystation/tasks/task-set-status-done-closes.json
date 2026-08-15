@@ -1,0 +1,26 @@
+{
+  "id": "task-set-status-done-closes",
+  "title": "Fix setTaskStatus to close done tasks",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/mutate.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: `setTaskStatus` (src/core/mutate.ts:151) sets `closed_at` only for `wont_do`, so a `review -> done` transition via `task set-status` leaves `closed_at: null`, while the same transition via `task finish` (src/core/mutate.ts:409) always stamps it. Two ways of reaching `done` produce divergent records. Fix: stamp `closed_at` for `done` as well.",
+  "acceptance": [
+    "`setTaskStatus(root, id, \"done\", ...)` on a review task sets `closed_at` to the mutation timestamp.",
+    "`setTaskStatus` to `wont_do` still sets `closed_at`; transitions to other statuses leave it unchanged.",
+    "A test asserts `task finish` and `set-status done` produce equivalent `done` records with respect to `closed_at`.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #1 (medium). Follows ADR-0007 lifecycle matrix: `review -> done` is a valid non-claim transition."
+}

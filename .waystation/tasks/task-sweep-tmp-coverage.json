@@ -1,0 +1,25 @@
+{
+  "id": "task-sweep-tmp-coverage",
+  "title": "Extend tmp sweep to the ledger root and derived dirs",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/generate.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-15T23:43:52+03:00",
+  "updated_at": "2026-08-15T23:43:52+03:00",
+  "closed_at": null,
+  "description": "From the 2026-08-15 complete code audit: `sweepTmpDirs` (src/core/store.ts:57-83) sweeps `*.tmp` in tasks/claims/messages/issues/handoffs but NOT the ledger root (where `mutation-intent.json.tmp` can be orphaned by a crash between temp write and rename) nor reports/context/views (where `writeText` in src/core/generate.ts:21-25 leaves temp files). Extend the sweep to cover those locations, keeping the under-lock invariant.",
+  "acceptance": [
+    "Orphaned `*.tmp` files in the ledger root and in `.waystation/reports`, `.waystation/context`, and `.waystation/views` are removed by the first lock sweep.",
+    "The sweep remains under the ledger lock; no live writer's temp is ever removed.",
+    "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "notes": "Reported as audit finding #14 (cosmetic). Touches src/core/store.ts, also touched by task-lock-contended-wiring and task-sse-event-coverage; coordinate."
+}

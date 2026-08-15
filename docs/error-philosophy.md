@@ -182,6 +182,56 @@ under Node. A future explicit fallback should surface it:
 
 ---
 
+## Manual Recovery: `mutation_intent_invalid`
+
+Every mutation is journaled: `applyMutationIntentUnlocked` first writes the
+planned writes and events to `.waystation/mutation-intent.json`, then replays
+them, then deletes the journal — all under the ledger lock
+(`src/core/store.ts`). On the next lock acquisition the journal is replayed
+again if it still exists, which makes mutations crash-safe and idempotent
+(events are deduplicated by the journal `id`).
+
+The fail-safe: if the journal is **malformed** (truncated, corrupt, hand-edited
+into an invalid shape) or **unsafe** (a write target that resolves outside
+`.waystation/`), `recoverMutationIntentUnlocked` throws
+`mutation_intent_invalid` on *every* lock acquisition. All writes are blocked
+until a human intervenes. This is deliberate — a corrupt write-ahead journal
+must never be guessed at automatically — and `waystation validate` flags the
+same file with the same code.
+
+### Repair procedure
+
+1. **Stop Waystation surfaces** (CLI commands, dashboard, MCP servers) so no
+   writer races your repair.
+2. **Confirm the diagnosis**: `waystation validate` reports
+   `mutation_intent_invalid` with `details.file: mutation-intent.json`.
+3. **Inspect the journal** at `.waystation/mutation-intent.json`:
+   - `id` — the mutation's dedup key (also stamped on its events),
+   - `writes[]` — planned `{ path, value }` full-file record writes,
+   - `events[]` — planned event-log lines.
+   Comparing `writes[].value` against the current record files tells you
+   whether the mutation already applied before the journal was left behind.
+   You can also search `events.jsonl` for `"mutation":"<id>"` — if present,
+   the mutation completed and only the journal deletion failed.
+4. **Resolve it**:
+   - *Well-formed but replay keeps failing*: check for a locked/read-only
+     record file or an unsafe `writes[].path`; fix the environment, or remove
+     the journal after manually applying any missing writes.
+   - *Malformed or unsafe*: copy the file aside for forensics, then delete
+     `.waystation/mutation-intent.json`. The pending mutation is lost; already
+     committed history in `events.jsonl` is never touched.
+5. **Verify**: `waystation validate` is clean and a trivial write
+   (e.g. `message post --thread project --from <agent> --body "recovered"`)
+   succeeds.
+
+Safety notes: only the pending mutation is at risk — record files and
+`events.jsonl` are never modified by journal deletion; replaying a *valid*
+journal is always safe (writes are full-file, events dedupe by `id`); never
+hand-edit the journal into a "fixed" shape — restore it from a copy or remove
+it.
+
+---
+
 ## Code Catalog & Stability
 
 - Codes are `lower_snake_case` (matching the shipped `validate` codes:

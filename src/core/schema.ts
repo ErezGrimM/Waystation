@@ -57,25 +57,29 @@ export type TaskStatus = z.infer<typeof TaskStatus>;
 /**
  * Task record schema (spec §6.2). Only the task type is fully modeled in the
  * first walking-skeleton slice; other record types are tightened in
- * task-skeleton-validate.
+ * task-skeleton-validate. `.passthrough()` preserves unknown fields on a
+ * round-trip (see ADR-0009): extra fields from hand-authored or future records
+ * are retained rather than silently stripped on the first mutation.
  */
-export const TaskRecord = z.object({
-  id: RecordId,
-  title: z.string().min(1),
-  status: TaskStatus,
-  priority: z.number().int().nonnegative().default(3),
-  scope: RecordId.nullable().optional(),
-  path_hints: z.array(z.string()).default([]),
-  prompts: z.array(RecordId).default([]),
-  dependencies: z.array(RecordId).default([]),
-  created_at: isoTs.optional(),
-  updated_at: isoTs.optional(),
-  closed_at: isoTs.nullable().optional(),
-  description: z.string().optional(),
-  acceptance: z.array(z.string()).default([]),
-  commits: z.array(z.string()).default([]),
-  notes: z.string().optional(),
-});
+export const TaskRecord = z
+  .object({
+    id: RecordId,
+    title: z.string().min(1),
+    status: TaskStatus,
+    priority: z.number().int().nonnegative().default(3),
+    scope: RecordId.nullable().optional(),
+    path_hints: z.array(z.string()).default([]),
+    prompts: z.array(RecordId).default([]),
+    dependencies: z.array(RecordId).default([]),
+    created_at: isoTs.optional(),
+    updated_at: isoTs.optional(),
+    closed_at: isoTs.nullable().optional(),
+    description: z.string().optional(),
+    acceptance: z.array(z.string()).default([]),
+    commits: z.array(z.string()).default([]),
+    notes: z.string().optional(),
+  })
+  .passthrough();
 export type TaskRecord = z.infer<typeof TaskRecord>;
 
 /**
