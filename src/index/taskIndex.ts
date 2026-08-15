@@ -1,5 +1,5 @@
 import type { TaskRecord, TaskStatus } from "../core/schema.ts";
-import { type ReadinessTask, taskReadiness } from "../core/tasks.ts";
+import { byPriorityThenCreatedAtThenId, type ReadinessTask, taskReadiness } from "../core/tasks.ts";
 import { type Db, openDb } from "./db.ts";
 
 /**
@@ -17,18 +17,20 @@ export async function buildTaskIndex(path: string, tasks: TaskRecord[]): Promise
       status TEXT NOT NULL,
       priority INTEGER NOT NULL,
       scope TEXT,
-      dependencies TEXT NOT NULL
+      dependencies TEXT NOT NULL,
+      created_at TEXT
     )
   `);
   for (const t of tasks) {
     db.run(
-      "INSERT OR REPLACE INTO tasks (id, title, status, priority, scope, dependencies) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT OR REPLACE INTO tasks (id, title, status, priority, scope, dependencies, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
       t.id,
       t.title,
       t.status,
       t.priority,
       t.scope ?? null,
       JSON.stringify(t.dependencies),
+      t.created_at ?? null,
     );
   }
   return db;
@@ -40,6 +42,7 @@ export interface IndexedTask {
   status: string;
   priority: number;
   scope: string | null;
+  created_at: string | null;
 }
 
 /** Query ready tasks straight from the index (status + dependency check). */
@@ -51,7 +54,8 @@ export function readyFromIndex(db: Db): IndexedTask[] {
     priority: number;
     scope: string | null;
     dependencies: string;
-  }>("SELECT id, title, status, priority, scope, dependencies FROM tasks");
+    created_at: string | null;
+  }>("SELECT id, title, status, priority, scope, dependencies, created_at FROM tasks");
 
   const indexed = rows.map((row) => ({
     ...row,
@@ -61,8 +65,13 @@ export function readyFromIndex(db: Db): IndexedTask[] {
 
   return indexed
     .filter((task) => taskReadiness(task, byId).state === "actionable")
-    .sort((a, b) =>
-      a.priority !== b.priority ? a.priority - b.priority : a.id.localeCompare(b.id),
-    )
-    .map(({ id, title, status, priority, scope }) => ({ id, title, status, priority, scope }));
+    .sort(byPriorityThenCreatedAtThenId)
+    .map(({ id, title, status, priority, scope, created_at }) => ({
+      id,
+      title,
+      status,
+      priority,
+      scope,
+      created_at,
+    }));
 }

@@ -318,3 +318,7 @@ surface.
 | [ADR-0002](./ADR-0002-implementation-stack-revised.md) | Superseded | Go core/API with embedded React dashboard |
 | [ADR-0003](./ADR-0003-worktree-message-scope.md) | Accepted | Worktree-local messages and ledger records for V1 |
 | [ADR-0004](./ADR-0004-message-storage-layout.md) | Accepted | Keep one-file-per-message JSON storage for V1 |
+| [ADR-0005](./ADR-0005-generated-artifact-policy.md) | Accepted | Track generated ledger Markdown; keep indexes disposable |
+| [ADR-0006](./ADR-0006-recoverable-ledger-mutations.md) | Accepted | Replay durable mutation intents |
+| [ADR-0007](./ADR-0007-lifecycle-transition-matrix.md) | Accepted | Core lifecycle transition matrix |
+| [ADR-0008](./ADR-0008-task-ranking-policy.md) | Accepted | Rank equal-priority tasks by created_at then id |

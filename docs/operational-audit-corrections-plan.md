@@ -242,7 +242,16 @@ Ranking is a lower-priority product decision, not a correctness-release prerequi
 
 If rank is accepted, the decision creates a separately phased implementation task covering schema, migration, mutations, CLI, MCP, dashboard, and deterministic tests. The current correction release does not absorb that optional feature.
 
-No `deferred` status is planned. After the readiness correction, `todo` is the non-actionable backlog state. A separate status should be reconsidered only if real usage proves `todo` insufficient.
+No `deferred` status is planned. After the readiness correction, `todo` is the
+non-actionable backlog state. A separate status should be reconsidered only if
+real usage proves `todo` insufficient.
+
+**Decision (2026-08-15):** [`ADR-0008`](../adr/ADR-0008-task-ranking-policy.md)
+adopts **priority, then `created_at`, then `id`** for actionable-task ordering,
+via one shared comparator used by both in-memory and index-backed queries.
+Explicit `rank` is rejected for now (priority already provides the user-control
+axis; schema/migration/surface cost is disproportionate without usage
+evidence). No `deferred` status is added.
 
 ## Implementation Sequence
 

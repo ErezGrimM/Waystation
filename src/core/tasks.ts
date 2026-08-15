@@ -56,9 +56,19 @@ export function isActionable(
   return taskReadiness(task, byId).state === "actionable";
 }
 
-/** Sort key: lower priority number first, then id for stability. */
-function byPriorityThenId(a: TaskRecord, b: TaskRecord): number {
+/**
+ * Sort key: lower priority number first; among equal priorities, earlier
+ * `created_at` first (records missing `created_at` sort as earliest); `id` is
+ * the final unique tiebreak. ADR-0008.
+ */
+export function byPriorityThenCreatedAtThenId(
+  a: Pick<TaskRecord, "id" | "priority"> & { created_at?: string | null },
+  b: Pick<TaskRecord, "id" | "priority"> & { created_at?: string | null },
+): number {
   if (a.priority !== b.priority) return a.priority - b.priority;
+  const aCreated = a.created_at ?? "";
+  const bCreated = b.created_at ?? "";
+  if (aCreated !== bCreated) return aCreated < bCreated ? -1 : 1;
   return a.id.localeCompare(b.id);
 }
 
@@ -69,7 +79,7 @@ export function indexById(tasks: TaskRecord[]): Map<string, TaskRecord> {
 /** All actionable tasks, best-first. */
 export function readyTasks(tasks: TaskRecord[]): TaskRecord[] {
   const byId = indexById(tasks);
-  return tasks.filter((t) => isActionable(t, byId)).sort(byPriorityThenId);
+  return tasks.filter((t) => isActionable(t, byId)).sort(byPriorityThenCreatedAtThenId);
 }
 
 /**
@@ -84,7 +94,7 @@ export function auditPromotableTasks(tasks: TaskRecord[]): TaskRecord[] {
     .filter(
       (t) => t.status === "todo" && t.dependencies.every((d) => dependencySatisfied(byId.get(d))),
     )
-    .sort(byPriorityThenId);
+    .sort(byPriorityThenCreatedAtThenId);
 }
 
 /** The single next task to work on, or null if none are ready. */

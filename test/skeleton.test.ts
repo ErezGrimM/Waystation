@@ -729,6 +729,60 @@ describe("bun:sqlite index", () => {
     );
   });
 
+  test("equal-priority actionable tasks order by created_at then id", () => {
+    const older = {
+      id: "task-z",
+      title: "Z",
+      status: "ready",
+      priority: 2,
+      dependencies: [],
+      created_at: "2026-07-01T00:00:00+03:00",
+    };
+    const newer = {
+      id: "task-a",
+      title: "A",
+      status: "ready",
+      priority: 2,
+      dependencies: [],
+      created_at: "2026-07-02T00:00:00+03:00",
+    };
+    const tasks = loadTasks(fixtureRoot([older, newer]));
+    expect(readyTasks(tasks).map((t) => t.id)).toEqual(["task-z", "task-a"]);
+    expect(nextTask(tasks)?.id).toBe("task-z");
+  });
+
+  test("a task missing created_at sorts earliest among equal priorities", () => {
+    const noStamp = { id: "task-ns", title: "NS", status: "ready", priority: 3, dependencies: [] };
+    const stamped = {
+      id: "task-sa",
+      title: "SA",
+      status: "ready",
+      priority: 3,
+      dependencies: [],
+      created_at: "2026-07-01T00:00:00+03:00",
+    };
+    const tasks = loadTasks(fixtureRoot([noStamp, stamped]));
+    expect(readyTasks(tasks).map((t) => t.id)).toEqual(["task-ns", "task-sa"]);
+  });
+
+  test("index-backed ordering matches in-memory for the created_at tiebreak", async () => {
+    const records = [
+      { id: "task-p", title: "P", status: "ready", priority: 1, dependencies: [] },
+      { id: "task-q", title: "Q", status: "ready", priority: 1, dependencies: [] },
+      { id: "task-r", title: "R", status: "ready", priority: 1, dependencies: [] },
+    ].map((r, index) => ({
+      ...r,
+      created_at: `2026-07-0${index + 1}T00:00:00+03:00`,
+    }));
+    const root = fixtureRoot(records);
+    const tasks = loadTasks(root);
+    const db = await buildTaskIndex(join(root, ".waystation", "index.sqlite"), tasks);
+    const fromIndex = readyFromIndex(db).map((t) => t.id);
+    db.close();
+    expect(fromIndex).toEqual(readyTasks(tasks).map((t) => t.id));
+    expect(fromIndex).toEqual(["task-p", "task-q", "task-r"]);
+  });
+
   test("index and in-memory readiness agree across every status and blocker state", async () => {
     const records = [
       { id: "dep-done", title: "Done", status: "done", priority: 1, dependencies: [] },
