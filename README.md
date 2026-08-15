@@ -126,8 +126,13 @@ Or, after rebuilding:
 ```
 
 A local MCP client should use one of those commands as the stdio server command
-with `C:\Projects\Waystation` as the working directory. The server is local-only
-and does not require a daemon or hosted service.
+with the project root as the working directory. The server binds the resolved
+ledger (via `--root`, `WAYSTATION_ROOT`, or upward discovery from the working
+directory) for the whole session. It is local-only and does not require a daemon
+or hosted service.
+
+See [docs/mcp.md](docs/mcp.md) for both launch modes, ledger discovery rules,
+the available tools, client configuration examples, and smoke checks.
 
 ## CLI
 
@@ -180,7 +185,7 @@ src/
   index/           bun:sqlite adapter (node:sqlite fallback) + task index
 test/              bun:test suite
 .waystation/       the ledger (see below)
-docs/              roadmap.md, error-philosophy.md
+docs/              roadmap.md, error-philosophy.md, mcp.md, migration-guide.md, release-packaging.md
 adr/               architecture decision records
 agentledger-spec.md   the full product spec
 ```
@@ -236,6 +241,7 @@ not on PATH, or use `.\waystation.exe` after rebuilding.
 
 - [docs/roadmap.md](docs/roadmap.md) — phased plan and current state
 - [docs/error-philosophy.md](docs/error-philosophy.md) — error/diagnostic model
+- [docs/mcp.md](docs/mcp.md) — MCP stdio server launch modes, discovery, and client setup
 - [docs/migration-guide.md](docs/migration-guide.md) — migrating from other task systems
 - [docs/release-packaging.md](docs/release-packaging.md) — release checklist, version bumps, binary handling, and fresh-clone smoke checks
 - [agentledger-spec.md](agentledger-spec.md) — full specification
