@@ -44,7 +44,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.2.0" },
+    { name: "waystation", version: "0.3.0" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -74,7 +74,10 @@ function buildServerAtRoot(root: string): McpServer {
 
   server.registerTool(
     "get_next_task",
-    { description: "The single highest-priority ready task, or null if none" },
+    {
+      description:
+        "The single highest-priority declared-ready task whose dependencies are done or wont_do, or null if none",
+    },
     async () => {
       const task = nextTask(loadTasks(root));
       return toContent(okResult(task));

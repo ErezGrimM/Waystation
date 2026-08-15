@@ -141,6 +141,7 @@ the available tools, client configuration examples, and smoke checks.
 ```sh
 # tasks
 waystation task next|ready|list|show <id>
+waystation task audit          # dependency-satisfied todo tasks (promote intentionally)
 waystation task claim|release|finish <id> --agent <name>
 
 # briefs, validation, generation

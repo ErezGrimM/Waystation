@@ -51,7 +51,13 @@ import {
   sweepTmpDirs,
   withLedgerLock,
 } from "../src/core/store.ts";
-import { indexById, nextTask, readyTasks, taskReadiness } from "../src/core/tasks.ts";
+import {
+  auditPromotableTasks,
+  indexById,
+  nextTask,
+  readyTasks,
+  taskReadiness,
+} from "../src/core/tasks.ts";
 import { safeIdPart } from "../src/core/time.ts";
 import { validateLedger } from "../src/core/validate.ts";
 import {
@@ -688,6 +694,41 @@ describe("bun:sqlite index", () => {
     expect(loadTasks(root).find((task) => task.id === "task-y")?.status).toBe("in_progress");
   });
 
+  test("auditPromotableTasks lists only dependency-satisfied todo tasks", () => {
+    const todoReady = {
+      id: "task-tr",
+      title: "TR",
+      status: "todo",
+      priority: 2,
+      dependencies: ["task-a"],
+    };
+    const todoBlocked = {
+      id: "task-tb",
+      title: "TB",
+      status: "todo",
+      priority: 1,
+      dependencies: ["task-b"],
+    };
+    const loaded = loadTasks(fixtureRoot([A, B, todoReady, todoBlocked]));
+    expect(auditPromotableTasks(loaded).map((t) => t.id)).toEqual(["task-tr"]);
+  });
+
+  test("auditPromotableTasks never promotes: candidates stay todo and non-actionable", () => {
+    const todoReady = {
+      id: "task-tr",
+      title: "TR",
+      status: "todo",
+      priority: 2,
+      dependencies: ["task-a"],
+    };
+    const loaded = loadTasks(fixtureRoot([A, todoReady]));
+    expect(nextTask(loaded)).toBeNull();
+    expect(auditPromotableTasks(loaded).map((t) => t.id)).toEqual(["task-tr"]);
+    expect(loadTasks(fixtureRoot([A, todoReady])).find((t) => t.id === "task-tr")?.status).toBe(
+      "todo",
+    );
+  });
+
   test("index and in-memory readiness agree across every status and blocker state", async () => {
     const records = [
       { id: "dep-done", title: "Done", status: "done", priority: 1, dependencies: [] },
@@ -983,6 +1024,26 @@ describe("CLI: task list / show", () => {
     const r = run(["task", "show", "task-nope"]);
     expect(r.code).toBe(1);
     expect(r.err).toContain("no such task");
+  });
+
+  test("task audit lists dependency-satisfied todo tasks without promoting", () => {
+    const localRoot = fixtureRoot([
+      A,
+      B,
+      { ...A, id: "task-cli-todo", title: "Promotable", status: "todo", priority: 2 },
+    ]);
+    const r = Bun.spawnSync({
+      cmd: [process.execPath, "run", cli, "task", "audit", "--json"],
+      cwd: localRoot,
+    });
+    expect(r.exitCode).toBe(0);
+    const res = JSON.parse(r.stdout.toString()) as {
+      ok: boolean;
+      data: Array<{ id: string; status: string }>;
+    };
+    expect(res.ok).toBe(true);
+    expect(res.data.map((t) => t.id)).toEqual(["task-cli-todo"]);
+    expect(res.data.every((t) => t.status === "todo")).toBe(true);
   });
 
   test("brief rejects an invalid budget with a coded diagnostic", () => {

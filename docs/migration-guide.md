@@ -101,6 +101,12 @@ Task status mapping:
 | Completed / shipped | `done` |
 | Canceled / rejected / duplicate | `wont_do` |
 
+Readiness is derived: a task is actionable only when its status is `ready` and
+every dependency is satisfied (`done` or `wont_do`). `todo` is backlog — it
+never appears in `task next`, even with satisfied dependencies. After migrating,
+use `waystation task audit` to list dependency-satisfied `todo` records, then
+promote genuinely-ready work to `ready` deliberately.
+
 Priority mapping:
 
 | Source meaning | Waystation priority |

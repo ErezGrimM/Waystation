@@ -261,6 +261,14 @@ wont_do
 
 `claimed` should not be a task status. Claim state is tracked separately.
 
+Readiness is **derived, never persisted**: a task is actionable (appears in
+`task next` / `task ready`, and claimable) only when its declared status is
+`ready` **and** every dependency is satisfied (a dependency is satisfied when
+it is `done` or `wont_do`). A `todo` task is backlog: it never appears as
+ready or claimable, even when its dependencies are satisfied. Promoting backlog
+to `ready` is an explicit, intentional act (`task audit` lists dependency-
+satisfied `todo` tasks for that purpose without promoting them).
+
 ### 6.3 Issue
 
 Issues track bugs, blockers, ambiguities, quality problems, and review findings.

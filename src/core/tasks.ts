@@ -72,6 +72,21 @@ export function readyTasks(tasks: TaskRecord[]): TaskRecord[] {
   return tasks.filter((t) => isActionable(t, byId)).sort(byPriorityThenId);
 }
 
+/**
+ * Todo tasks whose dependencies are all satisfied. These are candidates for
+ * intentional promotion to `ready` during a migration audit. They are never
+ * promoted automatically: readiness requires the declared `ready` status, so
+ * listing them here changes nothing by itself.
+ */
+export function auditPromotableTasks(tasks: TaskRecord[]): TaskRecord[] {
+  const byId = indexById(tasks);
+  return tasks
+    .filter(
+      (t) => t.status === "todo" && t.dependencies.every((d) => dependencySatisfied(byId.get(d))),
+    )
+    .sort(byPriorityThenId);
+}
+
 /** The single next task to work on, or null if none are ready. */
 export function nextTask(tasks: TaskRecord[]): TaskRecord | null {
   return readyTasks(tasks)[0] ?? null;

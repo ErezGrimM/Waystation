@@ -25,10 +25,10 @@ Cross-cutting principles that hold across every phase:
 
 ---
 
-## Current State (2026-07-15)
+## Current State (2026-08-15)
 
 **Runtime:** Bun 1.3.14 (local at `C:\bun`, not on PATH). Node 24 works as a
-fallback. The ledger validates cleanly. **Version:** 0.0.3.
+fallback. The ledger validates cleanly. **Version:** 0.3.0.
 
 **V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
 rebuildable SQLite index (all record types); `validate`; `task
@@ -44,14 +44,26 @@ commands with a stable code catalog and coverage test.
 briefs can resolve from the current git claim context, validation warns on
 overlapping active claims, and dashboard/MCP surfaces git context.
 
+**Operational hardening:** complete. Legacy UTC-`Z` timestamps were normalized,
+validation enforces filesystem-safe ids and filename/body-id agreement, generated
+reports/views regenerate cleanly, and events.jsonl appends are defended against
+missing trailing newlines (with a `waystation repair` tool for legacy files).
+
 **External integrations:** GitHub Issues import/export and Graphify brief
 enrichment are implemented and remain optional.
+
+**Release path:** complete. Fresh-clone smoke checklist, binary distribution
+notes (`docs/binary-distribution.md`), MCP launch examples (`docs/mcp.md`), and a
+commit-aware release checklist (`docs/release-packaging.md`) are all recorded.
+Migration/readiness behavior is codified (`waystation task audit`) and
+documented consistently across the spec, guide, and AGENTS.md.
 
 **Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
 features; worktree messages are scoped to the current checkout/worktree for V1.
 
-**Next:** Phase 9 operational hardening. UX polish is intentionally deferred to
-a later phase; release packaging follows hardening.
+**Next:** close the remaining operational-audit follow-ups
+(`task-audit-ranking-policy`, `task-operational-audit-corrections`). UX polish
+remains intentionally deferred to Phase 11.
 
 ---
 
@@ -171,14 +183,14 @@ Exit criteria:
 
 ---
 
-## Phase 9 — Operational Hardening
+## Phase 9 — Operational Hardening ✅ DONE (2026-07-16)
 
 Goal: tighten the existing system before adding more user-facing surface area.
 This phase is about trust: validation catches the shapes that migration and
 generated artifacts can introduce, old ledger data is normalized where useful,
 and generated outputs are audited for safety and correctness.
 
-Planned slices:
+Slices (all complete):
 - Normalize older UTC-`Z` timestamps to the current local-offset convention, or
   document a deliberate reason to leave any record unchanged.
 - Audit generated Markdown/context views for escaping, stale content, and
@@ -194,7 +206,7 @@ Out of scope:
 - New hosted services or external systems beyond the current optional GitHub
   support.
 
-Exit criteria:
+Exit criteria (met):
 - `waystation validate` catches the agreed migration/import edge cases.
 - Generated reports/views can be regenerated cleanly with no unsafe Markdown
   output or unexplained drift.
@@ -209,8 +221,10 @@ Progress:
 - Validation now enforces filesystem-safe record ids/references and flags
   filename/body-id mismatches; GitHub import rejects malformed issue payloads
   before writing ledger records.
+- `events.jsonl` appends are defended against missing trailing newlines;
+  `waystation repair` normalizes legacy files safely.
 
-## Phase 10 — Release Packaging
+## Phase 10 — Release Packaging ✅ DONE (2026-08-15)
 
 Goal: make Waystation straightforward to install, rebuild, smoke-test, and hand
 to another local agent or human after the hardening pass is complete.
@@ -220,10 +234,11 @@ Completed slices:
 - Task commit-reference support for traceable completion.
 - Release checklist covering version bumps, deterministic sync, ignored binary
   handling, commit-aware task closure, and final handoff.
-
-Remaining slices:
-- MCP launch examples for compiled and source modes.
-- Binary distribution notes and artifact naming.
+- MCP launch examples for compiled and source modes (`docs/mcp.md`).
+- Binary distribution notes and artifact naming (`docs/binary-distribution.md`).
+- Migration-audit query (`waystation task audit`) listing dependency-satisfied
+  `todo` tasks without auto-promotion, with consistent readiness/status wording
+  across the spec, guide, README, and AGENTS.md.
 
 ## Phase 11 — UX Polish
 

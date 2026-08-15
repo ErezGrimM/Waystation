@@ -39,7 +39,7 @@ import { CODES, type CommandResult, diag, okResult, toResult } from "../core/res
 import type { IssueRecord, TaskStatus } from "../core/schema.ts";
 import { loadIssues } from "../core/store.ts";
 import { syncLedger } from "../core/sync.ts";
-import { nextTask, readyTasks } from "../core/tasks.ts";
+import { auditPromotableTasks, nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
 import { backendWarnings } from "../index/ledgerIndex.ts";
 import { buildTaskIndex, readyFromIndex } from "../index/taskIndex.ts";
@@ -50,7 +50,7 @@ program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
   .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
-  .version("0.2.0");
+  .version("0.3.0");
 
 // Keep root selection in the core resolver, but make the CLI's explicit flag
 // available to every subcommand without duplicating root plumbing.
@@ -131,6 +131,26 @@ task
       }
       for (const t of tasks) {
         process.stdout.write(`${t.id}  [p${t.priority}]  ${t.status.padEnd(11)}  ${t.title}\n`);
+      }
+    });
+  });
+
+task
+  .command("audit")
+  .description("List dependency-satisfied todo tasks (candidates for intentional promotion)")
+  .option("--json", "output JSON")
+  .action((opts: { json?: boolean }) => {
+    const tasks = auditPromotableTasks(loadTasks());
+    emitResult(okResult(tasks), opts.json, () => {
+      if (tasks.length === 0) {
+        process.stdout.write("No dependency-satisfied todo tasks.\n");
+        return;
+      }
+      process.stdout.write(
+        "dependency-satisfied todo tasks (promote to ready intentionally, never automatically):\n",
+      );
+      for (const t of tasks) {
+        process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
       }
     });
   });

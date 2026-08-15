@@ -93,15 +93,19 @@ todo → ready → in_progress → review → done
                 ↘ blocked  ↗        ↘ wont_do
 ```
 
-- **todo**: drafted but not yet actionable (has unmet deps, needs more detail)
-- **ready**: all deps done, ready to claim
+- **todo**: drafted but not yet actionable (backlog until intentionally promoted)
+- **ready**: declared ready to claim (deps must be done or wont_do)
 - **in_progress**: claimed by an agent, work happening
 - **blocked**: can't proceed until a blocker is resolved
 - **review**: implementation done, awaiting sign-off
 - **done**: finished and closed
 - **wont_do**: explicitly declined
 
-A task is "actionable" (appears in `task next`) when its status is `todo` or `ready` and ALL its dependencies are `done`.
+A task is "actionable" (appears in `task next` / `task ready`) when its status
+is `ready` and ALL its dependencies are `done` or `wont_do`. `todo` tasks never
+appear as ready, even with satisfied dependencies — promote one to `ready`
+intentionally (see `task audit`, which lists dependency-satisfied `todo` tasks
+without promoting them).
 
 ### Writing good tasks
 
@@ -254,7 +258,7 @@ Before marking a task done, run ALL of these:
 | `src/core/mutate.ts` | `claimTask`, `releaseTask`, `finishTask` |
 | `src/core/messages.ts` | `postMessage`, `inbox`, `threadMessages` |
 | `src/core/git.ts` | `getGitState` (branch, worktree, status) |
-| `src/core/paths.ts` | `findProjectRoot`, `ledgerPaths` |
+| `src/core/paths.ts` | `resolveLedgerRoot` (explicit root → WAYSTATION_ROOT → upward discovery), `ledgerPaths` |
 | `src/cli/index.ts` | CLI entry (commander) |
 | `src/mcp/server.ts` | MCP tools over core |
 | `src/dashboard/server.ts` | Hono API routes over core |
