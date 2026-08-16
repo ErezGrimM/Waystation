@@ -50,7 +50,7 @@ program
   .name("waystation")
   .description("Local-first ledger for coordinating humans and AI coding agents")
   .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
-  .version("0.3.0");
+  .version("0.4.0");
 
 // Keep root selection in the core resolver, but make the CLI's explicit flag
 // available to every subcommand without duplicating root plumbing.
