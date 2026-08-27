@@ -2,8 +2,7 @@
 
 # task\-bun\-1\-4\-release — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 status: ready  priority: 2  scope: scope-cli
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-bun\-1\-4\-parallel\-verification
+readiness: actionable  reason: declared_ready
 
 Close the Bun 1\.4 migration as the Waystation 0\.5\.0 release\. Reconcile the compatibility and feature\-adoption work, bump every Waystation version authority, rebuild generated project state and the self\-contained executable, execute the full source/fresh\-clone/compiled verification matrix, preserve recoverable Bun 1\.3\.14 and Waystation 0\.4\.0 rollback artifacts, switch the canonical local Bun path only after all gates pass, and follow the commit\-aware release workflow so the task records the implementation commit before ledger closure\.
 

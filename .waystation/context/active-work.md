@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
+_none_
 
 ## Ready
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Coordination warnings
 _none_

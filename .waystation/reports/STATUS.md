@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## In progress
-- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
+_none_
 
 ## Review
 _none_
@@ -15,7 +15,7 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+_none_
 
 ## Backlog (todo)
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
@@ -61,6 +61,7 @@ _none_
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
 - `task-bun-1-4-compatibility` [p2] — Migrate Waystation's runtime contract to Bun 1\.4\.0
 - `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
+- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
