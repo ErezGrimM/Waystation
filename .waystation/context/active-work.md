@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-- `task-bun-1-4-dependency-remediation` [p1] — Remediate Bun 1\.4 dependency advisories
+_none_
 
 ## Ready
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Coordination warnings
 _none_

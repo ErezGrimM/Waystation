@@ -2,10 +2,10 @@
   "id": "claim-task-bun-1-4-dependency-remediation-codex-20260828-003813-c419a694",
   "task": "task-bun-1-4-dependency-remediation",
   "agent": "codex",
-  "status": "active",
+  "status": "completed",
   "branch": "main",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-08-28T00:38:13+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-08-28T00:39:58+03:00"
 }
