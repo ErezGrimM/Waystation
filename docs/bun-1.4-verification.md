@@ -63,7 +63,11 @@ test suite.
 The migration audit initially found 15 advisories (7 high, 7 moderate, 1 low).
 The dry run identified 14 patch-fixable advisories; the remaining React Router
 advisory requires its locked package family to move together. Dependency
-remediation is therefore a release gate, not an ignored warning.
+remediation was treated as a release gate, not an ignored warning. The reviewed
+fix updated six transitive lockfile resolutions and moved `react-router-dom`
+with `react-router` from 7.18.1 to 7.18.2. The post-remediation audit reports
+zero known vulnerabilities, `bun dedupe --check` reports no duplicates, and
+the license inventory succeeds.
 
 See Bun's documentation for
 [audit](https://bun.sh/docs/pm/cli/audit),

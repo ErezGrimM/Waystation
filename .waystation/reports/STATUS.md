@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+_none_
 
 ## In progress
-_none_
+- `task-bun-1-4-dependency-remediation` [p1] — Remediate Bun 1\.4 dependency advisories
 
 ## Review
 _none_
@@ -15,7 +15,7 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Backlog (todo)
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
