@@ -9,7 +9,7 @@ page is about the artifacts themselves.
 ## Canonical build command
 
 ```ps1
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun build --compile src/cli/index.ts --outfile waystation.exe
 ```
 
@@ -99,7 +99,7 @@ globally.
 
 ```ps1
 # From the Waystation checkout: refresh the current bundle.
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun build --compile src/cli/index.ts --outfile waystation.exe
 New-Item -ItemType Directory -Force dist\waystation-latest | Out-Null
 Copy-Item waystation.exe dist\waystation-latest\waystation.exe -Force

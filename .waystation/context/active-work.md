@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-bun-1-4-compatibility` [p2] — Migrate Waystation's runtime contract to Bun 1\.4\.0
 
 ## Ready
 _none_

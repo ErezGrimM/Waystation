@@ -6,7 +6,7 @@
 _none_
 
 ## In progress
-_none_
+- `task-bun-1-4-compatibility` [p2] — Migrate Waystation's runtime contract to Bun 1\.4\.0
 
 ## Review
 _none_
@@ -15,7 +15,9 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-_none_
+- `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
+- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Backlog (todo)
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim

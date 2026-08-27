@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-compatibility-codex-20260828-000710-qdat",
+  "thread": "task-bun-1-4-compatibility",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Baseline and staging evidence recorded before any canonical runtime change. Planning checkpoint: b9428bb. Bun 1.3.14 baseline: C:\\bun\\bin\\bun.exe, revision 1.3.14+0d9b296af, SHA-256 0187F68D843F825A72ADA4A7ECA60DB896ED753759A7F8252EDCD31AC1BF1B9C. Verification: 243 tests passed across 6 files in 19.32s; typecheck passed; Biome passed; ledger validate returned 0 errors and 3 expected dependency-wait warnings. Rollback Bun copy: C:\\bun\\versions\\1.3.14\\bun.exe with matching hash. Waystation 0.4.0 rollback: C:\\Projects\\Waystation\\dist\\waystation-0.4.0\\waystation.exe, 99,918,336 bytes, SHA-256 465B5620B9322695BAA5E985A75A0ED71716831ABE39BFCA04B3EF4BD81EB43B; --version, validate, task next, and brief smokes passed. Matching pre-migration package.json and bun.lock are stored beside it. Bun 1.4.0 staged side-by-side: C:\\bun\\versions\\1.4.0\\bun.exe, revision 1.4.0+34cbb9a40, 88,825,944 bytes, binary SHA-256 627D2E4775C24BDEDEE2CD7CCC18DCADAE061E5345274AB6E3C4C797927BFB8F. The official release archive matched GitHub asset SHA-256 E6F093D39DA486B20262CA8CDD5ED6A9E8BC9C2F275B78E6D3A0C5B28CC95901. Canonical C:\\bun\\bin\\bun.exe remains Bun 1.3.14 and is unchanged.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:07:10+03:00"
+}

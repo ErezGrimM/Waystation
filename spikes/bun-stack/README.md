@@ -35,6 +35,10 @@ modes.
 
 ## Results On 2026-07-06
 
+This section is historical compatibility evidence from the original stack
+decision. The maintained project runtime is now Bun 1.4.0; these results remain
+unchanged so the original Bun 1.3.14 spike stays reproducible and auditable.
+
 Environment:
 
 - Local Bun binary installed under `.tools/bun/`.

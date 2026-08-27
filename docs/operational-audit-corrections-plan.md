@@ -443,7 +443,7 @@ No automatic mass promotion is allowed. Rollback uses the previous binary; new o
 Run the complete project checklist:
 
 ```powershell
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun test
 & $bun run typecheck
 & $bun run check

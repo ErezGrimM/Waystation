@@ -25,10 +25,13 @@ Cross-cutting principles that hold across every phase:
 
 ---
 
-## Current State (2026-08-15)
+## Current State (2026-08-28)
 
-**Runtime:** Bun 1.3.14 (local at `C:\bun`, not on PATH). Node 24 works as a
-fallback. The ledger validates cleanly. **Version:** 0.3.0.
+**Runtime:** Bun 1.4.0 (pinned in `package.json`, staged locally at
+`C:\bun\versions\1.4.0\bun.exe`, not on PATH). The Bun 1.3.14 binary remains a
+rollback until the 0.5.0 release gate. Node 22+ remains the supported fallback
+for the portable core/SQLite adapter. The ledger validates cleanly.
+**Version:** 0.4.0.
 
 **V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
 rebuildable SQLite index (all record types); `validate`; `task

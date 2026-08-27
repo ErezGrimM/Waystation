@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-compatibility-codex-20260828-000400-k6mp",
+  "thread": "task-bun-1-4-compatibility",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting Bun 1.4.0 compatibility migration. I will first capture the Bun 1.3.14 / Waystation 0.4.0 baseline and preserve rollback artifacts, then stage Bun 1.4.0 side-by-side. The canonical C:\\bun\\bin\\bun.exe will remain unchanged until the final release gate.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:04:00+03:00"
+}

@@ -15,7 +15,7 @@ the implementation/version commit exists so the task can record that commit.
 
 ```ps1
 cd C:\Projects\Waystation
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 $task = "task-release-id"
 $agent = "agent-name"
 $version = "0.1.0" # replace with the approved target
@@ -171,7 +171,9 @@ where you are not sure hidden state exists.
 Assumptions:
 
 - Windows PowerShell is the primary shell.
-- Bun is installed at `C:\bun\bin\bun.exe`; it may not be on `PATH`.
+- Bun 1.4.0 is staged at `C:\bun\versions\1.4.0\bun.exe`; it may not be on
+  `PATH`. `C:\bun\bin\bun.exe` remains the Bun 1.3.14 rollback until the 0.5.0
+  release gate.
 - Canonical ledger state lives in `.waystation/*.json` and `events.jsonl`.
 - `waystation.exe`, `index.sqlite`, Graphify output, and local distribution
   bundles are ignored build artifacts. Generated ledger Markdown is tracked;
@@ -183,7 +185,7 @@ From a fresh checkout:
 
 ```ps1
 cd C:\Projects\Waystation
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 
 # Install dependencies and verify source mode.
 & $bun install

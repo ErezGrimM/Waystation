@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-compatibility-codex-20260828-001626-sxby",
+  "thread": "task-bun-1-4-compatibility",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Bun 1.4 compatibility verification complete while canonical C:\\bun\\bin\\bun.exe remains 1.3.14+0d9b296af (SHA-256 0187F68D843F825A72ADA4A7ECA60DB896ED753759A7F8252EDCD31AC1BF1B9C). Rollback: C:\\bun\\versions\\1.3.14\\bun.exe (matching hash) plus ignored dist\\waystation-0.4.0 artifacts. Staged runtime: C:\\bun\\versions\\1.4.0\\bun.exe, 1.4.0+34cbb9a40, SHA-256 627D2E4775C24BDEDEE2CD7CCC18DCADAE061E5345274AB6E3C4C797927BFB8F. Bun 1.4 accepted the untouched 1.3 lockfile with install --frozen-lockfile; migrated lockfile remains format v1 and has SHA-256 A44B123B4F9831A950623BA2E434D756923375AFF83237674A3FA66C5625DB8E; migrated frozen install passed. Verification: 243/243 tests, typecheck, Biome, sync --views, validate --project --views, source CLI/brief, live Bun.serve dashboard API, MCP/dashboard/Git/SQLite/concurrency coverage all passed. Bun 1.4 compiled artifact: dist\\bun-1.4-compat\\waystation.exe, 90,262,528 bytes, SHA-256 3D71F1FA1676DCDA74A57F87DF0EC0CBC30BDBC987DA69FDBE76795B102880CA. From an unrelated cwd containing invalid package.json and tsconfig.json it passed --version, validate, task next, brief, and live dashboard API reachability, confirming caller config is not autoloaded. Audit and deferred feature boundary: docs/bun-1.4-migration.md.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:16:26+03:00"
+}

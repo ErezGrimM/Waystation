@@ -20,16 +20,18 @@ current follow-up queue.
   also works as a fallback (SQLite falls back to `node:sqlite`), but Bun is the
   target.
 
-> **This dev machine:** Bun is installed at `C:\bun\bin\bun.exe` and is **not on
-> PATH**. Use the full path, e.g. `& C:\bun\bin\bun.exe test`, or add
-> `C:\bun\bin` to PATH. Examples below assume `bun` is on PATH.
+> **This dev machine:** the pinned Bun 1.4.0 binary is staged at
+> `C:\bun\versions\1.4.0\bun.exe` and is **not on PATH**. Use the full path,
+> e.g. `& C:\bun\versions\1.4.0\bun.exe test`. The canonical
+> `C:\bun\bin\bun.exe` remains the Bun 1.3.14 rollback until the 0.5.0 release
+> gate. Examples below assume `bun` is on PATH.
 
 ## Quickstart
 
 PowerShell on this repository:
 
 ```ps1
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun install
 & $bun test
 & $bun run typecheck
@@ -72,7 +74,7 @@ Use this while developing or when you want the latest TypeScript code without
 rebuilding the binary:
 
 ```ps1
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun run src/cli/index.ts task next
 & $bun run src/cli/index.ts brief --task task-id --budget medium
 ```
@@ -89,7 +91,7 @@ Use this when handing the project to another local agent or when you want a
 single executable command surface:
 
 ```ps1
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun build --compile src/cli/index.ts --outfile waystation.exe
 .\waystation.exe task next
 .\waystation.exe brief --task task-id --budget small
@@ -117,7 +119,7 @@ it from the project checkout so `findProjectRoot()` resolves the intended
 ledger:
 
 ```ps1
-$bun = "C:\bun\bin\bun.exe"
+$bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun run src/cli/index.ts mcp
 ```
 
@@ -246,8 +248,9 @@ Work is tracked in the ledger itself. A typical slice:
    `waystation reindex && waystation report --views`.
 6. Confirm `waystation validate` is clean; commit.
 
-On this Windows checkout, replace `bun` with `& C:\bun\bin\bun.exe` when Bun is
-not on PATH, or use `.\waystation.exe` after rebuilding.
+On this Windows checkout, replace `bun` with
+`& C:\bun\versions\1.4.0\bun.exe` when Bun is not on PATH, or use
+`.\waystation.exe` after rebuilding.
 
 ## More
 
