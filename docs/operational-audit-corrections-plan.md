@@ -450,7 +450,7 @@ $bun = "C:\bun\versions\1.4.0\bun.exe"
 .\waystation.exe sync --views
 .\waystation.exe validate --project
 graphify update .
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 ```
 
 Also smoke-test the compiled CLI, MCP startup, dashboard startup, a fresh ledger, an unrelated directory, and two real Git worktrees sharing one explicit ledger.

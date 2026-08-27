@@ -701,6 +701,47 @@ describe("dashboard API server", () => {
     rmSync(join(testRoot, "secret-marker.txt"), { force: true });
   });
 
+  test("production static routes serve assets and SPA fallbacks without traversal", async () => {
+    const distDir = join(testRoot, "dashboard-dist");
+    const assetsDir = join(distDir, "assets");
+    mkdirSync(assetsDir, { recursive: true });
+    writeFileSync(
+      join(distDir, "index.html"),
+      '<!doctype html><script type="module" src="/assets/index-test1234.js"></script>',
+    );
+    writeFileSync(join(assetsDir, "index-test1234.js"), "console.log('embedded asset')");
+    writeFileSync(join(assetsDir, "index-test1234.css"), "body { color: white; }");
+    writeFileSync(join(distDir, "favicon.ico"), "test-icon");
+    writeFileSync(join(distDir, "secret-marker.js"), "TOP-SECRET-CONTENTS");
+
+    const app = createApp(testRoot, distDir);
+    const index = await app.request("/");
+    expect(index.status).toBe(200);
+    expect(index.headers.get("content-type")).toContain("text/html");
+
+    const script = await app.request("/assets/index-test1234.js");
+    expect(script.status).toBe(200);
+    expect(script.headers.get("content-type")).toContain("javascript");
+
+    const style = await app.request("/assets/index-test1234.css");
+    expect(style.status).toBe(200);
+    expect(style.headers.get("content-type")).toContain("text/css");
+
+    const favicon = await app.request("/favicon.ico");
+    expect(favicon.status).toBe(200);
+
+    const spa = await app.request("/tasks/test-task");
+    expect(spa.status).toBe(200);
+    expect(await spa.text()).toContain("/assets/index-test1234.js");
+
+    const missing = await app.request("/assets/missing.js");
+    expect(missing.status).toBe(404);
+
+    const traversal = await app.request("/assets/%2e%2e%2fsecret-marker.js");
+    expect(traversal.status).toBe(404);
+    expect(await traversal.text()).not.toContain("TOP-SECRET-CONTENTS");
+  });
+
   // M2: a malformed record surfaces a coded envelope without leaking the path.
   test("a malformed record does not leak the absolute file path", async () => {
     const app = createApp(testRoot);

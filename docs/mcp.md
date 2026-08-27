@@ -37,8 +37,11 @@ Rebuild the binary after source changes:
 
 ```ps1
 $bun = "C:\bun\versions\1.4.0\bun.exe"
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 ```
+
+This canonical build also embeds the production dashboard. MCP and CLI modes
+remain available from the same self-contained executable.
 
 ### Choosing between them
 
@@ -46,7 +49,7 @@ $bun = "C:\bun\versions\1.4.0\bun.exe"
 |---|---|---|
 | Command | `& $bun run <checkout>\src\cli\index.ts mcp` | `.\waystation.exe mcp` |
 | Requires Bun | yes (`C:\bun\versions\1.4.0\bun.exe`) | no |
-| Tracks source | yes (no rebuild) | only after `bun build --compile` |
+| Tracks source | yes (no rebuild) | only after `bun run build` |
 | Best for | developing Waystation itself | MCP clients, other local projects |
 
 ## Working directory and ledger discovery

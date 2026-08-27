@@ -131,6 +131,21 @@ function originGuard(url: string, method: string, origin: string | undefined): R
   return null;
 }
 
+/** Dashboard source root, independent of the ledger selected by --root. */
+export function dashboardClientDir(): string {
+  return join(import.meta.dir, "client");
+}
+
+/**
+ * Production assets live beside this module in source mode and under the same
+ * relative path in Bun's embedded filesystem after `bun build --compile --asset`.
+ */
+export function productionDashboardDir(): string {
+  return Bun.isStandaloneExecutable
+    ? join(import.meta.dir, "dist")
+    : join(dashboardClientDir(), "dist");
+}
+
 /** Create a dashboard bound to one validated ledger root. */
 export function createApp(root?: string, distDir?: string): Hono {
   return createAppAtRoot(resolveLedgerRoot({ explicitRoot: root }), distDir);
@@ -664,7 +679,9 @@ function createAppAtRoot(root: string, distDir?: string): Hono {
 
   if (distDir) {
     app.get("/assets/*", async (c) => {
-      const target = fileWithin(join(distDir, "assets"), join(distDir, c.req.path));
+      const assetRoot = join(distDir, "assets");
+      const relativePath = c.req.path.slice("/assets/".length);
+      const target = fileWithin(assetRoot, join(assetRoot, relativePath));
       if (!target) return c.notFound();
       const file = Bun.file(target);
       if (await file.exists()) return new Response(file);

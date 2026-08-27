@@ -42,7 +42,7 @@ $bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun run src/cli/index.ts task next
 
 # build and smoke-test the standalone binary
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 .\waystation.exe --version
 .\waystation.exe validate
 ```
@@ -60,7 +60,7 @@ bun run src/cli/index.ts --help
 bun run src/cli/index.ts task next
 
 # build the standalone binary
-bun build --compile src/cli/index.ts --outfile waystation.exe
+bun run build
 ```
 
 ## Running Waystation
@@ -92,17 +92,20 @@ single executable command surface:
 
 ```ps1
 $bun = "C:\bun\versions\1.4.0\bun.exe"
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 .\waystation.exe task next
 .\waystation.exe brief --task task-id --budget small
 ```
 
-Rebuild `waystation.exe` after any change under `src/`, `package.json`, or
-`bun.lock`, and before asking another agent to rely on the compiled CLI. For
-docs-only or ledger-only changes, a rebuild is optional unless you want to
-refresh the handoff artifact. See [docs/binary-distribution.md](docs/binary-distribution.md)
-for artifact naming, the local distribution bundle convention, and copying the
-binary to another local project.
+`bun run build` first builds the Vite/React dashboard, then embeds that output
+with Bun 1.4's `--asset` support. The resulting `waystation.exe` serves its UI
+without an adjacent `dist` directory or source checkout. Rebuild it after any
+change under `src/`, `package.json`, or `bun.lock`, and before asking another
+agent to rely on the compiled CLI. For docs-only or ledger-only changes, a
+rebuild is optional unless you want to refresh the handoff artifact. See
+[docs/binary-distribution.md](docs/binary-distribution.md) for artifact naming,
+the local distribution bundle convention, and copying the binary to another
+local project.
 
 Minimum binary smoke checks:
 
@@ -243,7 +246,7 @@ Work is tracked in the ledger itself. A typical slice:
 2. `waystation task claim <id> --agent <you>`.
 3. Implement until `bun test`, `bun run typecheck`, and `bun run check` are green.
 4. Rebuild after code changes:
-   `bun build --compile src/cli/index.ts --outfile waystation.exe`.
+   `bun run build`.
 5. `waystation task finish <id> --agent <you>`, then
    `waystation reindex && waystation report --views`.
 6. Confirm `waystation validate` is clean; commit.

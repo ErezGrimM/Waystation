@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-embedded-dashboard-codex-20260828-001943-f9gx",
+  "thread": "task-bun-1-4-embedded-dashboard",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting embedded-dashboard migration. I expect to touch src/dashboard/, src/cli/index.ts, dashboard build scripts/tests, and distribution/release docs; retaining Vite dev mode and testing a copied Bun 1.4 executable from an unrelated project.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:19:43+03:00"
+}

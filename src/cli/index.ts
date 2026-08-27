@@ -1164,18 +1164,19 @@ program
   .option("--dev", "start Vite dev server alongside and proxy to it")
   .option("--port <port>", "port", "8787")
   .action(async (opts: { dev?: boolean; port: string }) => {
-    const { createApp } = await import("../dashboard/server.ts");
-    const { join } = await import("node:path");
+    const { createApp, dashboardClientDir, productionDashboardDir } = await import(
+      "../dashboard/server.ts"
+    );
     const root = findProjectRoot();
-    const distDir = join(root, "src", "dashboard", "client", "dist");
-    const app = createApp(root, opts.dev ? undefined : distDir);
+    const app = createApp(root, opts.dev ? undefined : productionDashboardDir());
     const port = Number(opts.port);
 
     if (opts.dev) {
       const vitePort = 5173;
-      const vDir = join(root, "src", "dashboard", "client");
+      const vDir = dashboardClientDir();
+      const bunExecutable = Bun.isStandaloneExecutable ? "bun" : process.execPath;
       const _viteProc = Bun.spawn(
-        ["bun", "x", "vite", "--port", String(vitePort), "--strictPort"],
+        [bunExecutable, "x", "vite", "--port", String(vitePort), "--strictPort"],
         {
           cwd: vDir,
           stdio: ["ignore", "inherit", "inherit"],

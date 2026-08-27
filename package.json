@@ -9,6 +9,8 @@
   },
   "scripts": {
     "waystation": "bun run src/cli/index.ts",
+    "dashboard:build": "vite build --config src/dashboard/client/vite.config.ts",
+    "build": "\"$npm_execpath\" run dashboard:build && \"$npm_execpath\" build --compile src/cli/index.ts --asset src/dashboard/client/dist --outfile waystation.exe",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "check": "biome check .",

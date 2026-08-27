@@ -3,11 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 
 ## In progress
-_none_
+- `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
 
 ## Review
 _none_

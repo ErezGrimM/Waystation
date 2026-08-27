@@ -10,14 +10,22 @@ page is about the artifacts themselves.
 
 ```ps1
 $bun = "C:\bun\versions\1.4.0\bun.exe"
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 ```
 
 `src/cli/index.ts` is the CLI entrypoint. The compiled output is a single
 self-contained Windows executable (`waystation.exe`) with no Bun runtime
-dependency. For environments that launch bins through Bun instead, the
-`package.json` `bin` field (`waystation` → `./src/cli/index.ts`) serves the
-same entrypoint from source.
+dependency. The package script runs the canonical Vite dashboard build first,
+then compiles the CLI with `--asset src/dashboard/client/dist`; the executable
+therefore serves the production dashboard without a source checkout or an
+adjacent asset directory. For environments that launch bins through Bun
+instead, the `package.json` `bin` field (`waystation` → `./src/cli/index.ts`)
+serves the same entrypoint from source.
+
+The script invokes nested build steps through Bun's `npm_execpath` environment
+value. This keeps every step on the same Bun executable as the outer
+`bun run build` command, including while 1.4.0 is staged beside an older
+rollback binary.
 
 Rebuild whenever `src/`, `package.json`, `bun.lock`, or the release version
 changes (see the release checklist). After building, run the minimum smoke
@@ -100,7 +108,7 @@ globally.
 ```ps1
 # From the Waystation checkout: refresh the current bundle.
 $bun = "C:\bun\versions\1.4.0\bun.exe"
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 New-Item -ItemType Directory -Force dist\waystation-latest | Out-Null
 Copy-Item waystation.exe dist\waystation-latest\waystation.exe -Force
 # (refresh dist\waystation-latest\skills\waystation and README.txt as needed)

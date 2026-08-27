@@ -14,8 +14,8 @@ $bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun run format          # biome format --write .
 & $bun run src/cli/index.ts --help
 
-# Compiled binary (rebuild after changes)
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+# Compiled binary + embedded dashboard (rebuild after changes)
+& $bun run build
 ```
 
 ## Architecture
@@ -224,7 +224,7 @@ If another agent is working on the same scope, coordinate via:
 - Every phase completion or major bug fix: **bump the minor version and reset
   patch** (for example, `0.0.3` → `0.1.0`).
 - Update in: `package.json`, `src/cli/index.ts` (`.version(...)`), `src/mcp/server.ts` (`McpServer` constructor)
-- Rebuild: `& $bun build --compile src/cli/index.ts --outfile waystation.exe`
+- Rebuild: `& $bun run build`
 - Follow the commit-aware checklist in `docs/release-packaging.md` so the task
   records the implementation commit before its ledger-closure commit.
 

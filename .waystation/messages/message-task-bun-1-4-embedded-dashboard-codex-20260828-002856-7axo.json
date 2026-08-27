@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-embedded-dashboard-codex-20260828-002856-7axo",
+  "thread": "task-bun-1-4-embedded-dashboard",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Embedded dashboard verification complete under Bun 1.4.0. Canonical package pipeline (\bun run build) built the Vite frontend then compiled with --asset src/dashboard/client/dist; artifact is 90563584 bytes, SHA-256 357D308C92483C176EA4FD96AA59C50E1A318D448B99EE9031DAB29F9D81C3F0. Full suite: 245/245 tests, typecheck, Biome, source project/views validation, and compiled validation passed. New copied-binary smoke launches from a temp unrelated project with no source/dist directory and verifies CLI version/validate, MCP stdio validate_ledger, root + hashed SPA asset, SPA fallback, API, graph JSON, MIME types, missing assets, and encoded traversal rejection. Source static-route tests also cover favicon when present. Production assets resolve via Bun's embedded import.meta.dir/dist, never the target ledger root; Vite dev source directory is module-relative and uses the currently running Bun executable.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:28:56+03:00"
+}

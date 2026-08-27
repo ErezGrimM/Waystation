@@ -82,7 +82,7 @@ version. The executable is a local handoff artifact and is intentionally not
 committed.
 
 ```ps1
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 
 $actualVersion = (.\waystation.exe --version).Trim()
 if ($actualVersion -ne $version) {
@@ -198,7 +198,7 @@ $bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun run src/cli/index.ts validate --project --views
 
 # Rebuild and smoke-test the executable.
-& $bun build --compile src/cli/index.ts --outfile waystation.exe
+& $bun run build
 .\waystation.exe --version
 .\waystation.exe validate
 .\waystation.exe task next
