@@ -3,10 +3,11 @@
 # Active Work
 
 ## In progress
-- `task-bun-1-4-compatibility` [p2] — Migrate Waystation's runtime contract to Bun 1\.4\.0
+_none_
 
 ## Ready
-_none_
+- `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
+- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 
 ## Coordination warnings
 _none_

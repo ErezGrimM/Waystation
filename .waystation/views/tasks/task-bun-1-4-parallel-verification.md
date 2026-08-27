@@ -2,8 +2,7 @@
 
 # task\-bun\-1\-4\-parallel\-verification — Adopt Bun 1\.4 parallel verification and dependency checks
 status: ready  priority: 2  scope: scope-core
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-bun\-1\-4\-compatibility
+readiness: actionable  reason: declared_ready
 
 Use Bun 1\.4's native parallel test and script execution to shorten the developer feedback loop without weakening the deterministic release gate\. Add explicit package scripts, prove that the six test files are isolated from one another, stress the parallel configuration for fixture, Git, port, and cleanup collisions, and document non\-mutating dependency health commands introduced in Bun 1\.4\. Preserve the existing sequential checks as the authoritative release evidence until parallel execution has demonstrated stability\.
 
