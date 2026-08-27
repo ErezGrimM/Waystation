@@ -1,0 +1,40 @@
+{
+  "id": "task-bun-1-4-release",
+  "title": "Release Waystation 0.5.0 on Bun 1.4.0",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "package.json",
+    "src/cli/index.ts",
+    "src/mcp/server.ts",
+    "AGENTS.md",
+    "README.md",
+    "docs/",
+    ".waystation/",
+    "graphify-out/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-bun-1-4-parallel-verification",
+    "task-bun-1-4-embedded-dashboard"
+  ],
+  "created_at": "2026-08-27T23:58:50+03:00",
+  "updated_at": "2026-08-27T23:58:50+03:00",
+  "closed_at": null,
+  "description": "Close the Bun 1.4 migration as the Waystation 0.5.0 release. Reconcile the compatibility and feature-adoption work, bump every Waystation version authority, rebuild generated project state and the self-contained executable, execute the full source/fresh-clone/compiled verification matrix, preserve recoverable Bun 1.3.14 and Waystation 0.4.0 rollback artifacts, switch the canonical local Bun path only after all gates pass, and follow the commit-aware release workflow so the task records the implementation commit before ledger closure.",
+  "acceptance": [
+    "Waystation version 0.5.0 is identical in package.json, Commander CLI metadata, and MCP server metadata.",
+    "The canonical local Bun binary reports exactly 1.4.0 and its revision is recorded only after the staged 1.4 compatibility, parallel verification, and embedded-dashboard tasks are complete.",
+    "Recoverable rollback artifacts preserve the Bun 1.3.14 binary/revision, the matching pre-migration package.json and bun.lock, and a known-good Waystation 0.4.0 executable or versioned distribution bundle.",
+    "graphify update ., bun test, the parallel test script, bun run typecheck, bun run check, source sync --views, validate --project --views, git diff --check, and ledger validation all pass.",
+    "The fresh-clone checklist succeeds with bun install --frozen-lockfile under Bun 1.4.0 and does not depend on untracked source state, an older executable, or a warm package cache.",
+    "The rebuilt 0.5.0 executable passes CLI mutation/read smokes, MCP stdio handshake, dashboard/API/embedded-asset smokes, and operation from an unrelated directory and a path containing spaces.",
+    "Canonical documentation presents Bun 1.4.0 and the self-contained dashboard build accurately; any remaining 1.3.14 references are explicitly historical or rollback evidence.",
+    "The implementation/version commit is created and added to the task before task finish; the subsequent ledger-closure commit, regenerated views, final validation result, and handoff message follow docs/release-packaging.md."
+  ],
+  "commits": [],
+  "notes": "This is the final dependency gate. Do not absorb Bun.JSONL, Bun.markdown, Bun.Terminal, Bun.cron, Bun.WebView, or Bun.Image adoption into the release task. Those are separate product decisions. Keep the task claimed through the implementation/version commit so the commit-aware release checklist remains valid."
+}

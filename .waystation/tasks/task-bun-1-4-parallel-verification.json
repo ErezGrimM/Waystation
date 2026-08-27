@@ -1,0 +1,35 @@
+{
+  "id": "task-bun-1-4-parallel-verification",
+  "title": "Adopt Bun 1.4 parallel verification and dependency checks",
+  "status": "ready",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "package.json",
+    "test/",
+    "docs/release-packaging.md",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-bun-1-4-compatibility"
+  ],
+  "created_at": "2026-08-27T23:58:50+03:00",
+  "updated_at": "2026-08-27T23:58:50+03:00",
+  "closed_at": null,
+  "description": "Use Bun 1.4's native parallel test and script execution to shorten the developer feedback loop without weakening the deterministic release gate. Add explicit package scripts, prove that the six test files are isolated from one another, stress the parallel configuration for fixture, Git, port, and cleanup collisions, and document non-mutating dependency health commands introduced in Bun 1.4. Preserve the existing sequential checks as the authoritative release evidence until parallel execution has demonstrated stability.",
+  "acceptance": [
+    "package.json provides an explicit parallel test script using bun test --parallel=4 --isolate and a clearly named fast verification script using bun run --parallel for independent checks.",
+    "The existing sequential bun test command remains available and continues to pass with identical functional coverage.",
+    "The parallel test command passes at least ten consecutive runs on Windows without shared temporary-directory, Git fixture, SQLite, server-port, environment, or cleanup collisions.",
+    "Test infrastructure changes use unique fixture roots and deterministic cleanup; they do not hide flakes with retries or relax assertions.",
+    "Developer documentation explains when to use the fast parallel check and keeps the final release checklist sequential unless evidence supports deliberately changing that policy.",
+    "Dependency health guidance covers bun audit, bun audit fix --dry-run, bun dedupe --check, and bun pm licenses, and distinguishes read-only checks from mutating commands.",
+    "bun test, the new parallel test script, bun run typecheck, bun run check, waystation validate, and git diff --check are all clean."
+  ],
+  "commits": [],
+  "notes": "This task may proceed in parallel with task-bun-1-4-embedded-dashboard after the compatibility task is done. Do not make network-dependent audit output part of the offline core test suite. Record sequential and parallel timings for comparison, but correctness and repeatability are the acceptance gates."
+}
