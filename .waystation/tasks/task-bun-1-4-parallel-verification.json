@@ -1,7 +1,7 @@
 {
   "id": "task-bun-1-4-parallel-verification",
   "title": "Adopt Bun 1.4 parallel verification and dependency checks",
-  "status": "ready",
+  "status": "in_progress",
   "priority": 2,
   "scope": "scope-core",
   "path_hints": [
@@ -18,7 +18,7 @@
     "task-bun-1-4-compatibility"
   ],
   "created_at": "2026-08-27T23:58:50+03:00",
-  "updated_at": "2026-08-27T23:58:50+03:00",
+  "updated_at": "2026-08-28T00:30:04+03:00",
   "closed_at": null,
   "description": "Use Bun 1.4's native parallel test and script execution to shorten the developer feedback loop without weakening the deterministic release gate. Add explicit package scripts, prove that the six test files are isolated from one another, stress the parallel configuration for fixture, Git, port, and cleanup collisions, and document non-mutating dependency health commands introduced in Bun 1.4. Preserve the existing sequential checks as the authoritative release evidence until parallel execution has demonstrated stability.",
   "acceptance": [

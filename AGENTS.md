@@ -9,6 +9,7 @@ Everything a coding agent needs to know to contribute to this project.
 # C:\bun\bin\bun.exe remains the Bun 1.3.14 rollback until the release gate.
 $bun = "C:\bun\versions\1.4.0\bun.exe"
 & $bun test                # run test suite
+& $bun run verify:fast     # parallel development preflight
 & $bun run typecheck       # tsc --noEmit
 & $bun run check           # biome check .
 & $bun run format          # biome format --write .

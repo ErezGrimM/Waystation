@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { emitMutationEvent, onMutationEvent } from "../src/core/events.ts";
 import { postMessage } from "../src/core/messages.ts";
@@ -7,7 +8,7 @@ import { firstError } from "../src/dashboard/client/src/api.ts";
 import { claimDisabledReason } from "../src/dashboard/client/src/lifecycle.ts";
 import { createApp } from "../src/dashboard/server.ts";
 
-const testRoot = join(process.cwd(), ".waystation-test-dashboard");
+const testRoot = mkdtempSync(join(tmpdir(), "waystation-dashboard-"));
 
 function setupLedger() {
   rmSync(testRoot, { recursive: true, force: true });
@@ -85,7 +86,7 @@ describe("dashboard API server", () => {
   });
 
   test("GET /api/tasks sort=created_at orders by real instant across offsets", async () => {
-    const root = join(process.cwd(), ".waystation-test-dashboard-sorts");
+    const root = mkdtempSync(join(tmpdir(), "waystation-dashboard-sorts-"));
     rmSync(root, { recursive: true, force: true });
     mkdirSync(root, { recursive: true });
     const ledger = join(root, ".waystation");
@@ -138,7 +139,7 @@ describe("dashboard API server", () => {
   });
 
   test("GET /api/claims orders by claimed_at real instant across offsets", async () => {
-    const root = join(process.cwd(), ".waystation-test-dashboard-claims-sort");
+    const root = mkdtempSync(join(tmpdir(), "waystation-dashboard-claims-sort-"));
     rmSync(root, { recursive: true, force: true });
     mkdirSync(root, { recursive: true });
     const ledger = join(root, ".waystation");

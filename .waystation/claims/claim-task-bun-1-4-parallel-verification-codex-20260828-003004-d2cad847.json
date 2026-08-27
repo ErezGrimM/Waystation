@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-bun-1-4-parallel-verification-codex-20260828-003004-d2cad847",
+  "task": "task-bun-1-4-parallel-verification",
+  "agent": "codex",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-28T00:30:04+03:00",
+  "released_at": null,
+  "completed_at": null
+}

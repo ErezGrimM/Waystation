@@ -28,6 +28,8 @@ git status --short
 - Start from an understood worktree. Do not discard unrelated user or agent
   changes to make it clean.
 - Confirm every dependency of the release task is done.
+- Resolve or explicitly disposition the findings from `bun audit`; advisory
+  remediation is a release input, not part of the offline test suite.
 - Confirm the task is claimed by `$agent` and its thread contains the current
   verification status.
 - For a phase completion or major bug fix, increment the minor version and
@@ -61,6 +63,10 @@ read-only validation afterward records a clear final health check.
 ```ps1
 graphify update .
 
+# Optional preflight: parallel tests, typecheck, and Biome for fast feedback.
+& $bun run verify:fast
+
+# Authoritative release evidence remains sequential.
 & $bun test
 & $bun run typecheck
 & $bun run check
@@ -70,6 +76,10 @@ graphify update .
 git diff --check
 git status --short
 ```
+
+See [bun-1.4-verification.md](bun-1.4-verification.md) for the 10-run parallel
+stress result and the read-only dependency audit commands. Do not replace the
+sequential release gate merely because the preflight passes.
 
 Inspect the diff. Expected tracked changes are the intended source/docs,
 canonical ledger records, and regenerated Markdown. `.waystation/index.sqlite`,

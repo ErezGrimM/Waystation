@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 
 ## Ready
-- `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
+_none_
 
 ## Coordination warnings
 _none_

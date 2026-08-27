@@ -11,7 +11,9 @@
     "waystation": "bun run src/cli/index.ts",
     "dashboard:build": "vite build --config src/dashboard/client/vite.config.ts",
     "build": "\"$npm_execpath\" run dashboard:build && \"$npm_execpath\" build --compile src/cli/index.ts --asset src/dashboard/client/dist --outfile waystation.exe",
-    "test": "bun test",
+    "test": "\"$npm_execpath\" test",
+    "test:parallel": "\"$npm_execpath\" test --parallel=4 --isolate",
+    "verify:fast": "\"$npm_execpath\" run --parallel test:parallel typecheck check",
     "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "format": "biome format --write ."

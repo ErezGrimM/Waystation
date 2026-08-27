@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -7,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buildServer } from "../src/mcp/server.ts";
 
-const testRoot = join(process.cwd(), ".waystation-test-mcp");
+const testRoot = mkdtempSync(join(tmpdir(), "waystation-mcp-"));
 
 function setupLedger() {
   rmSync(testRoot, { recursive: true, force: true });
@@ -347,7 +348,7 @@ describe("mcp server integration", () => {
 });
 
 describe("mcp lifecycle surfaces", () => {
-  const root = join(process.cwd(), ".waystation-test-mcp-lifecycle");
+  const root = mkdtempSync(join(tmpdir(), "waystation-mcp-lifecycle-"));
 
   beforeAll(() => {
     rmSync(root, { recursive: true, force: true });
@@ -529,7 +530,7 @@ describe("mcp lifecycle surfaces", () => {
 });
 
 describe("mcp tools: remaining coverage (M13)", () => {
-  const root = join(process.cwd(), ".waystation-test-mcp-m13");
+  const root = mkdtempSync(join(tmpdir(), "waystation-mcp-m13-"));
 
   beforeAll(() => {
     rmSync(root, { recursive: true, force: true });

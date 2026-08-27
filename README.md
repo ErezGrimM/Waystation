@@ -63,6 +63,12 @@ bun run src/cli/index.ts task next
 bun run build
 ```
 
+For a quicker development loop, `bun run verify:fast` runs isolated tests,
+typecheck, and Biome concurrently. The sequential commands above remain the
+authoritative release checks. See
+[docs/bun-1.4-verification.md](docs/bun-1.4-verification.md) for the parallel
+stress evidence and dependency-health commands.
+
 ## Running Waystation
 
 There are three supported local execution modes. They all operate on the
