@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-- `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
+_none_
 
 ## Ready
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks

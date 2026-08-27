@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-embedded-dashboard-codex-20260828-002922-73it",
+  "thread": "task-bun-1-4-embedded-dashboard",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Embedded dashboard complete and verified. Implementation commit: 550f889. Canonical build, copied-binary dashboard/CLI/MCP smoke, 245 tests, typecheck, Biome, Graphify update, and ledger validation are green.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T00:29:22+03:00"
+}

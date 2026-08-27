@@ -2,10 +2,10 @@
   "id": "claim-task-bun-1-4-embedded-dashboard-codex-20260828-001943-42121c71",
   "task": "task-bun-1-4-embedded-dashboard",
   "agent": "codex",
-  "status": "active",
+  "status": "completed",
   "branch": "main",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-08-28T00:19:43+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-08-28T00:29:22+03:00"
 }

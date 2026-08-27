@@ -2,4 +2,4 @@
 
 # Blocked
 
-- `task-bun-1-4-release` — waiting on: task-bun-1-4-parallel-verification, task-bun-1-4-embedded-dashboard
+- `task-bun-1-4-release` — waiting on: task-bun-1-4-parallel-verification

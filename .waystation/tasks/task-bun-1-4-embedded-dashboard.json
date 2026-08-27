@@ -1,7 +1,7 @@
 {
   "id": "task-bun-1-4-embedded-dashboard",
   "title": "Embed the dashboard in the Bun 1.4 executable",
-  "status": "in_progress",
+  "status": "done",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -22,8 +22,8 @@
     "task-bun-1-4-compatibility"
   ],
   "created_at": "2026-08-27T23:58:50+03:00",
-  "updated_at": "2026-08-28T00:19:43+03:00",
-  "closed_at": null,
+  "updated_at": "2026-08-28T00:29:22+03:00",
+  "closed_at": "2026-08-28T00:29:22+03:00",
   "description": "Use Bun 1.4's bun build --compile --asset support to make the production dashboard part of the standalone Waystation executable. Add one canonical frontend/build pipeline, resolve embedded production assets relative to the executable rather than the target ledger root, retain the Vite development workflow, and verify that a copied binary can serve the React application and API from an unrelated project without Waystation source files or a separate dashboard dist directory.",
   "acceptance": [
     "A canonical package script builds the Vite dashboard before compiling waystation.exe, and the compile command embeds src/dashboard/client/dist with Bun 1.4 --asset.",
@@ -35,6 +35,8 @@
     "Binary distribution, MCP, release, and README documentation use the canonical dashboard-build-and-compile command and explain that the dashboard is self-contained.",
     "bun test, bun run typecheck, bun run check, source-mode dashboard tests, compiled-dashboard smoke tests, and waystation validate all pass."
   ],
-  "commits": [],
+  "commits": [
+    "550f889"
+  ],
   "notes": "Keep dashboard API handlers thin and preserve CommandResult envelopes. Bun 1.4 documents that --asset can embed a directory and that node:fs treats /$bunfs/ as a directory tree. This task may proceed in parallel with task-bun-1-4-parallel-verification after the compatibility task is done."
 }
