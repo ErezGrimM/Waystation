@@ -1,0 +1,31 @@
+{
+  "id": "task-bun-native-dashboard-router",
+  "title": "Replace Hono dashboard routing with Bun.serve",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-dashboard",
+  "path_hints": [
+    "src/dashboard/server.ts",
+    "src/dashboard/",
+    "test/",
+    "package.json"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-bun-native-dashboard-build"
+  ],
+  "created_at": "2026-08-28T12:16:59+03:00",
+  "updated_at": "2026-08-28T12:16:59+03:00",
+  "closed_at": null,
+  "description": "Replace Hono with a typed direct Bun.serve route dispatcher for the dashboard API and static client serving. Preserve all endpoint paths, CommandResult JSON response shapes, status codes, request parsing, static fallback, SSE behavior, and compiled-binary asset serving. Remove Hono only after API contract parity passes.",
+  "acceptance": [
+    "Dashboard API and SSE tests pass unchanged or are strengthened to assert parity for every existing route.",
+    "Static assets, SPA fallback, headers, status codes, and CommandResult response envelopes match the current dashboard contract.",
+    "Hono is removed from package.json and bun.lock only after source and compiled dashboard smoke tests pass.",
+    "Bun 1.4 frozen install, tests, typecheck, Biome, build, and ledger validation pass."
+  ],
+  "commits": [],
+  "notes": "See docs/bun-native-stack-migration-plan.md. Depends on task-bun-native-dashboard-build to avoid overlapping production asset-distribution changes."
+}

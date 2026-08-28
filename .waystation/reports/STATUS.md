@@ -18,6 +18,9 @@ _none_
 _none_
 
 ## Backlog (todo)
+- `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
+- `task-bun-native-dashboard-build` [p2] — Replace Vite production dashboard build with Bun\.build
+- `task-bun-native-dashboard-router` [p2] — Replace Hono dashboard routing with Bun\.serve
 - `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
