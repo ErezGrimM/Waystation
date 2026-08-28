@@ -1,0 +1,10 @@
+{
+  "id": "message-task-handoff-id-collision-codex-20260828-115824-qsex",
+  "thread": "task-handoff-id-collision",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Added regression coverage proving same-second handoff creation keeps both records. The existing entropy-bearing mutation stamps provide the collision protection. Verified: 247 tests, typecheck, Biome, and ledger validation pass. Implementation: 201cfa275b722e3c816a96d7726c0a3f3f217b55. Handing off.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T11:58:24+03:00"
+}

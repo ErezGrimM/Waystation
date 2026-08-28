@@ -23,7 +23,6 @@ _none_
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
-- `task-handoff-id-collision` [p3] — Fix handoff id collision on same\-second creation
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
 - `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
@@ -80,6 +79,7 @@ _none_
 - `task-graph-fix-crash-and-duplicates` [p1] — Fix loadGraphData crash on malformed JSON and deduplicate impact hints
 - `task-graphify-brief-enrichment-correctness` [p1] — Make Graphify brief enrichment compatible, relevant, and deterministic
 - `task-handoff` [p2] — Implement handoff create/show
+- `task-handoff-id-collision` [p3] — Fix handoff id collision on same\-second creation
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement \`waystation init\`
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
