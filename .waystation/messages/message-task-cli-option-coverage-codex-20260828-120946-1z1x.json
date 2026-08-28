@@ -1,0 +1,10 @@
+{
+  "id": "message-task-cli-option-coverage-codex-20260828-120946-1z1x",
+  "thread": "task-cli-option-coverage",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Done. Added 37 CLI help-contract tests covering global and local command options across task, issue, handoff, prompt, message, GitHub, git, validation, sync/report, and dashboard commands. Existing fixture integration tests cover behavioral paths. Verified: 284 tests, typecheck, and Biome pass. Implementation: d0833f94c3303d819f88d9d830156ed5e6e12af8. Handing off.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T12:09:46+03:00"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "task-cli-option-coverage",
+  "title": "Add CLI option coverage",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "src/cli/index.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-08-28T12:08:02+03:00",
+  "updated_at": "2026-08-28T12:09:46+03:00",
+  "closed_at": "2026-08-28T12:09:46+03:00",
+  "description": "Create a maintainable CLI integration test matrix that exercises the command options supported by a local ledger, including JSON output, filters, mutation actors, lifecycle options, diagnostics, and the command groups that do not require external GitHub credentials or a long-running dashboard.",
+  "acceptance": [
+    "CLI tests exercise each supported local command option at least once, including global --root and --json where applicable.",
+    "Tests cover success and diagnostic behavior for lifecycle, issue, handoff, prompt, message, validation, index, report, sync, repair, and git command options.",
+    "External GitHub API and long-running MCP/dashboard server startup are explicitly isolated rather than making the suite network-dependent.",
+    "bun test, typecheck, Biome check, and ledger validation pass."
+  ],
+  "commits": [
+    "d0833f94c3303d819f88d9d830156ed5e6e12af8"
+  ],
+  "notes": "Scope intentionally excludes live GitHub API calls and persistent server startup. Use isolated fixture ledgers and child-process CLI invocations."
+}

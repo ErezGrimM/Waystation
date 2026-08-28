@@ -1,0 +1,10 @@
+{
+  "id": "message-task-cli-option-coverage-codex-20260828-120802-qxsi",
+  "thread": "task-cli-option-coverage",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting a CLI option-coverage matrix. I will inventory all command flags and add deterministic fixture-based integration coverage, isolating live external/server commands.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T12:08:02+03:00"
+}

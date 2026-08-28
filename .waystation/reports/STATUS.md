@@ -64,6 +64,7 @@ _none_
 - `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
+- `task-cli-option-coverage` [p2] — Add CLI option coverage
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
 - `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)

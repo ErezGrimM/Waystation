@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-cli-option-coverage-codex-20260828-120802-51011ea1",
+  "task": "task-cli-option-coverage",
+  "agent": "codex",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-28T12:08:02+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-28T12:09:46+03:00"
+}
