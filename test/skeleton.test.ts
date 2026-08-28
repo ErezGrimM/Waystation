@@ -20,7 +20,7 @@ import {
 import { exportGitHubIssues, importGitHubIssues } from "../src/core/gh.ts";
 import { getGitState } from "../src/core/git.ts";
 import { loadGraphData } from "../src/core/graph.ts";
-import { createHandoff, getHandoff } from "../src/core/handoff.ts";
+import { createHandoff, getHandoff, loadHandoffs } from "../src/core/handoff.ts";
 import { initLedger } from "../src/core/init.ts";
 import { createIssue } from "../src/core/issue.ts";
 import {
@@ -561,6 +561,17 @@ describe("handoff", () => {
     expect(getHandoff(root, h.id)?.summary).toBe("did part 1");
     expect(readFileSync(join(root, ".waystation", "events.jsonl"), "utf8")).toContain(
       "handoff.created",
+    );
+  });
+
+  test("same-second handoffs retain distinct records", async () => {
+    const root = fixtureRoot([D]);
+    const first = await createHandoff(root, { task: "task-d", from: "coder" }, now);
+    const second = await createHandoff(root, { task: "task-d", from: "coder" }, now);
+
+    expect(second.id).not.toBe(first.id);
+    expect(loadHandoffs(root).map((handoff) => handoff.id)).toEqual(
+      expect.arrayContaining([first.id, second.id]),
     );
   });
 
