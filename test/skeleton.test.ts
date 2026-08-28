@@ -1567,6 +1567,19 @@ describe("mutations: claim / release / finish", () => {
     expect(activeClaimForTask(root, "task-d")).toBeUndefined();
   });
 
+  test("same-second re-claims retain distinct claim records", async () => {
+    const root = fixtureRoot([D]);
+    const first = await claimTask(root, "task-d", "a", fixedNow);
+    await releaseTask(root, "task-d", "a", fixedNow);
+    const second = await claimTask(root, "task-d", "a", fixedNow);
+
+    expect(second.id).not.toBe(first.id);
+    const claims = loadClaims(root);
+    expect(claims).toHaveLength(2);
+    expect(claims.find((claim) => claim.id === first.id)?.status).toBe("released");
+    expect(claims.find((claim) => claim.id === second.id)?.status).toBe("active");
+  });
+
   test("release rejects an agent that does not own the active claim", async () => {
     const root = fixtureRoot([D]);
     await claimTask(root, "task-d", "a", fixedNow);
