@@ -59,6 +59,7 @@ _none_
 - `task-brief-git-claim-resolution` [p2] — Resolve task briefs from current branch or worktree claim
 - `task-bun-1-4-compatibility` [p2] — Migrate Waystation's runtime contract to Bun 1\.4\.0
 - `task-bun-1-4-dependency-remediation` [p1] — Remediate Bun 1\.4 dependency advisories
+- `task-bun-1-4-dependency-updates` [p3] — Update Bun 1\.4\-compatible dependencies
 - `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 - `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
