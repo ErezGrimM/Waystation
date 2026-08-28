@@ -18,7 +18,6 @@ _none_
 _none_
 
 ## Backlog (todo)
-- `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
 - `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
@@ -65,6 +64,7 @@ _none_
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 - `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
+- `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
 - `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
