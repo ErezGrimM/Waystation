@@ -14,9 +14,9 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-28T12:16:59+03:00",
-  "updated_at": "2026-08-28T12:16:59+03:00",
+  "updated_at": "2026-08-28T12:18:17+03:00",
   "closed_at": null,
-  "description": "Replace the Vite production dashboard build with Bun.build while preserving generated client assets, React JSX handling, static asset layout, the dashboard:build script contract, and binary asset embedding. Deliberately decide whether Vite remains solely for development watch/HMR or can be removed.",
+  "description": "Replace Vite production building in src/dashboard/client/vite.config.ts with Bun.build. Preserve src/dashboard/client/index.html, src/dashboard/client/src/main.tsx, React JSX, CSS, asset imports, hashed assets, favicon, and the dist layout consumed by dashboardClientDir() and productionDashboardDir() in src/dashboard/server.ts. Preserve package scripts dashboard:build and build, including bun build --compile --asset src/dashboard/client/dist. Keep or replace dashboard:dev with an explicitly tested local watch workflow.",
   "acceptance": [
     "dashboard:build produces the asset layout expected by productionDashboardDir and compiled binary tests.",
     "Bun.build handles React entry points, CSS, asset hashing, and SPA fallback inputs used by the dashboard.",
@@ -24,5 +24,5 @@
     "Bun 1.4 frozen install, tests, typecheck, Biome, build, and ledger validation pass."
   ],
   "commits": [],
-  "notes": "See docs/bun-native-stack-migration-plan.md. This task precedes the native dashboard router migration to keep production client distribution stable."
+  "notes": "Execution inventory: package.json scripts; src/dashboard/client/vite.config.ts; src/dashboard/client/index.html; src/dashboard/client/src/main.tsx; src/dashboard/server.ts dashboardClientDir()/productionDashboardDir(); test/compiled-dashboard.test.ts. Required output is dist/index.html, dist/assets/*, and favicon assets that work in source and compiled executable modes. See docs/bun-native-stack-migration-plan.md."
 }

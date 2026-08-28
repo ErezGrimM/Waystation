@@ -4,7 +4,7 @@
 status: todo  priority: 2  scope: scope-dashboard
 readiness: not_eligible  reason: status_todo
 
-Replace the Vite production dashboard build with Bun\.build while preserving generated client assets, React JSX handling, static asset layout, the dashboard:build script contract, and binary asset embedding\. Deliberately decide whether Vite remains solely for development watch/HMR or can be removed\.
+Replace Vite production building in src/dashboard/client/vite\.config\.ts with Bun\.build\. Preserve src/dashboard/client/index\.html, src/dashboard/client/src/main\.tsx, React JSX, CSS, asset imports, hashed assets, favicon, and the dist layout consumed by dashboardClientDir\(\) and productionDashboardDir\(\) in src/dashboard/server\.ts\. Preserve package scripts dashboard:build and build, including bun build \-\-compile \-\-asset src/dashboard/client/dist\. Keep or replace dashboard:dev with an explicitly tested local watch workflow\.
 
 ## Acceptance
 - dashboard:build produces the asset layout expected by productionDashboardDir and compiled binary tests\.

@@ -4,7 +4,7 @@
 status: todo  priority: 2  scope: scope-dashboard
 readiness: not_eligible  reason: status_todo
 
-Replace Hono with a typed direct Bun\.serve route dispatcher for the dashboard API and static client serving\. Preserve all endpoint paths, CommandResult JSON response shapes, status codes, request parsing, static fallback, SSE behavior, and compiled\-binary asset serving\. Remove Hono only after API contract parity passes\.
+Replace Hono in src/dashboard/server\.ts with a typed direct Bun\.serve dispatcher after task\-bun\-native\-dashboard\-build\. Preserve originGuard, json, catchDiag, SSE publishing, static asset serving, SPA fallback, and every existing route: /api/status; /api/tasks and /api/tasks/:id including brief, claim, release, finish, status, reopen; /api/issues and close; /api/gh/import/export; /api/messages and inbox; /api/prompts and render; /api/handoffs; /api/claims; /api/validate; /api/git/status, context, diff, commit; /api/reindex; /api/events; /graphify\-out/\*; /assets/\*; /favicon\.ico; / and wildcard fallback\.
 
 ## Acceptance
 - Dashboard API and SSE tests pass unchanged or are strengthened to assert parity for every existing route\.

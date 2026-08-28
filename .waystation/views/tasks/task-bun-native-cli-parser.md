@@ -4,7 +4,7 @@
 status: todo  priority: 2  scope: scope-cli
 readiness: not_eligible  reason: status_todo
 
-Replace Commander with a local typed parser and dispatcher based on Bun\.argv\. Preserve every current command, argument grammar, option default, help surface, \-\-root and \-\-json behavior, diagnostics, and exit status in source and compiled binary modes\. Remove commander only after compatibility verification\.
+Replace Commander in src/cli/index\.ts with a typed Bun\.argv parser/dispatcher\. Preserve init; task next/ready/list/audit/show/create/update/set\-status/reopen/claim/release/finish; issue list/show/create/update/close; brief; validate; reindex; repair; report; sync; handoff create/show; prompt list/show/render; message post/list; inbox; git status; mcp; gh import/export; and dashboard\. Preserve positional argument arity, every option in test/cli\-help\-options\.test\.ts, \-\-root, \-\-json, help/version output, CommandResult diagnostics, and exit status in source and compiled executable modes\.
 
 ## Acceptance
 - All existing CLI command and option contracts are covered by source\-mode and compiled\-binary tests\.

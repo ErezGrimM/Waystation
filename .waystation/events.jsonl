@@ -495,3 +495,6 @@
 {"type":"task.created","task":"task-bun-native-cli-parser","actor":"codex","ts":"2026-08-28T12:16:58+03:00","mutation":"mutation-task-create-task-bun-native-cli-parser-20260828-121658-fc031f43"}
 {"type":"task.created","task":"task-bun-native-dashboard-build","actor":"codex","ts":"2026-08-28T12:16:59+03:00","mutation":"mutation-task-create-task-bun-native-dashboard-build-20260828-121659-9a62f1ec"}
 {"type":"task.created","task":"task-bun-native-dashboard-router","actor":"codex","ts":"2026-08-28T12:16:59+03:00","mutation":"mutation-task-create-task-bun-native-dashboard-router-20260828-121659-ebde552d"}
+{"type":"task.updated","task":"task-bun-native-cli-parser","actor":"codex","ts":"2026-08-28T12:18:17+03:00","mutation":"mutation-task-update-task-bun-native-cli-parser-20260828-121817-5bdb2bb0"}
+{"type":"task.updated","task":"task-bun-native-dashboard-build","actor":"codex","ts":"2026-08-28T12:18:17+03:00","mutation":"mutation-task-update-task-bun-native-dashboard-build-20260828-121817-23cecf56"}
+{"type":"task.updated","task":"task-bun-native-dashboard-router","actor":"codex","ts":"2026-08-28T12:18:17+03:00","mutation":"mutation-task-update-task-bun-native-dashboard-router-20260828-121817-b6c980dd"}

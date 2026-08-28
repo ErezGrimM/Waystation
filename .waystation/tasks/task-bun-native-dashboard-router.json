@@ -17,9 +17,9 @@
     "task-bun-native-dashboard-build"
   ],
   "created_at": "2026-08-28T12:16:59+03:00",
-  "updated_at": "2026-08-28T12:16:59+03:00",
+  "updated_at": "2026-08-28T12:18:17+03:00",
   "closed_at": null,
-  "description": "Replace Hono with a typed direct Bun.serve route dispatcher for the dashboard API and static client serving. Preserve all endpoint paths, CommandResult JSON response shapes, status codes, request parsing, static fallback, SSE behavior, and compiled-binary asset serving. Remove Hono only after API contract parity passes.",
+  "description": "Replace Hono in src/dashboard/server.ts with a typed direct Bun.serve dispatcher after task-bun-native-dashboard-build. Preserve originGuard, json, catchDiag, SSE publishing, static asset serving, SPA fallback, and every existing route: /api/status; /api/tasks and /api/tasks/:id including brief, claim, release, finish, status, reopen; /api/issues and close; /api/gh/import/export; /api/messages and inbox; /api/prompts and render; /api/handoffs; /api/claims; /api/validate; /api/git/status, context, diff, commit; /api/reindex; /api/events; /graphify-out/*; /assets/*; /favicon.ico; / and wildcard fallback.",
   "acceptance": [
     "Dashboard API and SSE tests pass unchanged or are strengthened to assert parity for every existing route.",
     "Static assets, SPA fallback, headers, status codes, and CommandResult response envelopes match the current dashboard contract.",
@@ -27,5 +27,5 @@
     "Bun 1.4 frozen install, tests, typecheck, Biome, build, and ledger validation pass."
   ],
   "commits": [],
-  "notes": "See docs/bun-native-stack-migration-plan.md. Depends on task-bun-native-dashboard-build to avoid overlapping production asset-distribution changes."
+  "notes": "Execution inventory: src/dashboard/server.ts currently contains the Hono app and route contract; dashboard tests exercise API JSON envelopes, diagnostics, SSE, static serving, and compiled assets. Preserve Request/Response compatibility for tests or replace the test client without reducing coverage. All mutations continue through src/core. See docs/bun-native-stack-migration-plan.md."
 }

@@ -15,9 +15,9 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-28T12:16:58+03:00",
-  "updated_at": "2026-08-28T12:16:58+03:00",
+  "updated_at": "2026-08-28T12:18:17+03:00",
   "closed_at": null,
-  "description": "Replace Commander with a local typed parser and dispatcher based on Bun.argv. Preserve every current command, argument grammar, option default, help surface, --root and --json behavior, diagnostics, and exit status in source and compiled binary modes. Remove commander only after compatibility verification.",
+  "description": "Replace Commander in src/cli/index.ts with a typed Bun.argv parser/dispatcher. Preserve init; task next/ready/list/audit/show/create/update/set-status/reopen/claim/release/finish; issue list/show/create/update/close; brief; validate; reindex; repair; report; sync; handoff create/show; prompt list/show/render; message post/list; inbox; git status; mcp; gh import/export; and dashboard. Preserve positional argument arity, every option in test/cli-help-options.test.ts, --root, --json, help/version output, CommandResult diagnostics, and exit status in source and compiled executable modes.",
   "acceptance": [
     "All existing CLI command and option contracts are covered by source-mode and compiled-binary tests.",
     "The native parser preserves global --root and --json behavior, help output, diagnostics, and nonzero exit codes.",
@@ -25,5 +25,5 @@
     "Bun 1.4 frozen install, tests, typecheck, Biome, build, and ledger validation pass."
   ],
   "commits": [],
-  "notes": "See docs/bun-native-stack-migration-plan.md. Keep command specifications typed and centralized; do not move business logic out of src/core."
+  "notes": "Execution inventory: src/cli/index.ts is the sole parser/adapter; test/cli-help-options.test.ts defines the help/option contract; test/lifecycle-parity.test.ts and test/skeleton.test.ts cover behavior. Add a parser-independent command specification and derive help/validation from it. Do not move mutation logic out of src/core. See docs/bun-native-stack-migration-plan.md."
 }
