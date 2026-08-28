@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-bun-1-4-release-codex-20260828-004015-fe280033",
+  "task": "task-bun-1-4-release",
+  "agent": "codex",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-08-28T00:40:15+03:00",
+  "released_at": null,
+  "completed_at": "2026-08-28T11:27:29+03:00"
+}

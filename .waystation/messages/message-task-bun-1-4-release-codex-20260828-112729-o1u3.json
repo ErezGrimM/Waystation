@@ -1,0 +1,10 @@
+{
+  "id": "message-task-bun-1-4-release-codex-20260828-112729-o1u3",
+  "thread": "task-bun-1-4-release",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Release 0.5.0 verified. Implementation commit: e66d0bfb902d390ec9d0e428912ca18abe8bd88d. Handing off for ledger closure.",
+  "in_reply_to": null,
+  "created_at": "2026-08-28T11:27:29+03:00"
+}

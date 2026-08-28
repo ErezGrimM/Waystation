@@ -6,7 +6,7 @@
 _none_
 
 ## In progress
-- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+_none_
 
 ## Review
 _none_
@@ -63,6 +63,7 @@ _none_
 - `task-bun-1-4-dependency-remediation` [p1] — Remediate Bun 1\.4 dependency advisories
 - `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
