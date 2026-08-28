@@ -9,7 +9,7 @@ page is about the artifacts themselves.
 ## Canonical build command
 
 ```ps1
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 & $bun run build
 ```
 
@@ -24,8 +24,8 @@ serves the same entrypoint from source.
 
 The script invokes nested build steps through Bun's `npm_execpath` environment
 value. This keeps every step on the same Bun executable as the outer
-`bun run build` command, including while 1.4.0 is staged beside an older
-rollback binary.
+`bun run build` command and avoids accidentally selecting an older rollback
+binary.
 
 Rebuild whenever `src/`, `package.json`, `bun.lock`, or the release version
 changes (see the release checklist). After building, run the minimum smoke
@@ -107,7 +107,7 @@ globally.
 
 ```ps1
 # From the Waystation checkout: refresh the current bundle.
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 & $bun run build
 New-Item -ItemType Directory -Force dist\waystation-latest | Out-Null
 Copy-Item waystation.exe dist\waystation-latest\waystation.exe -Force

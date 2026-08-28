@@ -13,11 +13,11 @@ you run the CLI.
 ### Source mode
 
 Run the TypeScript entrypoint directly with Bun. The pinned Bun 1.4.0 binary is
-staged at `C:\bun\versions\1.4.0\bun.exe` on this machine and is **not** on
-`PATH`, so call it by full path:
+canonical at `C:\bun\bin\bun.exe` on this machine and is **not** on `PATH`, so
+call it by full path:
 
 ```ps1
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 & $bun run C:\Projects\Waystation\src\cli\index.ts mcp
 ```
 
@@ -36,7 +36,7 @@ C:\Projects\Waystation\waystation.exe mcp
 Rebuild the binary after source changes:
 
 ```ps1
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 & $bun run build
 ```
 
@@ -48,7 +48,7 @@ remain available from the same self-contained executable.
 | | Source mode | Compiled mode |
 |---|---|---|
 | Command | `& $bun run <checkout>\src\cli\index.ts mcp` | `.\waystation.exe mcp` |
-| Requires Bun | yes (`C:\bun\versions\1.4.0\bun.exe`) | no |
+| Requires Bun | yes (`C:\bun\bin\bun.exe`) | no |
 | Tracks source | yes (no rebuild) | only after `bun run build` |
 | Best for | developing Waystation itself | MCP clients, other local projects |
 

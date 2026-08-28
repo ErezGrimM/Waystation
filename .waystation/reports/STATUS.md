@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+_none_
 
 ## In progress
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Review
 _none_

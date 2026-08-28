@@ -5,9 +5,8 @@ Everything a coding agent needs to know to contribute to this project.
 ## Environment
 
 ```ps1
-# Bun 1.4.0 is staged here during the 0.5 migration — NOT on PATH.
-# C:\bun\bin\bun.exe remains the Bun 1.3.14 rollback until the release gate.
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+# Bun 1.4.0 is canonical here and is NOT on PATH.
+$bun = "C:\bun\bin\bun.exe"
 & $bun test                # run test suite
 & $bun run verify:fast     # parallel development preflight
 & $bun run typecheck       # tsc --noEmit

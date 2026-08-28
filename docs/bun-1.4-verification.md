@@ -9,7 +9,7 @@ release evidence.
 Run the isolated test files in parallel:
 
 ```ps1
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 & $bun run test:parallel
 ```
 
@@ -22,8 +22,8 @@ Run parallel tests, TypeScript, and Biome concurrently:
 `test:parallel` expands to `bun test --parallel=4 --isolate`.
 `verify:fast` uses `bun run --parallel` only for the independent test,
 typecheck, and lint processes. Package scripts invoke the same Bun executable
-that launched them through `$npm_execpath`, which matters while Bun 1.4 is
-staged separately from the canonical rollback binary.
+that launched them through `$npm_execpath`, preventing an older rollback binary
+from being selected by a nested script.
 
 The Windows migration stress run completed 10 consecutive parallel passes:
 245 tests across 7 files per run, 2,450 total test executions, and no failures.

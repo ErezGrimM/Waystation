@@ -6,7 +6,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const projectRoot = process.cwd();
-const tempRoot = mkdtempSync(join(tmpdir(), "waystation-compiled-dashboard-"));
+const tempRoot = mkdtempSync(join(tmpdir(), "waystation compiled dashboard "));
 
 afterAll(() => {
   rmSync(tempRoot, { recursive: true, force: true });
@@ -84,8 +84,8 @@ async function waitForDashboard(url: string): Promise<Response> {
 describe("compiled dashboard distribution", () => {
   test("copied executable serves embedded SPA/API/graph assets and MCP from an unrelated project", async () => {
     const buildDir = join(tempRoot, "build");
-    const runtimeDir = join(tempRoot, "runtime");
-    const ledgerRoot = join(tempRoot, "unrelated-project");
+    const runtimeDir = join(tempRoot, "runtime with spaces");
+    const ledgerRoot = join(tempRoot, "unrelated project with spaces");
     mkdirSync(buildDir, { recursive: true });
     mkdirSync(runtimeDir, { recursive: true });
     mkdirSync(ledgerRoot, { recursive: true });
@@ -107,7 +107,7 @@ describe("compiled dashboard distribution", () => {
     const exe = join(runtimeDir, "waystation.exe");
     copyFileSync(builtExe, exe);
     rmSync(buildDir, { recursive: true, force: true });
-    expect(run([exe, "--version"], runtimeDir).trim()).toBe("0.4.0");
+    expect(run([exe, "--version"], runtimeDir).trim()).toBe("0.5.0");
     run([exe, "--root", ledgerRoot, "validate"], runtimeDir);
 
     const transport = new StdioClientTransport({

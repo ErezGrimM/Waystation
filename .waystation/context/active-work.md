@@ -3,10 +3,10 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 
 ## Ready
-- `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+_none_
 
 ## Coordination warnings
 _none_

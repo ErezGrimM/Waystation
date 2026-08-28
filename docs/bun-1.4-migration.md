@@ -9,14 +9,13 @@ behavior first.
 
 | Role | Path | Version and revision |
 |---|---|---|
-| Staged migration runtime | `C:\bun\versions\1.4.0\bun.exe` | `1.4.0+34cbb9a40` |
-| Canonical pre-release runtime | `C:\bun\bin\bun.exe` | `1.3.14+0d9b296af` |
+| Canonical runtime | `C:\bun\bin\bun.exe` | `1.4.0+34cbb9a40` |
+| Versioned release runtime | `C:\bun\versions\1.4.0\bun.exe` | `1.4.0+34cbb9a40` |
 | Runtime rollback copy | `C:\bun\versions\1.3.14\bun.exe` | `1.3.14+0d9b296af` |
 | Waystation rollback bundle | `dist/waystation-0.4.0/` | executable, `package.json`, and `bun.lock` |
 
-The canonical `C:\bun\bin\bun.exe` stays on 1.3.14 until the Waystation 0.5.0
-release gate. Development and verification during the migration use the staged
-1.4.0 path explicitly.
+The canonical path moved to Bun 1.4.0 only after the Waystation 0.5.0 migration
+gates passed. Bun 1.3.14 remains available solely as a recoverable rollback.
 
 ## Package and lockfile contract
 
@@ -62,10 +61,10 @@ matrix must receive a regression test before this task completes.
 
 ## Verification
 
-Run all migration checks with the staged binary:
+Run all post-migration checks with the canonical binary:
 
 ```ps1
-$bun = "C:\bun\versions\1.4.0\bun.exe"
+$bun = "C:\bun\bin\bun.exe"
 
 & $bun --version
 & $bun --revision
