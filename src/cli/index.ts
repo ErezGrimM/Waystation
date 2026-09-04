@@ -33,7 +33,7 @@ import {
 } from "../core/mutate.ts";
 import { findProjectRoot, LedgerResolutionError, ledgerPaths } from "../core/paths.ts";
 import { getPrompt, loadPrompts, renderPrompt, selectPrompts } from "../core/prompt.ts";
-import { loadTasks, RecordError } from "../core/records.ts";
+import { loadTaskById, loadTasks, RecordError } from "../core/records.ts";
 import { repairEventsJsonl } from "../core/repair.ts";
 import { CODES, type CommandResult, diag, okResult, toResult } from "../core/result.ts";
 import type { IssueRecord, TaskStatus } from "../core/schema.ts";
@@ -165,7 +165,7 @@ task
   .description("Show a single task")
   .option("--json", "output JSON")
   .action((id: string, opts: { json?: boolean }) => {
-    const found = loadTasks().find((t) => t.id === id) ?? null;
+    const found = loadTaskById(id);
     const res = found
       ? okResult(found)
       : toResult(null, [diag("no_such_task", { message: `no such task: ${id}`, details: { id } })]);
