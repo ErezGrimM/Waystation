@@ -220,3 +220,31 @@ later records that own them.
 - Records stay `in_progress`/`ready` until the two repairs land and are re-verified on both binaries.
   Re-verification after any further environment change repeats the full §2 matrix — a prior green run
   does not transfer across a relocation or a toolchain change (§7.3 is the cautionary example).
+
+## 11. Follow-up round — outcome (same day)
+
+**F1 and F2 are closed, and both repairs were verified the same way as the originals.**
+
+| Item | Repair | Independent verification |
+| --- | --- | --- |
+| F1 (W01c#3) | `7e0cf9e fix(w01c): enforce producer inventory and version-2 adoption` — `test/intent-producer-inventory.test.ts` names the producers (`mutate`/`handoff`/`issue`/`messages`), fails when the set of `buildIntent`-referencing source files differs from that inventory, and fails on a hand-built `version: 1` literal in any producer, with the `store.ts` v1 reader and the deliberate v1 fixtures documented as exempt | teeth: injecting `version: 1` into `mutate.ts` → test fails; adding a new file that imports `buildIntent` → test fails; restored → green. 3 consecutive runs, no flake |
+| F2 (W01a#5) | `87b457d fix(w01a): cross-process lock contention fixture` — `test/lock-contention.test.ts` + `test/fixtures/hold-lock.ts` | the fixture locks the **same canonical target** as `store.ts` (`realpathSync(join(root, ".waystation"))`), writes its marker only after acquiring (parent polls — no bare sleep), and asserts wait-then-acquire (~1.5s observed). teeth: setting the lock to `retries: 0` makes the test fail, so it detects a lock that does not wait. 3 consecutive runs, no flake |
+
+**Full gates on `87b457d`, run by the coordinator, both binaries:** 305 pass / 0 fail (1137 expect, 11 files)
+on `C:/bun/bin/bun.exe` (1.4.1); 304 pass / 1 fail (1120 expect) on `C:/bun/versions/1.3.14/bun.exe`, the
+single failure being the compiled-dashboard `--asset` artifact of §3; `typecheck` and `check` clean (48
+files). The agent's reported counts match mine exactly.
+
+**F4 executed:** the seven verified records are closed in the ledger with commit evidence attached, and
+each carries a `verdict` message with its commit map and the evidence basis —
+W01a (`af05667`+`87b457d`), W01b (`4428d32`), W01c (`6d5d77e`+`7e0cf9e`, claimed and closed although the
+agent never claimed it), W01d (`39f4eff`), W02a (`88158d2`), W03 (`b3d9b2a`), W08a (`a24599b`).
+`validate --project --views` returns `ok: no problems found`, and the 30 `active_claim_overlap` warnings
+that existed while the claims were open are gone with them. `task ready` now lists exactly the three
+W02 records B is working through (W02b claimed).
+
+**F6 honoured:** no repo config was touched. `w02-git-context` remains inside the repo because of the
+stale handle; the limitation is recorded here instead of worked around in tracked config.
+
+**Still open:** W02b–d (one record per launch, commit-as-you-go), and the plan §6 gates that no delivered
+record touches (plugin load, MCP routing, half-native packaging, compiled build).
