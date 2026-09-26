@@ -17,6 +17,7 @@ invents its own spelling.
 | Hermes adjacent checkout | `59004a62356f3a4697ab0fe8ad5086d2b405e2a6`, `v0.21.4+canary.20260925T065930Z-24-g59004a6235` | `git rev-parse HEAD`, `git describe --tags` |
 | Stamp vs checkout drift | `0` commits | `git rev-list --count <stamp>..HEAD` |
 | Test baseline | `283 pass / 1 fail` (the failure is the compiled-dashboard case needing `src/dashboard/client/dist`) | plan §16; build the dashboard before treating that case as meaningful |
+| Bun runtime | repo `engines` require `>=1.4.0 <1.5`. `PATH` (`C:/bun/bin/bun.exe`) was 1.3.14 and now resolves **1.4.1** (promoted from `C:/Users/User/.bun/bin/bun.exe`); older builds are preserved at `C:/bun/versions/1.3.14/bun.exe` and `C:/bun/versions/1.4.0/bun.exe`. The plan's recorded `283 pass / 1 fail` baseline was measured on **1.3.14**, so any baseline comparison must invoke `C:/bun/versions/1.3.14/bun.exe` explicitly | `bun --version`, `package.json` `engines`, `scripts.build` (`--asset` is a 1.4+ flag) |
 | On-disk `waystation.exe` | dated `2026-08-28`, older than source, git-ignored | plan §16; compiled acceptance needs a fresh `bun run build` |
 
 The adjacent Hermes checkout is **not** a stale-mismatch case: the stamp commit and the checkout
@@ -120,7 +121,7 @@ waits; it does not edit across the boundary (plan §15, "shared-file changes are
 
 | Package | Sole writer of | May not touch |
 | --- | --- | --- |
-| W01 (`task-w01a…d`) | `src/core/store.ts`, the `ClaimRecord` passthrough line in `src/core/schema.ts`, persistence tests | `src/core/git.ts`, `src/core/paths.ts`, `integrations/hermes/**` |
+| W01 (`task-w01a…d`) | `src/core/store.ts`, `src/core/schema.ts`, `src/core/validate.ts` (the pending-intent shape check), the intent **producers** `src/core/mutate.ts`, `src/core/handoff.ts`, `src/core/issue.ts`, `src/core/messages.ts`, persistence tests | `src/core/git.ts`, `src/core/paths.ts`, `integrations/hermes/**` |
 | W02 (`task-w02a…d`) | `src/core/git.ts`, `src/core/paths.ts`, Git/context modules and their tests | `src/core/store.ts`, `src/core/schema.ts`, `integrations/hermes/**` |
 | W03 + W08a | the parser module and its fixtures; `integrations/hermes/**` | `src/core/store.ts`, `src/core/schema.ts`, `src/core/git.ts`, `src/core/paths.ts` |
 
