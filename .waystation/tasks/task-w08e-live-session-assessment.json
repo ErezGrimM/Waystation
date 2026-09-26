@@ -1,0 +1,27 @@
+{
+  "id": "task-w08e-live-session-assessment",
+  "title": "W08e: optional live Hermes session view assessment",
+  "status": "todo",
+  "priority": 5,
+  "scope": "scope-dashboard",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w09-integration-acceptance"
+  ],
+  "created_at": "2026-09-26T02:39:35+03:00",
+  "updated_at": "2026-09-26T02:42:07+03:00",
+  "closed_at": null,
+  "description": "After the baseline passes acceptance, assess the pinned host's transcript and activity APIs against the verified binding and session associations from W07, and report feasibility covering durable and live identity handling, pagination, profile routing and refresh tests. If viable, provide an explicitly Hermes-sourced read-only view. Never copy transcripts into the ledger, never guess associations by actor name, and never send prompts or control workers.",
+  "acceptance": [
+    "The assessment reports, with evidence, whether a durable and live session identity can be mapped to a verified binding without guessing.",
+    "Any resulting view is read-only, explicitly labeled as Hermes-sourced, paginated, and never writes canonical Waystation records.",
+    "The work neither blocks nor delays W09 and W10, and a negative result is a complete deliverable."
+  ],
+  "commits": [],
+  "notes": "Optional by decision Q18 and it must not gate the baseline release. Acceptance group A18; the assessment is only valid after the baseline passes acceptance."
+}

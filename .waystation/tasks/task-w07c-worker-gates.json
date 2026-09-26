@@ -1,0 +1,27 @@
+{
+  "id": "task-w07c-worker-gates",
+  "title": "W07c: worker setup and feasibility gate fixtures",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-mcp",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w07b-forwarding"
+  ],
+  "created_at": "2026-09-26T02:39:33+03:00",
+  "updated_at": "2026-09-26T02:39:33+03:00",
+  "closed_at": null,
+  "description": "Provide the worker setup path and the fixtures that must pass before worker execution touches a real project: host identity supplied correctly for normal and delegated workers; parallel sessions in one profile staying separate; the native client dispatching the selected project server in the correct profile scope; per-call worker context reaching the correct core invocation; resumes and reconnects never reusing another binding; disabled plugins, absent allowlists and unavailable context producing refusal; and runtime plugin registration interoperating with packaged desktop and backend targets.",
+  "acceptance": [
+    "Every gate of plan 12.5 has a passing fixture, and a failing gate blocks worker execution with the blocker recorded instead of a fallback.",
+    "No gate is satisfied by falling back to a startup working directory, one profile per worker, or a Hermes core modification.",
+    "The fixtures run against a temporary ledger and a temporary Hermes home and leave both unchanged."
+  ],
+  "commits": [],
+  "notes": "Gate failure is recorded for a separate design decision rather than silently choosing another architecture."
+}

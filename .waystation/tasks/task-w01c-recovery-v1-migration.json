@@ -1,0 +1,33 @@
+{
+  "id": "task-w01c-recovery-v1-migration",
+  "title": "W01c: version-1 recovery compatibility and producer migration",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/mutate.ts",
+    "src/core/handoff.ts",
+    "src/core/issue.ts",
+    "src/core/messages.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w01b-intent-v2"
+  ],
+  "created_at": "2026-09-26T02:39:26+03:00",
+  "updated_at": "2026-09-26T02:39:26+03:00",
+  "closed_at": null,
+  "description": "Recover legacy version-1 intents only when the events already present for the mutation match an exact expected prefix in order and count, comparing repeated identical payloads by position rather than by set membership, then append the missing suffix and preserve historical formatting and records. A malformed event log that prevents trustworthy recovery causes refusal with repair guidance instead of being read as an empty log. Then migrate every current intent producer to the version-2 constructor so no feature package refactors persistence independently.",
+  "acceptance": [
+    "Missing, partially applied, fully applied and repeated-prefix version-1 intents all recover to the expected state.",
+    "A malformed or ambiguous event log refuses recovery, preserves the intent for repair, and never rewrites history, with ignored JSON parse failures never interpreted as proof of an empty log.",
+    "Every current intent producer builds version 2, shown by an inventory that names each producer and fails if a hand-built version-1 intent remains.",
+    "Existing behavior tests pass apart from the intentional recovery correction, and that correction is named in the recorded evidence."
+  ],
+  "commits": [],
+  "notes": "Current producers are src/core/mutate.ts (create, update, set-status, reopen, commits, claim, release, finish), src/core/handoff.ts, src/core/issue.ts and src/core/messages.ts. Manual repair guidance lives in docs/error-philosophy.md; the CLI repair command only handles events.jsonl."
+}

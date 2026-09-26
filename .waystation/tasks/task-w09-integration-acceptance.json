@@ -1,0 +1,30 @@
+{
+  "id": "task-w09-integration-acceptance",
+  "title": "W09: combined integration and installed-Hermes acceptance",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-core",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w08d-package-assembly",
+    "task-w06b-transfer-surfaces"
+  ],
+  "created_at": "2026-09-26T02:39:35+03:00",
+  "updated_at": "2026-09-26T02:39:35+03:00",
+  "closed_at": null,
+  "description": "Run the combined acceptance the plan requires: the existing-behavior group, proving claim, release, finish, status, create and update behavior and dashboard behavior are preserved, unknown record fields are retained, an old reader tolerates additive metadata, and the incompatible writer upgrade is documented; and the end-to-end group covering select, claim, work, commit, reconcile and observe, takeover, resume and close, reconnect after a completed write, two-process races, one invalid project isolated from the rest, and source and compiled Windows fixtures. Faults occur at deterministic injection boundaries with no production crash switch, and recovery has at least one real separate-process fixture.",
+  "acceptance": [
+    "Existing behavior is preserved and additive metadata does not break an older reader, with the writer-upgrade constraint documented.",
+    "The end-to-end group passes on source and compiled Windows builds, including a two-process race and an isolated invalid project.",
+    "Interaction tests are added to the existing suite rather than duplicating unit coverage, and isolated temporary ledgers and repositories are used and cleaned up.",
+    "Actual commands, runtimes and results are recorded as evidence."
+  ],
+  "commits": [],
+  "notes": "Acceptance groups A09, A16 and the interaction half of A12 and A13. Do not mutate live project tasks or the original DuckBrain incident as fixtures."
+}

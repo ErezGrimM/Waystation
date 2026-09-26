@@ -1,0 +1,31 @@
+{
+  "id": "task-w01d-record-round-trip",
+  "title": "W01d: record-path preservation and claim round-trip integrity",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/store.ts",
+    "src/core/schema.ts",
+    "src/core/mutate.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w00-contract-freeze"
+  ],
+  "created_at": "2026-09-26T02:39:26+03:00",
+  "updated_at": "2026-09-26T02:39:26+03:00",
+  "closed_at": null,
+  "description": "Provide the helpers that keep every mutation writing to the exact file a record was loaded from, and close the unknown-field round-trip gap for claims. TaskRecord already round-trips unknown fields through its passthrough schema; ClaimRecord does not, and every claim is loaded and written through that schema, so a claim mutation drops unknown keys today. Fix the claim path, or make claim round-trips raw-preserving, so unknown claim fields survive a mutation.",
+  "acceptance": [
+    "A claim record carrying an unknown field survives release, finish and a new transfer-style mutation unchanged.",
+    "A task record keeps writing back to the file it was loaded from even when the filename does not match its id, and an assumed filename is never used to create a second record.",
+    "Unknown fields on task records still survive every mutation that touches them.",
+    "Ledger validation passes and the schema change does not weaken existing required-field validation."
+  ],
+  "commits": [],
+  "notes": "Coordinate with the open task-record-unknown-fields task, which owns the TaskRecord decision; if that task also fixes ClaimRecord, land the change there instead of duplicating it. ClaimRecord is in src/core/schema.ts, loadClaims and claimFile in src/core/store.ts, releaseTask and finishTask in src/core/mutate.ts."
+}

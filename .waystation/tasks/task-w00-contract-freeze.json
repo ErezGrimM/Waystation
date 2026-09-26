@@ -1,0 +1,29 @@
+{
+  "id": "task-w00-contract-freeze",
+  "title": "W00: freeze contracts, pins, schema names and task split",
+  "status": "todo",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md",
+    "docs/audit-2026-09-26-waystation-git-hermes-plan.md",
+    "src/core/schema.ts",
+    "src/core/result.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-09-26T02:40:58+03:00",
+  "updated_at": "2026-09-26T02:40:58+03:00",
+  "closed_at": null,
+  "description": "Freeze every W00-owned contract from the plan: InvocationContext, WorkerContext, CommitEvidence, ReconcileGitCommitData, ProjectRegistration, the worker binding, the transfer surface, the snapshot/detail/thread/history surface, the new event names and the new diagnostic names. Re-verify the Hermes build identity (install-stamp commit against the adjacent checkout commit) and re-check the mechanisms of plan 12.5 at the pinned revision before any dependent task starts. Record the acceptance-group to task mapping from plan 16.",
+  "acceptance": [
+    "Every identifier another task consumes is frozen by name in one place, with its owning W package named.",
+    "Hermes build identity is re-checked and recorded with the install-stamp commit, the adjacent checkout commit, and whether they match at the time of the check.",
+    "Each acceptance group A01-A18 is mapped to exactly one owning task, and each mapped criterion appears in that task's acceptance list.",
+    "No source file changes; the deliverable is contract text plus the frozen pin."
+  ],
+  "commits": [],
+  "notes": "Start from plan sections 4, 6-10, 11.2, 14, 15 and 16. The audit records what was verified and what remains unproven; treat the unproven gates as open work, not as settled facts."
+}

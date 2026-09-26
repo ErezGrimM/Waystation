@@ -1,0 +1,30 @@
+{
+  "id": "task-w04d-transfer",
+  "title": "W04d: explicit claim transfer",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w01c-recovery-v1-migration",
+    "task-w04a-additive-schema"
+  ],
+  "created_at": "2026-09-26T02:39:30+03:00",
+  "updated_at": "2026-09-26T02:39:30+03:00",
+  "closed_at": null,
+  "description": "Implement plan 8 as a separate core lifecycle operation, not a reconciliation override. For a new request require a consistent in_progress task, exactly the expected active claim, a different successor identity, valid successor context, a reason and the stopped acknowledgement; then release the old claim and create one active successor claim in a single intent, keeping the task in_progress, retaining evidence, updating updated_at and preserving the old claim and history. Append claim.released, task.claimed for the successor and task.claim_transferred with the exact request identity and inputs. A durable receipt makes the same request ID with the same inputs return no_change with the original old and new claim IDs while reporting current ownership separately; reusing an ID with different inputs is a conflict; an unseen request with a stale expected claim is refused; recovery never creates a second successor.",
+  "acceptance": [
+    "An expected-claim mismatch, a missing stopped acknowledgement, the same successor identity and invalid successor context are each refused without writing.",
+    "Exactly one active successor claim exists after transfer, the old claim and all evidence are preserved, and the task stays in_progress.",
+    "An exact retry returns no_change with the original claim IDs and current ownership reported separately, and a reused request ID with different inputs is a conflict.",
+    "The operation never attaches commits, closes a task, kills a process, launches a worker, expires a claim or interprets a disconnect as release."
+  ],
+  "commits": [],
+  "notes": "Acceptance group A07. The existing release path returns the task to ready, so transfer must not reuse it. Actor text and the stopped acknowledgement are audit inputs, not authentication."
+}

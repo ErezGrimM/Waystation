@@ -1,0 +1,30 @@
+{
+  "id": "task-w05b-bounded-reads",
+  "title": "W05b: bounded detail, thread and history reads",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w05a-snapshot"
+  ],
+  "created_at": "2026-09-26T02:39:30+03:00",
+  "updated_at": "2026-09-26T02:39:30+03:00",
+  "closed_at": null,
+  "description": "Implement detail, thread and history reads with the pagination and consistency rules of plan 10.3: default page size 100 and maximum 200, additionally bounded by response size; threads ordered by parsed created_at with the exact message ID as tie-breaker and reply IDs preserved without assuming the parent is on the same page; event history in canonical append order with a stable offset or identity so equal timestamps never reorder it; opaque cursors encoding version, ledger identity, collection revision, query and last key, refused when reused for another project, query or collection; a cursor_stale result when relevant content changed; a single over-limit body served through bounded detail chunks or failing clearly, with every truncated summary linking to full detail; and the response revision reported so a client can distinguish a newer view from its last board snapshot. Detect observed external edits with before and after fingerprints and refuse unstable reads.",
+  "acceptance": [
+    "Pagination is stable across a large fixture: no record is skipped or duplicated, and a cursor from one project, query or collection is refused in another.",
+    "A relevant content change returns cursor_stale instead of silently skipping or repeating rows.",
+    "Equal-timestamp history preserves canonical append order, and a reply whose parent is off-page is still resolvable.",
+    "Large commit messages and message bodies are served in bounded chunks or fail clearly, never silently truncated.",
+    "Lifecycle inconsistencies in otherwise readable records surface as integrity diagnostics and are never presented as actionable work."
+  ],
+  "commits": [],
+  "notes": "Best-effort detection of non-cooperating manual edits is the goal, not proof that every writer participated in the lock."
+}

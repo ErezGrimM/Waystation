@@ -1,0 +1,29 @@
+{
+  "id": "task-w02c-source-identity",
+  "title": "W02c: repository source identity from the canonical common directory",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w02a-process-adapter"
+  ],
+  "created_at": "2026-09-26T02:39:27+03:00",
+  "updated_at": "2026-09-26T02:39:27+03:00",
+  "closed_at": null,
+  "description": "Derive a deterministic source ID from the canonical Git common-directory filesystem location, resolving aliases with platform-aware canonicalization and without lowercasing case-sensitive directories. Linked worktrees of one repository share a source ID; separate clones are separate sources even when their remotes match; remote URLs are never identity and are never persisted. Moving a checkout changes its location-based identity while historical associations remain intact and verification at the new location is recorded separately.",
+  "acceptance": [
+    "Linked worktrees of one repository produce one source ID, and two clones of the same remote produce two.",
+    "A recorded association keeps its original source ID after the checkout moves, and verification at the new location is recorded as a new association.",
+    "Alias, junction, short-name and Windows case variants of one path cannot produce two source IDs.",
+    "Remote URLs never appear in persisted identity or evidence."
+  ],
+  "commits": [],
+  "notes": "Acceptance group A02. Portable repository rebinding is explicitly out of scope for this release."
+}

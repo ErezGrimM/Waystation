@@ -1,0 +1,31 @@
+{
+  "id": "task-w10-release",
+  "title": "W10: versioned release, packaging and selected rollout",
+  "status": "todo",
+  "priority": 4,
+  "scope": "scope-cli",
+  "path_hints": [
+    "package.json",
+    "docs/release-packaging.md",
+    "src/cli/index.ts",
+    "src/mcp/server.ts"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w09-integration-acceptance"
+  ],
+  "created_at": "2026-09-26T02:39:35+03:00",
+  "updated_at": "2026-09-26T02:39:35+03:00",
+  "closed_at": null,
+  "description": "Perform the one coordinated release: update package.json, the CLI version and the MCP version together from the 0.5.0 baseline to the next appropriate minor, keep the plugin's own package metadata separate without an extra core bump, follow docs/release-packaging.md, and package the integration subdirectory as one installable Hermes folder. Before rollout, recheck the actual Hermes executable and build stamp and the backend and plugin API compatibility at that build, preserve prior artifacts and plugin configuration, settle pending mutation intents and coordinate all active writers, verify source and compiled Windows behavior with fixture ledgers, configure explicit project MCP routes, toolsets, plugin grants and both backend and native enablement, run read-only health checks before selecting real work, and record installed versions, paths and the supported compatibility range. Document rollback constraints for the new intent format and additive metadata, and preserve ledgers during uninstall.",
+  "acceptance": [
+    "All three version authorities agree and the release artifact is built from the validated revision.",
+    "The rollout record names the installed Hermes build commit, the plugin versions and paths, and the supported compatibility range, and was produced by read-only health checks before any real task was selected.",
+    "Rollback with a settled new-format pending intent is documented and exercised on a fixture, and uninstall leaves the ledger untouched.",
+    "Deployment covers local Waystation and the selected native Hermes installation only."
+  ],
+  "commits": [],
+  "notes": "Acceptance group A17. Excluded: DuckBrain deployment, cloud services, remote hosts and native Kanban migration."
+}

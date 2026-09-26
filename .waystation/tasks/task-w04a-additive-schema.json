@@ -1,0 +1,29 @@
+{
+  "id": "task-w04a-additive-schema",
+  "title": "W04a: additive CommitEvidence schema",
+  "status": "todo",
+  "priority": 1,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/schema.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w00-contract-freeze"
+  ],
+  "created_at": "2026-09-26T02:39:28+03:00",
+  "updated_at": "2026-09-26T02:39:28+03:00",
+  "closed_at": null,
+  "description": "Add the optional versioned TaskRecord.commit_evidence field and its schemas exactly as frozen in W00: schema_version 1, with entries carrying source_id, source_common_dir, object_format, oid, aliases, message, encoding, raw_message_base64, observed_at, observed_by and source_worktree. Keep TaskRecord.commits an ordered string array and never migrate it to objects. Absence of the new field stays valid and is not materialized during unrelated reads. Subjects and bodies are derived for display only and never replace task.description. If the claim round-trip fix from W01d has not landed, land the one-line claim schema change here as this package's early additive edit.",
+  "acceptance": [
+    "Existing ledgers load unchanged with the field absent, and no read materializes it.",
+    "Field names and schema version match the frozen W00 contract, with a test that fails if a name or the version drifts.",
+    "The field round-trips through a mutation without disturbing commits, description or unknown fields.",
+    "Typecheck, the existing test suite and ledger validation pass."
+  ],
+  "commits": [],
+  "notes": "src/core/schema.ts owns these schemas; W04 owns schema-file edits for this feature. Lifecycle and closure links stay in canonical events, so this metadata is not a second lifecycle ledger."
+}

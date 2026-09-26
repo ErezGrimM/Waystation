@@ -21,6 +21,7 @@ _none_
 - `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
 - `task-bun-native-dashboard-build` [p2] — Replace Vite production dashboard build with Bun\.build
 - `task-bun-native-dashboard-router` [p2] — Replace Hono dashboard routing with Bun\.serve
+- `task-cli-list-option-absorption` [p1] — CLI list\-valued options must not absorb the following option token
 - `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
@@ -37,6 +38,36 @@ _none_
 - `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
 - `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
 - `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
+- `task-w00-contract-freeze` [p1] — W00: freeze contracts, pins, schema names and task split
+- `task-w01a-lock-acquisition-split` [p1] — W01a: split ledger lock acquisition into mutation and read paths
+- `task-w01b-intent-v2` [p1] — W01b: version\-2 mutation intents with stable event identity
+- `task-w01c-recovery-v1-migration` [p2] — W01c: version\-1 recovery compatibility and producer migration
+- `task-w01d-record-round-trip` [p2] — W01d: record\-path preservation and claim round\-trip integrity
+- `task-w02a-process-adapter` [p1] — W02a: portable bounded process adapter for Git reads
+- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
+- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
+- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
+- `task-w03-trailer-parser` [p1] — W03: deterministic tolerant trailer parser
+- `task-w04a-additive-schema` [p1] — W04a: additive CommitEvidence schema
+- `task-w04b-reconcile-core` [p1] — W04b: reconciliation core operation
+- `task-w04c-lifecycle-guard` [p2] — W04c: reopened\-work guard and earlier\-completion reconstruction
+- `task-w04d-transfer` [p2] — W04d: explicit claim transfer
+- `task-w05a-snapshot` [p2] — W05a: coherent ledger snapshot
+- `task-w05b-bounded-reads` [p2] — W05b: bounded detail, thread and history reads
+- `task-w06a-reconcile-surfaces` [p2] — W06a: reconciliation CLI and MCP surfaces with worker context
+- `task-w06b-transfer-surfaces` [p3] — W06b: transfer CLI and MCP surfaces
+- `task-w06c-read-surfaces` [p2] — W06c: read surfaces and exported worker tool contracts
+- `task-w06d-diagnostics-contract` [p3] — W06d: diagnostic catalog declarations for the new families
+- `task-w07a-binding-store` [p2] — W07a: worker binding store, generation and lifecycle
+- `task-w07b-forwarding` [p2] — W07b: worker call forwarding through the native MCP client
+- `task-w07c-worker-gates` [p3] — W07c: worker setup and feasibility gate fixtures
+- `task-w08a-registry-foundation` [p2] — W08a: project registry and package foundation
+- `task-w08b-plugin-backend` [p3] — W08b: read\-only plugin backend endpoints
+- `task-w08c-native-monitor` [p3] — W08c: native Monitor views and refresh behavior
+- `task-w08d-package-assembly` [p3] — W08d: package assembly and installation procedure
+- `task-w08e-live-session-assessment` [p5] — W08e: optional live Hermes session view assessment
+- `task-w09-integration-acceptance` [p3] — W09: combined integration and installed\-Hermes acceptance
+- `task-w10-release` [p4] — W10: versioned release, packaging and selected rollout
 
 ## Done
 - `task-active-claim-overlap-warnings` [p2] — Warn when active claims have overlapping file hints

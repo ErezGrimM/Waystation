@@ -1,0 +1,28 @@
+{
+  "id": "task-w07b-forwarding",
+  "title": "W07b: worker call forwarding through the native MCP client",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-mcp",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w07a-binding-store"
+  ],
+  "created_at": "2026-09-26T02:39:33+03:00",
+  "updated_at": "2026-09-26T02:39:33+03:00",
+  "closed_at": null,
+  "description": "Forward every supported worker call through Hermes's existing MCP client, with no private parallel client and no general shell proxy: obtain host-provided session, worker and profile context; resolve and validate exactly one binding; validate registration, pinned route, worktree, binding generation and required ownership context; resolve the operation from the generated allowlisted catalog; supply the bound actor and worker context and reject attempts to override them; forward to the project-bound server; decode transport and Waystation results separately while preserving both diagnostics; and release in-flight accounting without changing the binding. Validate the inner result rather than trusting transport success, never automatically replay a claim, message or handoff mutation on a lost response, and report an unknown outcome when a truncated response may follow a completed write. Read responses stay inside the payload budget with pagination or chunking, canonical message bodies are never truncated to fit a wrapper, and the adapter validates result shape and types rather than looking for prose such as success.",
+  "acceptance": [
+    "Outer transport success with an inner failure is reported as failure, and a malformed or truncated response is reported as an unknown outcome for writes rather than as success or as nothing having happened.",
+    "Model-supplied actor or context overrides are rejected, and a call with a missing or ambiguous binding never falls back to a startup working directory or a default profile route.",
+    "Read payloads stay inside the budget with pagination in place, and a canonical message body is never truncated to fit a wrapper.",
+    "A disabled plugin, an absent MCP allowlist entry, an unavailable server and a missing grant each produce a distinct refusal instead of a degraded fallback."
+  ],
+  "commits": [],
+  "notes": "Acceptance group A13. Each project is one MCP server entry with the ledger encoded in its command arguments, so per-project isolation comes from the server name and explicit arguments, never from the caller's working directory."
+}

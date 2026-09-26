@@ -1,0 +1,29 @@
+{
+  "id": "task-w04c-lifecycle-guard",
+  "title": "W04c: reopened-work guard and earlier-completion reconstruction",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    "src/core/",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w04b-reconcile-core"
+  ],
+  "created_at": "2026-09-26T02:39:29+03:00",
+  "updated_at": "2026-09-26T02:39:29+03:00",
+  "closed_at": null,
+  "description": "Implement the reopened-work guard behind decision Q16: reconstruct earlier completion evidence from canonical lifecycle and reconciliation events in append order, not timestamp sorting alone, treating reopen events and historical completed claims as signals of an earlier lifecycle. A commit used to close an earlier lifecycle cannot close a later one, including when it is currently attached under another source. Where prior completion is indicated but earlier history cannot establish a reliable boundary, use the conservative fallback: require an object not already represented in the reopened task's existing evidence and disclose the fallback in diagnostics. An unresolved potentially matching historical reference blocks the check, and missing historical objects are reported as unavailable rather than reconstructed from a hash alone.",
+  "acceptance": [
+    "A completion commit from an earlier lifecycle is refused for closure after reopen, including when it is attached under a different source or copied into another repository.",
+    "Append-order reconstruction is used rather than timestamp sorting, and reordering timestamps does not change the outcome.",
+    "The conservative fallback requires new evidence and discloses itself in the result diagnostics and events.",
+    "An unresolved potentially matching historical reference refuses the mutation, and manually erased lifecycle history is reported as unknowable rather than guessed."
+  ],
+  "commits": [],
+  "notes": "Reopening retains commits and clears closed_at, so the guard cannot rely on a missing reference. Historical descriptions for references with unknown provenance stay unresolved, with a warning."
+}

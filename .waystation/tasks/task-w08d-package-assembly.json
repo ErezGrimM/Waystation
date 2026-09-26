@@ -1,0 +1,29 @@
+{
+  "id": "task-w08d-package-assembly",
+  "title": "W08d: package assembly and installation procedure",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-mcp",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-w07c-worker-gates",
+    "task-w08c-native-monitor"
+  ],
+  "created_at": "2026-09-26T02:39:34+03:00",
+  "updated_at": "2026-09-26T02:39:34+03:00",
+  "closed_at": null,
+  "description": "Assemble the single integration package and its documented installation procedure: plugin.yaml, the assembly and registration entrypoint, generated tool contracts, the registry, the worker modules, the dashboard backend, the built native plugin artifact, tests and a README. Runtime artifacts are built or copied by the documented procedure rather than by forking Hermes core, and the package installs as one folder into the selected native Hermes installation with explicit project MCP routes, toolsets, plugin grants and both backend and native enablement configured.",
+  "acceptance": [
+    "One folder installs into the selected Hermes installation and enables both halves without a separate repository or catalog publication.",
+    "The built native artifact imports only what the plugin fence allows, and generated contracts are present rather than regenerated at runtime.",
+    "Uninstalling leaves the canonical ledger untouched, does not release claims, and preserves plugin configuration for reinstall.",
+    "The procedure names the Hermes home it targets and does not modify Hermes core files."
+  ],
+  "commits": [],
+  "notes": "W08 owns manifests and assembly; W07 contributes one registration entrypoint."
+}
