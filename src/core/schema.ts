@@ -180,17 +180,25 @@ export type PromptRecord = z.infer<typeof PromptRecord>;
 export const ClaimStatus = z.enum(["active", "released", "completed", "stale"]);
 export type ClaimStatus = z.infer<typeof ClaimStatus>;
 
-/** Claim record schema (spec §6.6). Claims track who is working on what. */
-export const ClaimRecord = z.object({
-  id: RecordId,
-  task: RecordId,
-  agent: z.string().min(1),
-  status: ClaimStatus,
-  branch: z.string().nullable().optional(),
-  worktree: z.string().nullable().optional(),
-  claimed_at: isoTs,
-  released_at: isoTs.nullable().optional(),
-  completed_at: isoTs.nullable().optional(),
-  notes: z.string().optional(),
-});
+/**
+ * Claim record schema (spec §6.6). Claims track who is working on what.
+ * `.passthrough()` preserves unknown fields on a round-trip (ADR-0009): every
+ * claim is loaded and written through this schema, so without the passthrough a
+ * claim mutation would silently drop keys it does not model (plan §6). This
+ * mirrors the passthrough TaskRecord already has.
+ */
+export const ClaimRecord = z
+  .object({
+    id: RecordId,
+    task: RecordId,
+    agent: z.string().min(1),
+    status: ClaimStatus,
+    branch: z.string().nullable().optional(),
+    worktree: z.string().nullable().optional(),
+    claimed_at: isoTs,
+    released_at: isoTs.nullable().optional(),
+    completed_at: isoTs.nullable().optional(),
+    notes: z.string().optional(),
+  })
+  .passthrough();
 export type ClaimRecord = z.infer<typeof ClaimRecord>;

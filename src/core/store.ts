@@ -696,7 +696,7 @@ export function loadClaimFiles(root?: string): LoadedClaim[] {
   } catch {
     return [];
   }
-  const claims: ClaimRecord[] = [];
+  const claims: LoadedClaim[] = [];
   for (const name of entries) {
     if (!name.endsWith(".json")) continue;
     const file = join(dir, name);
@@ -708,13 +708,23 @@ export function loadClaimFiles(root?: string): LoadedClaim[] {
         "schema_invalid",
       );
     }
-    claims.push(parsed.data);
+    claims.push({ claim: parsed.data, file });
   }
   return claims;
 }
 
+/** Load and validate all claim records. */
+export function loadClaims(root?: string): ClaimRecord[] {
+  return loadClaimFiles(root).map((c) => c.claim);
+}
+
 export function activeClaimForTask(root: string, taskId: string): ClaimRecord | undefined {
   return loadClaims(root).find((c) => c.task === taskId && c.status === "active");
+}
+
+/** The active claim for a task together with its source file, for write-back. */
+export function activeClaimForTaskWithFile(root: string, taskId: string): LoadedClaim | undefined {
+  return loadClaimFiles(root).find((c) => c.claim.task === taskId && c.claim.status === "active");
 }
 
 /** Load and validate all issue records (permissive schema; spec §6.3). */
