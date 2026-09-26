@@ -5,6 +5,7 @@ import { RecordError } from "./records.ts";
 import { type MessageKind, type MessageRecord, MessageRecord as MessageSchema } from "./schema.ts";
 import {
   applyMutationIntentUnlocked,
+  buildIntent,
   loadClaims,
   mutationWrite,
   readJsonFile,
@@ -86,23 +87,25 @@ export async function postMessage(
       created_at: ts,
     };
     const parsed = MessageSchema.parse(message); // fail loudly on a bad message
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-message-${parsed.id}`,
-      kind: "message.post",
-      writes: [mutationWrite(root, messageFile(root, parsed.id), parsed)],
-      events: [
-        {
-          type: "message.posted",
-          message: parsed.id,
-          thread: parsed.thread,
-          from: parsed.from_agent,
-          to: parsed.to_agent,
-          actor: parsed.from_agent,
-          ts,
-        },
-      ],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-message-${parsed.id}`,
+        kind: "message.post",
+        writes: [mutationWrite(root, messageFile(root, parsed.id), parsed)],
+        events: [
+          {
+            type: "message.posted",
+            message: parsed.id,
+            thread: parsed.thread,
+            from: parsed.from_agent,
+            to: parsed.to_agent,
+            actor: parsed.from_agent,
+            ts,
+          },
+        ],
+      }),
+    );
     return parsed;
   });
 }

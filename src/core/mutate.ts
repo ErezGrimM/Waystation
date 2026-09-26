@@ -10,7 +10,9 @@ import {
 } from "./schema.ts";
 import {
   activeClaimForTask,
+  activeClaimForTaskWithFile,
   applyMutationIntentUnlocked,
+  buildIntent,
   claimFile,
   mutationWrite,
   withLedgerLock,
@@ -77,13 +79,15 @@ export async function createTask(
     const file = `${ledgerPaths(root).tasks}/${task.id}.json`;
     if (loadTaskFiles(root).some((x) => x.task.id === task.id))
       throw new MutationError(`task already exists: ${task.id}`, "duplicate_id");
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-task-create-${task.id}-${mutationStamp(now)}`,
-      kind: "task.create",
-      writes: [mutationWrite(root, file, task)],
-      events: [{ type: "task.created", task: task.id, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-task-create-${task.id}-${mutationStamp(now)}`,
+        kind: "task.create",
+        writes: [mutationWrite(root, file, task)],
+        events: [{ type: "task.created", task: task.id, actor, ts }],
+      }),
+    );
     return task;
   });
 }
@@ -108,13 +112,15 @@ export async function updateTask(
       commits: task.commits,
       updated_at: ts,
     });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-task-update-${id}-${mutationStamp(now)}`,
-      kind: "task.update",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "task.updated", task: id, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-task-update-${id}-${mutationStamp(now)}`,
+        kind: "task.update",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "task.updated", task: id, actor, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -150,13 +156,15 @@ export async function setTaskStatus(
       updated_at: ts,
       closed_at: to === "wont_do" || to === "done" ? ts : task.closed_at,
     });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-task-status-${id}-${mutationStamp(now)}`,
-      kind: "task.status",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "task.status_changed", task: id, from: task.status, to, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-task-status-${id}-${mutationStamp(now)}`,
+        kind: "task.status",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "task.status_changed", task: id, from: task.status, to, actor, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -174,13 +182,15 @@ export async function reopenTask(
       throw new MutationError("only terminal tasks can be reopened", "invalid_transition");
     const ts = nowIso(now);
     const updated = TaskSchema.parse({ ...task, status: to, closed_at: null, updated_at: ts });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-task-reopen-${id}-${mutationStamp(now)}`,
-      kind: "task.reopen",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "task.reopened", task: id, from: task.status, to, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-task-reopen-${id}-${mutationStamp(now)}`,
+        kind: "task.reopen",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "task.reopened", task: id, from: task.status, to, actor, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -249,13 +259,15 @@ export async function addTaskCommits(
     if (refs.length === 0) return task;
     const ts = nowIso(now);
     const updated = { ...taskWithCommits(task, refs), updated_at: ts };
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-task-commits-${id}-${mutationStamp(now)}`,
-      kind: "task.commits_attached",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-task-commits-${id}-${mutationStamp(now)}`,
+        kind: "task.commits_attached",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -309,27 +321,29 @@ export async function claimTask(
       completed_at: null,
     };
     const from = task.status;
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-claim-${claim.id}`,
-      kind: "task.claim",
-      writes: [
-        mutationWrite(root, claimFile(root, claim.id), claim),
-        mutationWrite(root, file, { ...task, status: "in_progress", updated_at: ts }),
-      ],
-      events: [
-        {
-          type: "task.claimed",
-          task: id,
-          claim: claim.id,
-          actor: agent,
-          branch: claim.branch,
-          worktree: claim.worktree,
-          ts,
-        },
-        { type: "task.status_changed", task: id, from, to: "in_progress", actor: agent, ts },
-      ],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-claim-${claim.id}`,
+        kind: "task.claim",
+        writes: [
+          mutationWrite(root, claimFile(root, claim.id), claim),
+          mutationWrite(root, file, { ...task, status: "in_progress", updated_at: ts }),
+        ],
+        events: [
+          {
+            type: "task.claimed",
+            task: id,
+            claim: claim.id,
+            actor: agent,
+            branch: claim.branch,
+            worktree: claim.worktree,
+            ts,
+          },
+          { type: "task.status_changed", task: id, from, to: "in_progress", actor: agent, ts },
+        ],
+      }),
+    );
     return claim;
   });
 }
@@ -343,8 +357,9 @@ export async function releaseTask(
 ): Promise<void> {
   return withLedgerLock(root, () => {
     const { task, file } = requireTask(root, id);
-    const claim = activeClaimForTask(root, id);
-    if (!claim) throw new MutationError(`task ${id} has no active claim`, "no_active_claim");
+    const loaded = activeClaimForTaskWithFile(root, id);
+    if (!loaded) throw new MutationError(`task ${id} has no active claim`, "no_active_claim");
+    const claim = loaded.claim;
     if (claim.agent !== agent) {
       throw new MutationError(
         `task ${id} is claimed by ${claim.agent}, not ${agent}`,
@@ -353,23 +368,25 @@ export async function releaseTask(
     }
     const ts = nowIso(now);
     const from = task.status;
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-release-${claim.id}`,
-      kind: "task.release",
-      writes: [
-        mutationWrite(root, claimFile(root, claim.id), {
-          ...claim,
-          status: "released",
-          released_at: ts,
-        }),
-        mutationWrite(root, file, { ...task, status: "ready", updated_at: ts }),
-      ],
-      events: [
-        { type: "claim.released", task: id, claim: claim.id, actor: agent, ts },
-        { type: "task.status_changed", task: id, from, to: "ready", actor: agent, ts },
-      ],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-release-${claim.id}`,
+        kind: "task.release",
+        writes: [
+          mutationWrite(root, loaded.file, {
+            ...claim,
+            status: "released",
+            released_at: ts,
+          }),
+          mutationWrite(root, file, { ...task, status: "ready", updated_at: ts }),
+        ],
+        events: [
+          { type: "claim.released", task: id, claim: claim.id, actor: agent, ts },
+          { type: "task.status_changed", task: id, from, to: "ready", actor: agent, ts },
+        ],
+      }),
+    );
     // Released tasks return to `ready` (actionable) by design; claims are only
     // allowed from todo/ready, so no other prior status can be lost here.
   });
@@ -390,7 +407,8 @@ export async function finishTask(
       throw new MutationError(`task ${id} is wont_do; cannot finish`, "invalid_transition");
     }
     const ts = nowIso(now);
-    const claim = activeClaimForTask(root, id);
+    const loadedClaim = activeClaimForTaskWithFile(root, id);
+    const claim = loadedClaim?.claim;
     if (claim && claim.agent !== agent) {
       throw new MutationError(
         `task ${id} is claimed by ${claim.agent}, not ${agent}`,
@@ -408,31 +426,32 @@ export async function finishTask(
       updated_at: ts,
       closed_at: ts,
     };
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-finish-${id}-${mutationStamp(now)}`,
-      kind: "task.finish",
-      writes: [
-        ...(claim
-          ? [
-              mutationWrite(root, claimFile(root, claim.id), {
-                ...claim,
-                status: "completed",
-                completed_at: ts,
-              }),
-            ]
-          : []),
-        mutationWrite(root, file, completedTask),
-      ],
-      events: [
-        { type: "task.status_changed", task: id, from, to: "done", actor: agent, ts },
-        ...(claim
-          ? [{ type: "claim.completed", task: id, claim: claim.id, actor: agent, ts }]
-          : []),
-        ...(refs.length
-          ? [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }]
-          : []),
-      ],
-    });
+    const claimWrites = loadedClaim
+      ? [
+          mutationWrite(root, loadedClaim.file, {
+            ...loadedClaim.claim,
+            status: "completed",
+            completed_at: ts,
+          }),
+        ]
+      : [];
+    const claimEvents = loadedClaim
+      ? [{ type: "claim.completed", task: id, claim: loadedClaim.claim.id, actor: agent, ts }]
+      : [];
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-finish-${id}-${mutationStamp(now)}`,
+        kind: "task.finish",
+        writes: [...claimWrites, mutationWrite(root, file, completedTask)],
+        events: [
+          { type: "task.status_changed", task: id, from, to: "done", actor: agent, ts },
+          ...claimEvents,
+          ...(refs.length
+            ? [{ type: "task.commits_attached", task: id, commits: refs, actor: agent, ts }]
+            : []),
+        ],
+      }),
+    );
   });
 }

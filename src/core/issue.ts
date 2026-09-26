@@ -5,6 +5,7 @@ import { ledgerPaths } from "./paths.ts";
 import { type IssueRecord, IssueRecord as IssueSchema, isSafeRecordId } from "./schema.ts";
 import {
   applyMutationIntentUnlocked,
+  buildIntent,
   mutationWrite,
   readJsonFile,
   withLedgerLock,
@@ -55,13 +56,15 @@ export async function updateIssue(
       closed_at: current.closed_at,
       updated_at: ts,
     });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-issue-update-${id}-${mutationStamp(now)}`,
-      kind: "issue.update",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "issue.updated", issue: id, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-issue-update-${id}-${mutationStamp(now)}`,
+        kind: "issue.update",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "issue.updated", issue: id, actor, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -85,13 +88,15 @@ export async function closeIssue(
       updated_at: ts,
       closed_at: ts,
     });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-issue-close-${id}-${mutationStamp(now)}`,
-      kind: "issue.close",
-      writes: [mutationWrite(root, file, updated)],
-      events: [{ type: "issue.closed", issue: id, actor, ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-issue-close-${id}-${mutationStamp(now)}`,
+        kind: "issue.close",
+        writes: [mutationWrite(root, file, updated)],
+        events: [{ type: "issue.closed", issue: id, actor, ts }],
+      }),
+    );
     return updated;
   });
 }
@@ -152,13 +157,15 @@ export async function createIssue(
     if (input.source !== undefined) record.source = input.source;
 
     const parsed = IssueSchema.parse(record);
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-issue-${id}`,
-      kind: "issue.create",
-      writes: [mutationWrite(root, file, record)],
-      events: [{ type: "issue.created", issue: id, title: input.title, actor: "mcp", ts }],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-issue-${id}`,
+        kind: "issue.create",
+        writes: [mutationWrite(root, file, record)],
+        events: [{ type: "issue.created", issue: id, title: input.title, actor: "mcp", ts }],
+      }),
+    );
     return parsed;
   });
 }
