@@ -16,8 +16,8 @@ invents its own spelling.
 | Hermes install stamp | `59004a62356f3a4697ab0fe8ad5086d2b405e2a6`, `0.21.5+2168.g59004a6`, built `2026-09-25T13:55:07Z`, `dirty: false` | `apps/desktop/release/win-unpacked/resources/install-stamp.json`, repo-root `install-stamp.json` |
 | Hermes adjacent checkout | `59004a62356f3a4697ab0fe8ad5086d2b405e2a6`, `v0.21.4+canary.20260925T065930Z-24-g59004a6235` | `git rev-parse HEAD`, `git describe --tags` |
 | Stamp vs checkout drift | `0` commits | `git rev-list --count <stamp>..HEAD` |
-| Test baseline | `283 pass / 1 fail` (the failure is the compiled-dashboard case needing `src/dashboard/client/dist`) | plan §16; build the dashboard before treating that case as meaningful |
-| Bun runtime | repo `engines` require `>=1.4.0 <1.5`. `PATH` (`C:/bun/bin/bun.exe`) was 1.3.14 and now resolves **1.4.1** (promoted from `C:/Users/User/.bun/bin/bun.exe`); older builds are preserved at `C:/bun/versions/1.3.14/bun.exe` and `C:/bun/versions/1.4.0/bun.exe`. The plan's recorded `283 pass / 1 fail` baseline was measured on **1.3.14**, so any baseline comparison must invoke `C:/bun/versions/1.3.14/bun.exe` explicitly | `bun --version`, `package.json` `engines`, `scripts.build` (`--asset` is a 1.4+ flag) |
+| Test baseline | **`284 pass / 0 fail` on `C:/bun/bin/bun.exe` (1.4.1)**, with the dashboard client built (`bun run dashboard:build` first when `src/dashboard/client/dist` is missing). The earlier `283 pass / 1 fail` figure belonged to the **retired** 1.3.14 binary, whose missing `--asset` flag broke the compiled-dashboard case; on 1.4.1 that case passes. Any failing test on 1.4.1 is now a real failure, not an accepted baseline. | `bun test` in the tree; see §4 |
+| Bun runtime | repo `engines` require `>=1.4.0 <1.5`. The gate target is **1.4.1** at `C:/bun/bin/bun.exe` (on `PATH`, promoted from `C:/Users/User/.bun/bin/bun.exe`). Older builds stay archived under `C:/bun/versions/` (`1.3.14`, `1.4.0`) for archaeology only: **1.3.14 is retired as the test baseline by owner decision (2026-09-26)** — on the same tree with the dashboard built it reports `283/1` where 1.4.1 reports `284/0`, and its missing `--asset` flag is a tooling limitation, not a code defect. Do not gate on it, and do not compare against it. | `bun --version`, `package.json` `engines`, `scripts.build` |
 | On-disk `waystation.exe` | dated `2026-08-28`, older than source, git-ignored | plan §16; compiled acceptance needs a fresh `bun run build` |
 
 The adjacent Hermes checkout is **not** a stale-mismatch case: the stamp commit and the checkout
@@ -134,13 +134,18 @@ and W04a then adds only `commit_evidence`.
 
 ```bash
 bun run dashboard:build     # only if src/dashboard/client/dist is missing
-bun test
+bun test                    # gate on C:/bun/bin/bun.exe (1.4.1): expect 0 fail
 bun run typecheck
 bun run check
 ```
 
-- Never exercise the live ledger: use `tmp` fixture ledgers and repositories, and clean up fixture
-  roots.
+Gate on **1.4.1** (`C:/bun/bin/bun.exe`). There is no second binary to compare against: 1.3.14 is
+archived and retired as a baseline, so any failing test on 1.4.1 is a regression to investigate rather
+than an accepted before-state.
+
+- Never exercise the live ledger: use fixture ledgers and repositories under the worktree's git-excluded
+  `.fixtures/` (external paths such as `$TEMP` are denied to non-interactive agent runs), and clean up
+  fixture roots.
 - The canonical ledger (`.waystation/`) is coordinator-owned during parallel work. Packages do not
   claim, message, or commit ledger files; the coordinator serializes ledger bookkeeping (plan §17.2).
 - Commit on your own branch, never on `main`, and never push.

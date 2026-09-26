@@ -61,6 +61,11 @@ failure is **tooling**, not code. This also means the plan's "build the dashboar
 case as meaningful" instruction was necessary but not sufficient — the binary must be the
 engines-compliant one. See F5.
 
+**Owner decision, same day: 1.3.14 is retired as the baseline.** Gates run on **1.4.1 only**; the 1.3.14
+column in the §2 table is retained as history, not as a comparison target, and a failing test on 1.4.1 is
+a real failure. The freeze doc's baseline row, its verification protocol and the plan's §16 text were all
+updated to this policy.
+
 ## 4. Acceptance criteria per record
 
 ### W01a — lock acquisition split (`af05667`, source only; tests land in `39f4eff` — F4)
