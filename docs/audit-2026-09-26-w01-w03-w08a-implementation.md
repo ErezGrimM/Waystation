@@ -164,7 +164,7 @@ The delivered tests are load-bearing: they fail when the behaviour they claim to
 | F3 | low | W08a criterion 4: "never held while waiting on a ledger lock or an MCP request" holds only because this module makes no such call — no test protects the invariant. | W08b/W08c must carry this as an explicit test when the plugin backend introduces those calls. |
 | F4 | low (bookkeeping) | The tests for W01a–c were committed with W01d (`test/persistence.test.ts` lands in `39f4eff`), so the per-record "commit as evidence" mapping is blurred. The W01c record is also still `ready` in the ledger although implemented and committed. | Record the mapping in the ledger comment when closing; claim/close W01c like its siblings. |
 | F5 | info (doc) | Plan §16 records `283 pass / 1 fail` as the baseline and as A09's before-state; that number is 1.3.14-specific. The same tree on the engines-compliant 1.4.1 is **284 pass / 0 fail**. | Correct §16 and A09's before-state to name the binary; treat the compiled-dashboard case as a 1.3.14 tooling gap, not a failure. |
-| F6 | info (env) | `bun run check` on `main` fails with "nested root configuration" while any worktree containing `biome.json` lives inside the repo. This predates this session (the abandoned `search-performance-66790a` worktree triggers it alone) but my three worktrees made it worse. | Keep worktrees outside the repo root (§7) — one remains inside because of a stale file handle; or, with your approval, add a one-line ignore for the worktree directory to the repo's `biome.json` (a tracked-config change, hence not done unilaterally). |
+| F6 | info (env) | `bun run check` on `main` fails with "nested root configuration" while any worktree containing `biome.json` lives inside the repo. This predates this session (the abandoned `search-performance-66790a` worktree triggers it alone) but my three worktrees made it worse. | Keep worktrees outside the repo root (§7) — one remains inside because of a stale file handle; or, with your approval, add a one-line ignore for the worktree directory to the repo's `biome.json` (a tracked-config change, hence not done unilaterally). **Decision (owner, 2026-09-26): do not touch the repo config.** Keep worktrees outside the repo root and retry moving the last one once its agent run ends; if it cannot be moved, record the limitation here rather than changing `biome.json`. |
 | F7 | info (env) | Earlier claim in this workstream that "Hermes's Python has no PyYAML" was wrong: that is the *tools* interpreter. Hermes's **runtime** is its venv (`hermes-agent/venv/Scripts/python.exe`), which has `yaml`, `pydantic`, `sqlite3` and **no** `pytest`. | Plugin tests stay stdlib-`unittest`-only (as instructed); no install is needed. Corrected in the agents' brief. |
 
 ## 7. Environment repairs made while getting here (full disclosure)
@@ -206,3 +206,17 @@ later records that own them.
 3. F5 applied to the plan.
 4. Then, and only then, the records advance from `in_progress` to `done` with commit evidence attached —
    still without merging to `main`.
+
+## 10. Follow-up round (opened 2026-09-26, after the owner's decisions)
+
+- **F1 and F2 are authorised for repair** on the W01 branch by the same agent, as two commits
+  (`fix(w01c): …` producer inventory test, `fix(w01a): …` cross-process contention fixture), under the
+  environment contract recorded in §7.4 (fixtures inside the worktree, `node_modules` junction, no `..`).
+- **F6 decision:** the repo's `biome.json` is not to be changed. Worktrees stay outside the repo root;
+  the last in-repo worktree (`w02-git-context`) will be moved once its live agent run ends, and if the
+  stale handle persists the limitation is recorded here rather than worked around in tracked config.
+- **F4 bookkeeping** is executed by the coordinator at close time: the W01c record is claimed and closed
+  with the commit map, and each record's `Commit` evidence is attached rather than inferred.
+- Records stay `in_progress`/`ready` until the two repairs land and are re-verified on both binaries.
+  Re-verification after any further environment change repeats the full §2 matrix — a prior green run
+  does not transfer across a relocation or a toolchain change (§7.3 is the cautionary example).
