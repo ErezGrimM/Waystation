@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-w03-trailer-parser-w03-parser-registry-20260926-102219-29ac2058",
+  "task": "task-w03-trailer-parser",
+  "agent": "w03-parser-registry",
+  "status": "active",
+  "branch": "wt/w03-parser-registry",
+  "worktree": "C:/Projects/Waystation/.claude/worktrees/w03-parser-registry",
+  "claimed_at": "2026-09-26T10:22:19+03:00",
+  "released_at": null,
+  "completed_at": null
+}

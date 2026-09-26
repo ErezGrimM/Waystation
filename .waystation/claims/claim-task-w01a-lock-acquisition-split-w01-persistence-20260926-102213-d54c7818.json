@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-w01a-lock-acquisition-split-w01-persistence-20260926-102213-d54c7818",
+  "task": "task-w01a-lock-acquisition-split",
+  "agent": "w01-persistence",
+  "status": "active",
+  "branch": "wt/w01-persistence",
+  "worktree": "C:/Projects/Waystation/.claude/worktrees/w01-persistence",
+  "claimed_at": "2026-09-26T10:22:13+03:00",
+  "released_at": null,
+  "completed_at": null
+}

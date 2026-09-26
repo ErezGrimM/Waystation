@@ -2,4 +2,7 @@
 
 # Blocked
 
-_none_
+- `task-w01c-recovery-v1-migration` — waiting on: task-w01b-intent-v2
+- `task-w02b-object-resolution` — waiting on: task-w02a-process-adapter
+- `task-w02c-source-identity` — waiting on: task-w02a-process-adapter
+- `task-w02d-context-helpers` — waiting on: task-w02a-process-adapter

@@ -6,7 +6,12 @@
 _none_
 
 ## In progress
-_none_
+- `task-w01a-lock-acquisition-split` [p1] — W01a: split ledger lock acquisition into mutation and read paths
+- `task-w01b-intent-v2` [p1] — W01b: version\-2 mutation intents with stable event identity
+- `task-w01d-record-round-trip` [p2] — W01d: record\-path preservation and claim round\-trip integrity
+- `task-w02a-process-adapter` [p1] — W02a: portable bounded process adapter for Git reads
+- `task-w03-trailer-parser` [p1] — W03: deterministic tolerant trailer parser
+- `task-w08a-registry-foundation` [p2] — W08a: project registry and package foundation
 
 ## Review
 _none_
@@ -15,7 +20,10 @@ _none_
 _none_
 
 ## Waiting (blocked by dependencies)
-_none_
+- `task-w01c-recovery-v1-migration` [p2] — W01c: version\-1 recovery compatibility and producer migration
+- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
+- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
+- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
 
 ## Backlog (todo)
 - `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
@@ -38,16 +46,6 @@ _none_
 - `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
 - `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
 - `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
-- `task-w00-contract-freeze` [p1] — W00: freeze contracts, pins, schema names and task split
-- `task-w01a-lock-acquisition-split` [p1] — W01a: split ledger lock acquisition into mutation and read paths
-- `task-w01b-intent-v2` [p1] — W01b: version\-2 mutation intents with stable event identity
-- `task-w01c-recovery-v1-migration` [p2] — W01c: version\-1 recovery compatibility and producer migration
-- `task-w01d-record-round-trip` [p2] — W01d: record\-path preservation and claim round\-trip integrity
-- `task-w02a-process-adapter` [p1] — W02a: portable bounded process adapter for Git reads
-- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
-- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
-- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
-- `task-w03-trailer-parser` [p1] — W03: deterministic tolerant trailer parser
 - `task-w04a-additive-schema` [p1] — W04a: additive CommitEvidence schema
 - `task-w04b-reconcile-core` [p1] — W04b: reconciliation core operation
 - `task-w04c-lifecycle-guard` [p2] — W04c: reopened\-work guard and earlier\-completion reconstruction
@@ -61,7 +59,6 @@ _none_
 - `task-w07a-binding-store` [p2] — W07a: worker binding store, generation and lifecycle
 - `task-w07b-forwarding` [p2] — W07b: worker call forwarding through the native MCP client
 - `task-w07c-worker-gates` [p3] — W07c: worker setup and feasibility gate fixtures
-- `task-w08a-registry-foundation` [p2] — W08a: project registry and package foundation
 - `task-w08b-plugin-backend` [p3] — W08b: read\-only plugin backend endpoints
 - `task-w08c-native-monitor` [p3] — W08c: native Monitor views and refresh behavior
 - `task-w08d-package-assembly` [p3] — W08d: package assembly and installation procedure
@@ -148,6 +145,7 @@ _none_
 - `task-skeleton-task-next` [p1] — Walking skeleton: end\-to\-end \`waystation task next\`
 - `task-skeleton-validate` [p2] — Widen skeleton: full\-ledger validation
 - `task-validate-messages` [p3] — Extend validate to cover message records
+- `task-w00-contract-freeze` [p1] — W00: freeze contracts, pins, schema names and task split
 
 ## Won't do
 _none_
@@ -156,4 +154,29 @@ _none_
 _none_
 
 ## Coordination warnings
-_none_
+- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims have overlapping path hints near src/core/store.ts (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims have overlapping path hints near test (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims share scope scope-core (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims have overlapping path hints near src/core/store.ts (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims have overlapping path hints near test (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims share scope scope-core (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
+- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
+- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims have overlapping path hints near src/core/store.ts (advisory)
+- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims have overlapping path hints near test (advisory)
+- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims share scope scope-core (advisory)
+- `task-w01b-intent-v2` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01b-intent-v2` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
+- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
+- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
+- `task-w01d-record-round-trip` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01d-record-round-trip` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
+- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
+- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
+- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
+- `task-w02a-process-adapter` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
+- `task-w02a-process-adapter` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
