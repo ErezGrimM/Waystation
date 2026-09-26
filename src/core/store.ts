@@ -8,11 +8,13 @@ import {
   readdirSync,
   readFileSync,
   readSync,
+  realpathSync,
   renameSync,
   unlinkSync,
   writeSync,
 } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import lockfile from "proper-lockfile";
 import { emitMutationEvent } from "./events.ts";
 import { ledgerPaths } from "./paths.ts";
@@ -327,22 +329,41 @@ export class LockError extends Error {
 }
 
 /**
- * Run a mutation while holding a single ledger-wide write lock (spec §12).
- * The CLI, dashboard, and MCP layers must all funnel writes through here.
+ * Canonical ledger directory for the lock. Resolving junctions/symlinks means
+ * every cooperating reader/writer locks one path for one ledger regardless of
+ * the alias it arrived through (plan §9.1). User-facing paths stay as given.
  */
-export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
-  const paths = ledgerPaths(root);
-  mkdirSync(paths.ledger, { recursive: true });
-  let release: () => Promise<void>;
+function canonicalLockDir(root: string): string {
+  return realpathSync(join(root, ".waystation"));
+}
+
+async function acquireLedgerLock(dir: string): Promise<() => Promise<void>> {
   try {
-    release = await lockfile.lock(paths.ledger, {
+    return await lockfile.lock(dir, {
       realpath: false,
       retries: { retries: 15, minTimeout: 20, maxTimeout: 400 },
       stale: 60_000,
     });
   } catch (err) {
-    throw new LockError(`could not acquire ledger write lock: ${(err as Error).message}`);
+    throw new LockError(`could not acquire ledger lock: ${(err as Error).message}`);
   }
+}
+
+/** True while a pending mutation intent exists on disk. */
+export function hasPendingIntent(root: string): boolean {
+  return existsSync(intentFile(root));
+}
+
+/**
+ * Run a mutation while holding a single ledger-wide write lock (spec §12).
+ * The mutation path creates the ledger directory, sweeps orphaned temporaries
+ * once per process, and recovers a pending intent before running the callback.
+ * The CLI, dashboard, and MCP layers must all funnel writes through here.
+ */
+export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
+  const paths = ledgerPaths(root);
+  mkdirSync(paths.ledger, { recursive: true });
+  const release = await acquireLedgerLock(canonicalLockDir(root));
   try {
     // Sweep under the lock: all writes funnel through here, so any *.tmp
     // present now is genuinely orphaned (a concurrent writer's live temp can
@@ -355,12 +376,45 @@ export async function withLedgerLock<T>(root: string, fn: () => Promise<T> | T):
   }
 }
 
+/**
+ * Run a read-only snapshot/detail operation while holding the SAME ledger
+ * lock (plan §9.1). This path never creates the ledger directory, sweeps
+ * temporaries, recovers an intent, or writes canonical/derived data. A pending
+ * intent is refused with a coded diagnostic instead of being recovered. The
+ * missing-ledger failure lives in ledger resolution, so the ledger already
+ * exists by the time a snapshot/detail read reaches here.
+ */
+export async function withLedgerReadLock<T>(root: string, fn: () => Promise<T> | T): Promise<T> {
+  const release = await acquireLedgerLock(canonicalLockDir(root));
+  try {
+    if (hasPendingIntent(root)) {
+      throw intentError(
+        intentFile(root),
+        "a pending mutation intent blocks read-only access; run a mutation (or repair) first",
+      );
+    }
+    return await fn();
+  } finally {
+    await release();
+  }
+}
+
 export function claimFile(root: string, id: string): string {
   return join(ledgerPaths(root).claims, `${id}.json`);
 }
 
-/** Load and validate all claim records. */
-export function loadClaims(root?: string): ClaimRecord[] {
+/** A validated claim record together with the file it was loaded from. */
+export interface LoadedClaim {
+  claim: ClaimRecord;
+  file: string;
+}
+
+/**
+ * Load and validate all claim records, keeping the source file path for each
+ * so a mutation writes back to the exact file a claim was loaded from (audit
+ * M7 / plan §7.3), rather than assuming filename === id.
+ */
+export function loadClaimFiles(root?: string): LoadedClaim[] {
   const dir = ledgerPaths(root).claims;
   let entries: string[];
   try {
