@@ -2,10 +2,10 @@
   "id": "claim-task-w01d-record-round-trip-w01-persistence-20260926-102216-d35c10fb",
   "task": "task-w01d-record-round-trip",
   "agent": "w01-persistence",
-  "status": "active",
+  "status": "completed",
   "branch": "wt/w01-persistence",
   "worktree": "C:/Projects/Waystation/.claude/worktrees/w01-persistence",
   "claimed_at": "2026-09-26T10:22:16+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-09-26T12:23:32+03:00"
 }

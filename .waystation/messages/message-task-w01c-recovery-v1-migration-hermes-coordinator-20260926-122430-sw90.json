@@ -1,0 +1,10 @@
+{
+  "id": "message-task-w01c-recovery-v1-migration-hermes-coordinator-20260926-122430-sw90",
+  "thread": "task-w01c-recovery-v1-migration",
+  "from_agent": "hermes-coordinator",
+  "to_agent": null,
+  "kind": "verdict",
+  "body": "CLOSED with evidence. Source 6d5d77e (v1 recovery + producer migration) + 7e0cf9e (F1: test/intent-producer-inventory.test.ts). Audit gap F1 (criterion 3) is closed: the inventory test NAMES the producers (mutate/handoff/issue/messages) and fails if the set of buildIntent-referencing source files differs (so a NEW unregistered producer is caught), and fails on any hand-built 'version: 1' literal in a producer while documenting why store.ts and the v1 fixtures are exempt. Coordinator teeth checks: injecting version:1 into mutate.ts fails it; adding a new file that imports buildIntent fails it. This record was implemented but never claimed before close; the claim is now satisfied by finish.",
+  "in_reply_to": null,
+  "created_at": "2026-09-26T12:24:30+03:00"
+}

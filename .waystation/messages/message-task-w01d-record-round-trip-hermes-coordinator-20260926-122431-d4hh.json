@@ -1,0 +1,10 @@
+{
+  "id": "message-task-w01d-record-round-trip-hermes-coordinator-20260926-122431-d4hh",
+  "thread": "task-w01d-record-round-trip",
+  "from_agent": "hermes-coordinator",
+  "to_agent": null,
+  "kind": "verdict",
+  "body": "CLOSED with evidence. Source 39f4eff (also carries test/persistence.test.ts, which holds the acceptance tests for W01a-c as well - recorded here because the per-record commit map is otherwise blurred; see audit doc 2026-09-26 F4). ClaimRecord.passthrough() at schema.ts:203; loadClaimFiles keeps the source file path so a claim writes back to the file it was loaded from and no duplicate id-named record is created. Unknown TASK fields are covered by the pre-existing test/skeleton.test.ts:266. Validation passes; the schema change is additive only.",
+  "in_reply_to": null,
+  "created_at": "2026-09-26T12:24:31+03:00"
+}

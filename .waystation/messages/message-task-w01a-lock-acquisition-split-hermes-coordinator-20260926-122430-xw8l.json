@@ -1,0 +1,10 @@
+{
+  "id": "message-task-w01a-lock-acquisition-split-hermes-coordinator-20260926-122430-xw8l",
+  "thread": "task-w01a-lock-acquisition-split",
+  "from_agent": "hermes-coordinator",
+  "to_agent": null,
+  "kind": "verdict",
+  "body": "CLOSED with evidence. Source af05667 (lock split) + 87b457d (F2: test/lock-contention.test.ts with test/fixtures/hold-lock.ts). F2 gap from audit doc 2026-09-26 (criterion 5) is closed: the fixture contends on the SAME canonical lock target as src/core/store.ts (realpathSync(join(root,'.waystation'))), writes a marker only after acquiring so the parent polls instead of sleeping, and asserts wait-then-acquire (~1.5s observed). Coordinator teeth check: setting the lock to retries:0 makes this test fail, so it detects a non-waiting lock. Gates on HEAD 87b457d: 305 pass/0 fail on bun 1.4.1, 304/1 on 1.3.14 (compiled-dashboard --asset artifact), typecheck+check clean.",
+  "in_reply_to": null,
+  "created_at": "2026-09-26T12:24:30+03:00"
+}

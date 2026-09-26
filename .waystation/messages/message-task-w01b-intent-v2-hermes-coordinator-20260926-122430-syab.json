@@ -1,0 +1,10 @@
+{
+  "id": "message-task-w01b-intent-v2-hermes-coordinator-20260926-122430-syab",
+  "thread": "task-w01b-intent-v2",
+  "from_agent": "hermes-coordinator",
+  "to_agent": null,
+  "kind": "verdict",
+  "body": "CLOSED with evidence. Source 4428d32. Verified independently: recovery appends only the missing event suffix (store.ts:550-566), ordered-prefix verification precedes any write, escaping targets refused via realpath containment, and a REAL separate-process recovery fixture exists (test/fixtures/interrupted-mutation.ts, driven by Bun.spawnSync on process.execPath). Coordinator mutation checks: re-appending all events, dropping the prefix verification, or letting the read path mkdir each make the matching test fail. 0 production crash switches (grep of src/).",
+  "in_reply_to": null,
+  "created_at": "2026-09-26T12:24:30+03:00"
+}

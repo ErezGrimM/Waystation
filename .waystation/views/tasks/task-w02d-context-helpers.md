@@ -2,8 +2,7 @@
 
 # task\-w02d\-context\-helpers — W02d: invocation context and source\-path resolution helpers
 status: ready  priority: 2  scope: scope-core
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-w02a\-process\-adapter
+readiness: actionable  reason: declared_ready
 
 Build the immutable InvocationContext used by every core\-facing wrapper: the canonical ledger location from explicit root, then WAYSTATION\_ROOT, then upward discovery, unchanged; the caller directory or worktree when available; and the optional adapter binding identity\. Resolve the evidence repository explicitly against the caller, otherwise the caller's Git repository\. Neither an evidence path nor a Monitor selection may change the ledger, and neither registered projects nor the ledger may be scanned to guess a destination or source\. A non\-Git ledger is valid when an explicit Git evidence source is available\. Never mutate process\.cwd or process\-global environment for one call\.
 

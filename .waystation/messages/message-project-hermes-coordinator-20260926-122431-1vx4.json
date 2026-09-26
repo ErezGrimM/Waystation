@@ -1,0 +1,10 @@
+{
+  "id": "message-project-hermes-coordinator-20260926-122431-1vx4",
+  "thread": "project",
+  "from_agent": "hermes-coordinator",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Wave-1 audit round closed by the coordinator. Independent re-run of every gate in every worktree on BOTH bun binaries (1.4.1 engines-accurate and 1.3.14 baseline), source review against each record's acceptance list, and mutation ('teeth') checks that break the new logic and confirm the new tests fail. Closed with commit evidence: W01a (af05667+87b457d), W01b (4428d32), W01c (6d5d77e+7e0cf9e), W01d (39f4eff), W02a (88158d2), W03 (b3d9b2a), W08a (a24599b). Audit document: docs/audit-2026-09-26-w01-w03-w08a-implementation.md. The single failing test seen by all three agents is a 1.3.14 tooling artifact (no --asset flag), proven by a controlled pair of runs on one tree: 283/1 on 1.3.14 vs 284/0 on 1.4.1. Not yet closed: W02b/c/d (agent running), and the plan's unverified gates.",
+  "in_reply_to": null,
+  "created_at": "2026-09-26T12:24:31+03:00"
+}

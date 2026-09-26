@@ -2,8 +2,7 @@
 
 # task\-w02c\-source\-identity — W02c: repository source identity from the canonical common directory
 status: ready  priority: 2  scope: scope-git
-readiness: waiting  reason: unmet_dependencies
-readiness_blockers: task\-w02a\-process\-adapter
+readiness: actionable  reason: declared_ready
 
 Derive a deterministic source ID from the canonical Git common\-directory filesystem location, resolving aliases with platform\-aware canonicalization and without lowercasing case\-sensitive directories\. Linked worktrees of one repository share a source ID; separate clones are separate sources even when their remotes match; remote URLs are never identity and are never persisted\. Moving a checkout changes its location\-based identity while historical associations remain intact and verification at the new location is recorded separately\.
 

@@ -3,40 +3,12 @@
 # Active Work
 
 ## In progress
-- `task-w01a-lock-acquisition-split` [p1] — W01a: split ledger lock acquisition into mutation and read paths
-- `task-w01b-intent-v2` [p1] — W01b: version\-2 mutation intents with stable event identity
-- `task-w01d-record-round-trip` [p2] — W01d: record\-path preservation and claim round\-trip integrity
-- `task-w02a-process-adapter` [p1] — W02a: portable bounded process adapter for Git reads
-- `task-w03-trailer-parser` [p1] — W03: deterministic tolerant trailer parser
-- `task-w08a-registry-foundation` [p2] — W08a: project registry and package foundation
-
-## Ready
 _none_
 
+## Ready
+- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
+- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
+- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
+
 ## Coordination warnings
-- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims have overlapping path hints near src/core/store.ts (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims have overlapping path hints near test (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w01b-intent-v2` — active claims share scope scope-core (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims have overlapping path hints near src/core/store.ts (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims have overlapping path hints near test (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w01d-record-round-trip` — active claims share scope scope-core (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
-- `task-w01a-lock-acquisition-split` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
-- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims have overlapping path hints near src/core/store.ts (advisory)
-- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims have overlapping path hints near test (advisory)
-- `task-w01b-intent-v2` / `task-w01d-record-round-trip` — active claims share scope scope-core (advisory)
-- `task-w01b-intent-v2` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01b-intent-v2` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
-- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
-- `task-w01b-intent-v2` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
-- `task-w01d-record-round-trip` / `task-w02a-process-adapter` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01d-record-round-trip` / `task-w02a-process-adapter` — active claims have overlapping path hints near test (advisory)
-- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
-- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
-- `task-w01d-record-round-trip` / `task-w03-trailer-parser` — active claims share scope scope-core (advisory)
-- `task-w02a-process-adapter` / `task-w03-trailer-parser` — active claims have overlapping path hints near src/core (advisory)
-- `task-w02a-process-adapter` / `task-w03-trailer-parser` — active claims have overlapping path hints near test (advisory)
+_none_

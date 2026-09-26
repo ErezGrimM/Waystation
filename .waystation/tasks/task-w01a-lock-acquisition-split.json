@@ -1,7 +1,7 @@
 {
   "id": "task-w01a-lock-acquisition-split",
   "title": "W01a: split ledger lock acquisition into mutation and read paths",
-  "status": "in_progress",
+  "status": "done",
   "priority": 1,
   "scope": "scope-core",
   "path_hints": [
@@ -16,8 +16,8 @@
     "task-w00-contract-freeze"
   ],
   "created_at": "2026-09-26T02:39:25+03:00",
-  "updated_at": "2026-09-26T10:22:13+03:00",
-  "closed_at": null,
+  "updated_at": "2026-09-26T12:23:31+03:00",
+  "closed_at": "2026-09-26T12:23:31+03:00",
   "description": "Implement the two lock policies of plan 9.1. The mutation path keeps today's behavior: create the ledger directory, sweep orphaned temporaries once per process, recover a pending intent, then run. The read-only snapshot/detail path acquires the same lock without creating the ledger, sweeping, recovering, or modifying canonical or derived data, and refuses to proceed while a pending intent exists. Normalize ledger aliases so a junction or symlink cannot form a second lock for one ledger while user-facing paths stay as expressed, release in finally, and keep the existing coded contention behavior.",
   "acceptance": [
     "Mutation-path behavior is unchanged for every existing caller and existing behavior tests pass.",
@@ -26,6 +26,9 @@
     "Alias normalization is covered by a test that reaches one ledger through a junction or symlink and observes a single lock.",
     "A real separate-process contention fixture exists alongside any in-process fault seam."
   ],
-  "commits": [],
+  "commits": [
+    "af05667",
+    "87b457d"
+  ],
   "notes": "src/core/store.ts owns the primitive (withLedgerLock creates the directory before locking and sweeps once per process); src/core/paths.ts owns resolution and already fails with ledger_not_found."
 }
