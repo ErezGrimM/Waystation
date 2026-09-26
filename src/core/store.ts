@@ -216,24 +216,75 @@ export function appendEventUnlocked(root: string, event: Record<string, unknown>
   emitMutationEvent(event);
 }
 
+/** One journaled record write inside a mutation intent. */
+export interface MutationIntentWrite {
+  path: string;
+  value: unknown;
+}
+
+/** A single expected event with stable per-event identity (plan §9.2). */
+export interface MutationIntentEvent {
+  /** Ordinal/event identity within this mutation; stable across replays. */
+  id: string;
+  payload: Record<string, unknown>;
+}
+
+/** Version-2 mutation intent: per-event identity, no batch-level "any event" check. */
 export interface MutationIntent {
+  version: 2;
+  id: string;
+  kind: string;
+  writes: MutationIntentWrite[];
+  events: MutationIntentEvent[];
+}
+
+/** Legacy version-1 intent. Recovered only on an exact ordered event prefix. */
+export interface MutationIntentV1 {
   version: 1;
   id: string;
   kind: string;
-  writes: Array<{ path: string; value: unknown }>;
+  writes: MutationIntentWrite[];
   events: Array<Record<string, unknown>>;
+}
+
+/** Producer-facing constructor input; `events` are the bare payloads in order. */
+export interface MutationIntentInput {
+  id: string;
+  kind: string;
+  writes: MutationIntentWrite[];
+  events: Array<Record<string, unknown>>;
+}
+
+/** Bookkeeping keys stamped onto appended events so recovery can identify them. */
+const MUTATION_ID_KEY = "mutation";
+const MUTATION_EVENT_KEY = "intent_event";
+
+/**
+ * Build a version-2 intent from a producer's bare event payloads. Each event
+ * gets a stable ordinal id; recovery matches already-appended events to this
+ * sequence by identity and payload, then appends only the exact missing suffix.
+ */
+export function buildIntent(input: MutationIntentInput): MutationIntent {
+  return {
+    version: 2,
+    id: input.id,
+    kind: input.kind,
+    writes: input.writes,
+    events: input.events.map((payload, index) => ({ id: String(index), payload })),
+  };
 }
 
 function intentFile(root: string): string {
   return join(ledgerPaths(root).ledger, "mutation-intent.json");
 }
 
+/** A coded RecordError for a pending-intent / recovery problem. */
+function intentError(file: string, message: string): RecordError {
+  return new RecordError(file, message, "mutation_intent_invalid");
+}
+
 /** Convert a ledger record filename into a safe journal-relative target. */
-export function mutationWrite(
-  root: string,
-  file: string,
-  value: unknown,
-): MutationIntent["writes"][number] {
+export function mutationWrite(root: string, file: string, value: unknown): MutationIntentWrite {
   const ledger = resolve(ledgerPaths(root).ledger);
   const target = resolve(file);
   const path = relative(ledger, target);
@@ -248,59 +299,282 @@ export function mutationWrite(
   return { path, value };
 }
 
-function parseIntent(root: string): MutationIntent | null {
+type ParsedIntent = MutationIntent | MutationIntentV1;
+
+function parseIntent(root: string): ParsedIntent | null {
   const file = intentFile(root);
   if (!existsSync(file)) return null;
   const value = readJsonFile(file);
-  if (
-    !value ||
-    typeof value !== "object" ||
-    (value as { version?: unknown }).version !== 1 ||
-    typeof (value as { id?: unknown }).id !== "string" ||
-    !Array.isArray((value as { writes?: unknown }).writes) ||
-    !Array.isArray((value as { events?: unknown }).events)
-  ) {
-    throw new RecordError(file, "malformed mutation intent", "mutation_intent_invalid");
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw intentError(file, "malformed mutation intent");
   }
-  return value as MutationIntent;
+  const version = (value as { version?: unknown }).version;
+  if (version === 1) return parseV1Intent(file, value as Record<string, unknown>);
+  if (version === 2) return parseV2Intent(file, value as Record<string, unknown>);
+  throw intentError(file, `unknown mutation intent version: ${String(version)}`);
 }
 
-function eventAlreadyAppended(root: string, mutation: string): boolean {
-  const events = ledgerPaths(root).events;
-  if (!existsSync(events)) return false;
-  return readFileSync(events, "utf8")
-    .split(/\r?\n/)
-    .some((line) => {
-      if (!line) return false;
-      try {
-        return (JSON.parse(line) as { mutation?: unknown }).mutation === mutation;
-      } catch {
-        return false;
-      }
-    });
+function parseV1Intent(file: string, value: Record<string, unknown>): MutationIntentV1 {
+  const id = value.id;
+  const kind = value.kind;
+  const writes = value.writes;
+  const events = value.events;
+  if (
+    typeof id !== "string" ||
+    id.length === 0 ||
+    typeof kind !== "string" ||
+    !Array.isArray(writes) ||
+    !Array.isArray(events)
+  ) {
+    throw intentError(file, "malformed mutation intent");
+  }
+  return { version: 1, id, kind, writes: writes as MutationIntentWrite[], events };
+}
+
+function parseV2Intent(file: string, value: Record<string, unknown>): MutationIntent {
+  const id = value.id;
+  const kind = value.kind;
+  const writes = value.writes;
+  const events = value.events;
+  if (
+    typeof id !== "string" ||
+    id.length === 0 ||
+    typeof kind !== "string" ||
+    kind.length === 0 ||
+    !Array.isArray(writes) ||
+    !Array.isArray(events)
+  ) {
+    throw intentError(file, "malformed mutation intent");
+  }
+  for (const rawWrite of writes) {
+    if (!rawWrite || typeof rawWrite !== "object" || Array.isArray(rawWrite)) {
+      throw intentError(file, "malformed mutation intent write entry");
+    }
+    const write = rawWrite as Record<string, unknown>;
+    if (typeof write.path !== "string" || write.path.length === 0 || !("value" in write)) {
+      throw intentError(file, "malformed mutation intent write entry");
+    }
+  }
+  const seenEventIds = new Set<string>();
+  for (const rawEvent of events) {
+    if (!rawEvent || typeof rawEvent !== "object" || Array.isArray(rawEvent)) {
+      throw intentError(file, "malformed mutation intent event entry");
+    }
+    const event = rawEvent as Record<string, unknown>;
+    const payload = event.payload;
+    if (typeof event.id !== "string" || event.id.length === 0) {
+      throw intentError(file, "malformed mutation intent event entry");
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw intentError(file, "malformed mutation intent event entry");
+    }
+    if (seenEventIds.has(event.id)) {
+      throw intentError(file, `duplicate event identity in mutation intent: ${event.id}`);
+    }
+    seenEventIds.add(event.id);
+  }
+  return {
+    version: 2,
+    id,
+    kind,
+    writes: writes as MutationIntentWrite[],
+    events: events as MutationIntentEvent[],
+  };
+}
+
+/**
+ * Read the already-appended events for `mutationId` from events.jsonl. Returns
+ * the trailing suffix of events carrying that mutation id, verifying they form
+ * one contiguous suffix (any earlier event with the same id is duplicate or
+ * reordered data). A torn/invalid line is a recovery error, never proof of an
+ * empty log.
+ */
+function readMutationEvents(root: string, mutationId: string): Array<Record<string, unknown>> {
+  const eventsFile = ledgerPaths(root).events;
+  if (!existsSync(eventsFile)) return [];
+  const lines = readFileSync(eventsFile, "utf8").split(/\r?\n/);
+  const parsed: Array<Record<string, unknown>> = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+    let value: unknown;
+    try {
+      value = JSON.parse(line);
+    } catch {
+      throw new RecordError(
+        eventsFile,
+        `torn event log line ${i + 1}; repair before recovery`,
+        "mutation_intent_invalid",
+      );
+    }
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new RecordError(
+        eventsFile,
+        `invalid event log line ${i + 1}`,
+        "mutation_intent_invalid",
+      );
+    }
+    parsed.push(value as Record<string, unknown>);
+  }
+  const appended: Array<Record<string, unknown>> = [];
+  let idx = parsed.length - 1;
+  while (idx >= 0 && (parsed[idx] as { mutation?: unknown }).mutation === mutationId) {
+    appended.unshift(parsed[idx] as Record<string, unknown>);
+    idx--;
+  }
+  for (let j = 0; j <= idx; j++) {
+    if ((parsed[j] as { mutation?: unknown }).mutation === mutationId) {
+      throw new RecordError(
+        eventsFile,
+        "mutation events are not a contiguous suffix",
+        "mutation_intent_invalid",
+      );
+    }
+  }
+  return appended;
+}
+
+/** Remove the recovery bookkeeping keys so payloads can be compared exactly. */
+function stripBookkeeping(event: Record<string, unknown>): Record<string, unknown> {
+  const rest: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(event)) {
+    if (key === MUTATION_ID_KEY || key === MUTATION_EVENT_KEY) continue;
+    rest[key] = value;
+  }
+  return rest;
+}
+
+function verifyV1Prefix(
+  file: string,
+  intent: MutationIntentV1,
+  appended: Array<Record<string, unknown>>,
+): void {
+  if (appended.length > intent.events.length) {
+    throw intentError(file, "more appended events than the intent expects");
+  }
+  for (let i = 0; i < appended.length; i++) {
+    const stored = appended[i];
+    const expected = intent.events[i];
+    if (!stored || !expected) continue;
+    // v1 compares repeated identical payloads by position, not set membership.
+    if (!isDeepStrictEqual(stripBookkeeping(stored), expected)) {
+      throw intentError(file, `event payload conflict at position ${i}`);
+    }
+  }
+}
+
+function verifyV2Prefix(
+  file: string,
+  intent: MutationIntent,
+  appended: Array<Record<string, unknown>>,
+): void {
+  if (appended.length > intent.events.length) {
+    throw intentError(file, "more appended events than the intent expects");
+  }
+  for (let i = 0; i < appended.length; i++) {
+    const stored = appended[i];
+    const expected = intent.events[i];
+    if (!stored || !expected) continue;
+    if (stored[MUTATION_EVENT_KEY] !== expected.id) {
+      throw intentError(
+        file,
+        `event identity mismatch at position ${i}: expected ${expected.id}, found ${String(stored[MUTATION_EVENT_KEY])}`,
+      );
+    }
+    if (!isDeepStrictEqual(stripBookkeeping(stored), expected.payload)) {
+      throw intentError(file, `event payload conflict at position ${i} (${expected.id})`);
+    }
+  }
+}
+
+/**
+ * Verify a journal-relative target is canonically contained in the ledger,
+ * resolving symlinks/junctions so a path that escapes through a link is
+ * refused even though its string prefix looks safe (plan §9.2).
+ */
+function assertLedgerContained(file: string, ledger: string, target: string): void {
+  let realLedger: string;
+  try {
+    realLedger = realpathSync(ledger);
+  } catch {
+    return; // ledger not materialized; the string check above already passed
+  }
+  let existing = target;
+  while (!existsSync(existing)) {
+    const parent = dirname(existing);
+    if (parent === existing) break;
+    existing = parent;
+  }
+  let realExisting: string;
+  try {
+    realExisting = realpathSync(existing);
+  } catch {
+    return;
+  }
+  const rel = relative(realLedger, realExisting);
+  if (rel === "") return;
+  if (rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+    throw intentError(file, `mutation target escapes the ledger: ${target}`);
+  }
+}
+
+/** Apply a parsed intent while the ledger lock is held. Safe to repeat. */
+function recoverIntentUnlocked(root: string, intent: ParsedIntent): void {
+  const file = intentFile(root);
+  const ledger = resolve(ledgerPaths(root).ledger);
+
+  // Preflight: every write target is a complete, safely-contained record path.
+  for (const write of intent.writes) {
+    const target = resolve(ledger, write.path);
+    if (target === ledger || !target.startsWith(`${ledger}${sep}`)) {
+      throw intentError(file, `mutation intent has unsafe target: ${write.path}`);
+    }
+    assertLedgerContained(file, ledger, target);
+  }
+
+  // Preflight: the already-appended events must match an exact ordered prefix
+  // before any additional recovery write happens.
+  const appended = readMutationEvents(root, intent.id);
+  if (intent.version === 2) {
+    verifyV2Prefix(file, intent, appended);
+  } else {
+    verifyV1Prefix(file, intent, appended);
+  }
+
+  // Apply the record writes (atomic per-file replacement).
+  for (const write of intent.writes) {
+    writeJsonAtomic(resolve(ledger, write.path), write.value);
+  }
+
+  // Append only the exact missing event suffix.
+  for (let i = appended.length; i < intent.events.length; i++) {
+    const event = intent.events[i];
+    if (!event) continue;
+    if (intent.version === 2) {
+      const e = event as MutationIntentEvent;
+      appendEventUnlocked(root, {
+        ...e.payload,
+        [MUTATION_ID_KEY]: intent.id,
+        [MUTATION_EVENT_KEY]: e.id,
+      });
+    } else {
+      appendEventUnlocked(root, {
+        ...(event as Record<string, unknown>),
+        [MUTATION_ID_KEY]: intent.id,
+      });
+    }
+  }
+
+  // Remove the intent only after records and events are durably complete.
+  unlinkSync(file);
+  fsyncDir(ledger);
 }
 
 /** Replay an intent while the ledger lock is held. Safe to repeat after any crash. */
 export function recoverMutationIntentUnlocked(root: string): void {
   const intent = parseIntent(root);
   if (!intent) return;
-  const ledger = resolve(ledgerPaths(root).ledger);
-  for (const write of intent.writes) {
-    const file = resolve(ledger, write.path);
-    if (file === ledger || !file.startsWith(`${ledger}${sep}`)) {
-      throw new RecordError(
-        intentFile(root),
-        "mutation intent has unsafe target",
-        "mutation_intent_invalid",
-      );
-    }
-    writeJsonAtomic(file, write.value);
-  }
-  if (!eventAlreadyAppended(root, intent.id)) {
-    for (const event of intent.events) appendEventUnlocked(root, { ...event, mutation: intent.id });
-  }
-  unlinkSync(intentFile(root));
-  fsyncDir(ledger);
+  recoverIntentUnlocked(root, intent);
 }
 
 /** Persist a replayable multi-file mutation, then apply it to completion. */

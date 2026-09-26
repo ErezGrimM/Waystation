@@ -174,8 +174,11 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
   if (existsSync(mutationIntent)) {
     try {
       const intent = JSON.parse(readFileSync(mutationIntent, "utf8")) as Record<string, unknown>;
+      const version = intent.version;
+      // Both the legacy v1 shape and the v2 intent shape are valid; store.ts
+      // owns the full structural validation at recovery time.
       if (
-        intent.version !== 1 ||
+        (version !== 1 && version !== 2) ||
         typeof intent.id !== "string" ||
         !Array.isArray(intent.writes) ||
         !Array.isArray(intent.events)
