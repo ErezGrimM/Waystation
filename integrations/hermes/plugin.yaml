@@ -1,0 +1,36 @@
+# Hermes plugin manifest for the Waystation integration.
+# This package provides the project registry foundation, shared worker/Monitor
+# contracts, and a read-only native Monitor backend for the Waystation ledger.
+# Runtime artifacts are built/copied during the documented install procedure;
+# Hermes core is not forked.
+id: waystation
+name: Waystation
+version: 0.1.0
+description: Native Hermes integration for the Waystation task ledger.
+author: Waystation contributors
+
+contributes:
+  desktop:
+    entry: desktop/plugin.js
+  dashboard:
+    manifest: dashboard/manifest.json
+    backend: dashboard/plugin_api.py
+  worker:
+    registration: __init__.py
+    modules:
+      - worker/
+
+settings:
+  schema:
+    type: object
+    properties:
+      mcp_server_allowlist:
+        type: array
+        items:
+          type: string
+        description: Project-bound MCP server names the plugin may invoke.
+    required: []
+
+# The registry stores ProjectRegistration records in profile-scoped plugin state
+# (ctx.state). It never writes into .waystation or treats browser storage as
+# authoritative.

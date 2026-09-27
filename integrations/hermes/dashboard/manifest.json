@@ -1,0 +1,20 @@
+{
+  "id": "waystation",
+  "name": "Waystation Monitor",
+  "version": "0.1.0",
+  "backend": "plugin_api.py",
+  "contributes": {
+    "routes": [
+      {
+        "path": "/registry",
+        "method": "GET",
+        "handler": "list_projects"
+      },
+      {
+        "path": "/registry/:key",
+        "method": "GET",
+        "handler": "get_project"
+      }
+    ]
+  }
+}
