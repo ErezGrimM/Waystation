@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-w02d-context-helpers-codex-reconcile-20260927-115622-fbf75f86",
+  "task": "task-w02d-context-helpers",
+  "agent": "codex-reconcile",
+  "status": "active",
+  "branch": "codex/reconcile-started-work",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-09-27T11:56:22+03:00",
+  "released_at": null,
+  "completed_at": null
+}

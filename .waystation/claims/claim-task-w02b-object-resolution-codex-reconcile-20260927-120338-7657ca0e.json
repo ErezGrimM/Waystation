@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-w02b-object-resolution-codex-reconcile-20260927-120338-7657ca0e",
+  "task": "task-w02b-object-resolution",
+  "agent": "codex-reconcile",
+  "status": "active",
+  "branch": "codex/reconcile-started-work",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-09-27T12:03:38+03:00",
+  "released_at": null,
+  "completed_at": null
+}

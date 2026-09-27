@@ -131,16 +131,19 @@ function decodeCommitMessage(bytes: Uint8Array, declared: string | null): Commit
   for (const label of labels) {
     let strict: TextDecoder;
     try {
-      strict = new TextDecoder(label, { fatal: true });
+      strict = new TextDecoder(label, { fatal: true, ignoreBOM: true });
     } catch {
       continue;
     }
     try {
+      const message = strict.decode(bytes);
+      const lossless =
+        strict.encoding === "utf-8" && Buffer.from(message, "utf8").equals(Buffer.from(bytes));
       return {
-        message: strict.decode(bytes),
+        message,
         encoding: declared,
-        rawMessageBase64: null,
-        decodedLosslessly: true,
+        rawMessageBase64: lossless ? null : Buffer.from(bytes).toString("base64"),
+        decodedLosslessly: lossless,
       };
     } catch {
       // Not losslessly decodable with this label; try the next.
@@ -206,7 +209,11 @@ export function resolveCommitObject(
     ]);
   }
 
-  const resolution = runSafeGit(["rev-parse", "--verify", ref], repo, options);
+  const resolution = runSafeGit(
+    ["rev-parse", `--disambiguate=${ref.toLowerCase()}`],
+    repo,
+    options,
+  );
   if (!resolution.ok || !resolution.data) return passThroughDiags(resolution);
   if (resolution.data.exitCode !== 0) {
     const stderr = stderrText(resolution.data);
@@ -223,14 +230,20 @@ export function resolveCommitObject(
       { ref, repo, stderr },
     );
   }
-  const oid = stdoutText(resolution.data).trim().toLowerCase();
-  if (!oid.startsWith(ref.toLowerCase())) {
+  const matches = stdoutText(resolution.data).trim().split(/\r?\n/).filter(Boolean);
+  if (matches.length === 0)
     return invalidRef(
-      "ref_name",
-      `"${ref}" resolved as a ref name rather than as the hexadecimal characters of an object id; a commit reference must address the object itself`,
-      { ref, repo, resolved: oid },
+      "missing",
+      "The matching object is not available locally; lazy network fetching is disabled",
+      { ref, repo },
     );
-  }
+  if (matches.length !== 1)
+    return invalidRef(
+      "ambiguous",
+      "The abbreviation matches multiple objects; supply a longer object ID",
+      { ref, repo },
+    );
+  const oid = (matches[0] ?? "").toLowerCase();
 
   const typeProbe = runSafeGit(["cat-file", "-t", oid], repo, options);
   if (!typeProbe.ok || !typeProbe.data) return passThroughDiags(typeProbe);
@@ -271,6 +284,7 @@ export function resolveCommitObject(
   }
 
   const formatProbe = runSafeGit(["rev-parse", "--show-object-format"], repo, options);
+  if (!formatProbe.ok || !formatProbe.data) return passThroughDiags(formatProbe);
   const formatText = observationText(formatProbe);
   if (formatText !== "sha1" && formatText !== "sha256") {
     return toResult<ResolvedCommit>(null, [

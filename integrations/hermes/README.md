@@ -1,7 +1,7 @@
 # Waystation Hermes integration
 
-Single Hermes plugin package that connects the native Hermes runtime to a local
-Waystation ledger. Generic ledger behavior stays in `src/core/`; this directory
+Foundation for a single Hermes plugin package. It does not yet connect the native
+runtime to a ledger or expose a Monitor. Generic ledger behavior stays in `src/core/`; this directory
 contains only the Hermes-specific adapter, registry, and Monitor surface.
 
 ## Structure
@@ -27,8 +27,10 @@ integrations/hermes/
 
 ## Registry
 
-The project registry is stored in Hermes profile-scoped plugin state
-(`ctx.state`), never in `.waystation` or browser storage. Each registration has
+The project registry accepts a profile-scoped `PluginState` adapter. W08b/W08d
+must implement and verify the host bridge; `ctx.state` is a planned integration
+contract, not a currently wired Python-to-TypeScript interface. State must never
+live in `.waystation` or browser storage. Each registration has
 a generated stable key independent of folder name, Waystation `project_id`, or
 remote URL.
 
@@ -57,3 +59,10 @@ The registry is unit-tested in `test/hermes-registry.test.ts` against a mock
 - W07 owns the worker adapter and binding store.
 - W08b/W08c own the Monitor backend and native UI.
 - W08d owns final assembly.
+
+The scaffold's `register(ctx)` imports successfully but intentionally registers
+no tools or routes. The previous cross-language placeholder imports were removed
+during reconciliation. Registry operations serialize across facades sharing one
+state adapter; the future production adapter must additionally provide durable,
+cross-process serialization. Runtime/profile state keys use an encoded tuple to
+avoid delimiter collisions. There is no released legacy registry to migrate.

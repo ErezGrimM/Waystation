@@ -152,7 +152,7 @@ describe("ProjectRegistry", () => {
     expect(serverList.data).toHaveLength(1);
 
     expect(registryStateKey(route("desktop", "default"))).toBe(
-      "waystation_registry:desktop:default",
+      'waystation_registry:["desktop","default"]',
     );
   });
 
@@ -190,6 +190,7 @@ describe("ProjectRegistry", () => {
     const blocked = await reg.addReference(created.data!.key, "binding-2");
     expect(blocked.ok).toBe(false);
     expect(blocked.errors[0]?.code).toBe("registry_retired_project");
+    expect((await registry().addReference(created.data!.key, "binding-1")).ok).toBe(true);
   });
 
   test("hard delete is refused while referenced", async () => {
@@ -285,14 +286,49 @@ describe("ProjectRegistry", () => {
     const reg = registry();
     const created = await reg.create({
       label: "A",
-      ledger_root: "C:/Missing",
+      ledger_root: "C:/Projects/A",
       mcp_server: "mcp-a",
     });
 
+    fs.rootExists = async () => false;
     const validated = await reg.validateRoot(created.data!.key);
     expect(validated.ok).toBe(false);
     expect(validated.errors[0]?.code).toBe("registry_missing_root");
     expect(validated.errors[0]?.hint).toContain("will not retarget");
+  });
+
+  test("separate facades serialize writes and returned records cannot mutate storage", async () => {
+    const first = registry();
+    const second = registry();
+    const results = await Promise.all([
+      first.create({ label: "A", ledger_root: "C:/Junctions/A", mcp_server: "mcp-a" }),
+      second.create({ label: "B", ledger_root: "C:/Projects/B", mcp_server: "mcp-b" }),
+    ]);
+    expect(results.every((result) => result.ok)).toBe(true);
+    expect((await first.list()).data).toHaveLength(2);
+    expect(results[0]!.data!.ledger_root).toBe("C:/Projects/A");
+    results[0]!.data!.label = "unpersisted";
+    expect((await second.get(results[0]!.data!.key)).data!.label).toBe("A");
+    const fetched = await first.get(results[0]!.data!.key);
+    fetched.data!.label = "also unpersisted";
+    expect((await second.get(fetched.data!.key)).data!.label).toBe("A");
+  });
+
+  test("corrupt state, route delimiter collisions and missing roots fail safely", async () => {
+    expect(registryStateKey(route("a:b", "c"))).not.toBe(registryStateKey(route("a", "b:c")));
+    expect((await registry().get("__proto__")).errors[0]?.code).toBe(
+      "registry_missing_registration",
+    );
+    expect(
+      (await registry().create({ label: "missing", ledger_root: "C:/Missing", mcp_server: "a" }))
+        .errors[0]?.code,
+    ).toBe("registry_missing_root");
+    await state.set(registryStateKey(route()), { registrations: "corrupt", references: {} });
+    expect((await registry().list()).errors[0]?.code).toBe("registry_invalid_state");
+    expect(
+      (await registry().create({ label: "A", ledger_root: "C:/Projects/A", mcp_server: "a" }))
+        .errors[0]?.code,
+    ).toBe("registry_invalid_state");
   });
 
   test("existing root validation succeeds", async () => {

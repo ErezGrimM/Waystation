@@ -25,13 +25,19 @@ Cross-cutting principles that hold across every phase:
 
 ---
 
-## Current State (2026-08-28)
+## Current State (2026-09-27)
 
-**Runtime:** Bun 1.4.0 (pinned in `package.json`, canonical locally at
-`C:\bun\bin\bun.exe`, not on PATH). The versioned Bun 1.3.14 binary remains a
-recoverable rollback. Node 22+ remains the supported fallback for the portable
+**Runtime:** Bun 1.4.1 (pinned in `package.json`, canonical locally at
+`C:\bun\bin\bun.exe`). Bun 1.3.14 is retired as the test baseline. Node 22+ remains the supported fallback for the portable
 core/SQLite adapter. The ledger validates cleanly.
-**Version:** 0.5.0.
+**Version:** 0.6.0.
+
+**Git/Hermes foundation:** W01, W02, W03 and W08a plus the direct task lookup
+optimization are integrated. This supplies persistence, safe Git reads, context,
+trailer parsing and a registry library. Public reconciliation, session bindings,
+and the native Hermes Monitor remain backlog. See
+[reconciliation evidence](reconciliation-2026-09-27.md) and the
+[unified implementation plan](waystation-git-hermes-implementation-plan.md).
 
 **V1 milestone (spec §21): COMPLETE.** `init`; JSON record read/write; events;
 rebuildable SQLite index (all record types); `validate`; `task

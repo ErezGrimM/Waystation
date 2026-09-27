@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { version } from "../package.json";
 
 const projectRoot = process.cwd();
 const tempRoot = mkdtempSync(join(tmpdir(), "waystation compiled dashboard "));
@@ -107,7 +108,7 @@ describe("compiled dashboard distribution", () => {
     const exe = join(runtimeDir, "waystation.exe");
     copyFileSync(builtExe, exe);
     rmSync(buildDir, { recursive: true, force: true });
-    expect(run([exe, "--version"], runtimeDir).trim()).toBe("0.5.0");
+    expect(run([exe, "--version"], runtimeDir).trim()).toBe(version);
     run([exe, "--root", ledgerRoot, "validate"], runtimeDir);
 
     const transport = new StdioClientTransport({

@@ -5,7 +5,7 @@ Everything a coding agent needs to know to contribute to this project.
 ## Environment
 
 ```ps1
-# Bun 1.4.0 is canonical here and is NOT on PATH.
+# Bun 1.4.1 is the canonical verification runtime (see the contract freeze).
 $bun = "C:\bun\bin\bun.exe"
 & $bun test                # run test suite
 & $bun run verify:fast     # parallel development preflight

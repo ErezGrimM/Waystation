@@ -3,12 +3,13 @@
 # Waystation Status
 
 ## Ready to claim
+_none_
+
+## In progress
+- `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
 - `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
 - `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
 - `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
-
-## In progress
-_none_
 
 ## Review
 _none_
@@ -155,4 +156,11 @@ _none_
 _none_
 
 ## Coordination warnings
-_none_
+- `task-reconcile-started-wave` / `task-w02d-context-helpers` — active claims share scope scope-core (advisory)
+- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims have overlapping path hints near src/core (advisory)
+- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims have overlapping path hints near test (advisory)
+- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims share scope scope-git (advisory)
+- `task-w02b-object-resolution` / `task-w02d-context-helpers` — active claims have overlapping path hints near src/core (advisory)
+- `task-w02b-object-resolution` / `task-w02d-context-helpers` — active claims have overlapping path hints near test (advisory)
+- `task-w02c-source-identity` / `task-w02d-context-helpers` — active claims have overlapping path hints near src/core (advisory)
+- `task-w02c-source-identity` / `task-w02d-context-helpers` — active claims have overlapping path hints near test (advisory)

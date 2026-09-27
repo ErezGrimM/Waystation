@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
-import { type TaskRecord, TaskRecord as TaskRecordSchema } from "./schema.ts";
+import { isSafeRecordId, type TaskRecord, TaskRecord as TaskRecordSchema } from "./schema.ts";
 import { readJsonFile } from "./store.ts";
 
 export class RecordError extends Error {
@@ -74,6 +74,7 @@ export function loadTasks(root?: string): TaskRecord[] {
  * to a full scan so behaviour is identical to `loadTasks().find()`.
  */
 export function loadTaskById(id: string, root?: string): TaskRecord | null {
+  if (!isSafeRecordId(id)) return null;
   const file = join(ledgerPaths(root).tasks, `${id}.json`);
   if (existsSync(file)) {
     const parsed = TaskRecordSchema.safeParse(readJsonFile(file));

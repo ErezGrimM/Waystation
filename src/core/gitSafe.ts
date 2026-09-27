@@ -24,7 +24,16 @@ export interface SafeGitOptions {
  * external prompt helper can be spawned.
  */
 export function safetyEnv(): Record<string, string | undefined> {
+  // A caller's Git shell environment must never redirect an explicitly selected
+  // evidence repository or inject command configuration into these reads.
+  const cleared = Object.fromEntries(
+    Object.keys(process.env)
+      .filter((key) => key.toUpperCase().startsWith("GIT_"))
+      .map((key) => [key, undefined]),
+  );
   return {
+    ...cleared,
+    LC_ALL: "C",
     GIT_TERMINAL_PROMPT: "0",
     GIT_NO_LAZY_FETCH: "1",
     GIT_ASKPASS: undefined,

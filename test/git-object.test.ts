@@ -172,7 +172,9 @@ describe("resolveCommitObject (W02b)", () => {
     gitOr(repo, ["branch", "1234567"]);
     // Plain Git resolves the hex-shaped string to the branch tip.
     expect(gitOr(repo, ["rev-parse", "--verify", "1234567"])).toBe(head);
-    expectReason(resolve(repo, "1234567"), "ref_name");
+    expectReason(resolve(repo, "1234567"), "missing");
+    gitOr(repo, ["branch", head.slice(0, 7)]);
+    expect(resolve(repo, head.slice(0, 7)).data?.oid).toBe(head);
   });
 
   test("an ambiguous abbreviation produces a distinct coded diagnostic", () => {
@@ -225,7 +227,6 @@ describe("resolveCommitObject (W02b)", () => {
     rmSync(join(repo, ".git", "objects", a.slice(0, 2), a.slice(2)));
     const samples = [
       resolve(repo, "HEAD"), // not_hex
-      resolve(repo, "1234567"), // ref_name
       resolve(repo, a), // missing
       resolve(repo, blob), // non_commit
     ];
@@ -456,6 +457,31 @@ describe("resolveCommitObject (W02b)", () => {
       Buffer.from([0x41, 0xe9, 0xe8, 0xff, 0xfe]),
     );
     expect(invalidRes.data?.message.message).toContain("\uFFFD");
+    const bomMessage = Buffer.from("\uFEFFOriginal description\n", "utf8");
+    const bomObject = Bun.spawnSync(["git", "hash-object", "-t", "commit", "-w", "--stdin"], {
+      cwd: repo,
+      stdin: Buffer.concat([header, bomMessage]),
+    });
+    expect(bomObject.exitCode).toBe(0);
+    const bomResult = resolve(repo, bomObject.stdout.toString().trim());
+    expect(Buffer.from(bomResult.data!.message.message, "utf8")).toEqual(bomMessage);
+  });
+
+  test("ambient Git routing cannot redirect an explicit evidence repository", () => {
+    const repo = gitFixtureRepo("selected");
+    const other = gitFixtureRepo("ambient");
+    const oid = commitFile(repo, "a.txt", "selected", "selected repository");
+    commitFile(other, "a.txt", "other", "other repository");
+    const previous = process.env.GIT_DIR;
+    try {
+      process.env.GIT_DIR = join(other, ".git");
+      for (const backend of backends)
+        expect(resolve(repo, oid, backend).data?.message.message).toBe("selected repository\n");
+      expect(process.env.GIT_DIR).toBe(join(other, ".git"));
+    } finally {
+      if (previous === undefined) delete process.env.GIT_DIR;
+      else process.env.GIT_DIR = previous;
+    }
   });
 
   test("a non-repository evidence path is a distinct coded diagnostic", () => {

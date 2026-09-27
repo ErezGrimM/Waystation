@@ -67,6 +67,44 @@ function readEvents(root: string): Array<Record<string, unknown>> {
     .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
+test("malformed legacy writes and events fail before any recovery write", async () => {
+  for (const bad of [
+    { writes: [{ path: "tasks/bad.json" }], events: [] },
+    { writes: [], events: [null] },
+  ]) {
+    const root = fixtureRoot([TASK_READY]);
+    const before = readFileSync(join(root, ".waystation", "tasks", "task-ready.json"), "utf8");
+    writeIntent(root, {
+      version: 1,
+      id: "malformed",
+      kind: "test",
+      writes: [
+        { path: "tasks/task-ready.json", value: { ...TASK_READY, title: "must not write" } },
+        ...bad.writes,
+      ],
+      events: bad.events,
+    });
+    await expect(withLedgerLock(root, () => undefined)).rejects.toThrow();
+    expect(readFileSync(join(root, ".waystation", "tasks", "task-ready.json"), "utf8")).toBe(
+      before,
+    );
+    expect(existsSync(intentFile(root))).toBe(true);
+  }
+});
+
+test("a complete JSON event without its newline is safely terminated during recovery", async () => {
+  const root = fixtureRoot([TASK_READY]);
+  const events = join(root, ".waystation", "events.jsonl");
+  writeFileSync(events, '{"type":"old"}');
+  writeIntent(
+    root,
+    buildIntent({ id: "tail", kind: "test", writes: [], events: [{ type: "new" }] }),
+  );
+  await withLedgerLock(root, () => undefined);
+  expect(readEvents(root).map((event) => event.type)).toEqual(["old", "new"]);
+  expect(existsSync(intentFile(root))).toBe(false);
+});
+
 describe("W01a: lock acquisition split", () => {
   test("the read path never creates the ledger directory", async () => {
     const root = mkdtempSync(join(tmpdir(), "waystation-read-nocreate-"));

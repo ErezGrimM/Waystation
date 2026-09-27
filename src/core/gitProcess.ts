@@ -95,12 +95,13 @@ function runViaNode(input: GitRunInput, timeoutMs: number, maxOutputBytes: numbe
   };
 }
 
-function runViaBun(input: GitRunInput, timeoutMs: number): BackendOutcome {
+function runViaBun(input: GitRunInput, timeoutMs: number, maxOutputBytes: number): BackendOutcome {
   try {
     const result = Bun.spawnSync(["git", ...input.args], {
       cwd: input.cwd,
       env: mergedEnv(input.env),
       timeout: timeoutMs,
+      maxBuffer: maxOutputBytes,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -113,8 +114,12 @@ function runViaBun(input: GitRunInput, timeoutMs: number): BackendOutcome {
       stdout: result.stdout ?? new Uint8Array(0),
       stderr: result.stderr ?? new Uint8Array(0),
       spawnError: null,
-      timedOut: killed,
-      outputOverflow: false,
+      timedOut:
+        killed &&
+        result.stdout.byteLength <= maxOutputBytes &&
+        result.stderr.byteLength <= maxOutputBytes,
+      outputOverflow:
+        result.stdout.byteLength > maxOutputBytes || result.stderr.byteLength > maxOutputBytes,
     };
   } catch (e) {
     const code = (e as { code?: string }).code ?? "spawn_failed";
@@ -134,8 +139,22 @@ export function runGit(input: GitRunInput): CommandResult<GitRunOutput> {
   const timeoutMs = input.timeoutMs ?? GIT_DEFAULT_TIMEOUT_MS;
   const maxOutputBytes = input.maxOutputBytes ?? GIT_DEFAULT_MAX_OUTPUT_BYTES;
   const backend: GitBackend = input.backend ?? (isBun ? "bun" : "node");
+  if (
+    !Number.isSafeInteger(timeoutMs) ||
+    timeoutMs <= 0 ||
+    !Number.isSafeInteger(maxOutputBytes) ||
+    maxOutputBytes <= 0
+  ) {
+    return toResult<GitRunOutput>(null, [
+      diag("git_command_failed", {
+        message: "Git time and output bounds must be positive safe integers",
+      }),
+    ]);
+  }
   const outcome =
-    backend === "bun" ? runViaBun(input, timeoutMs) : runViaNode(input, timeoutMs, maxOutputBytes);
+    backend === "bun"
+      ? runViaBun(input, timeoutMs, maxOutputBytes)
+      : runViaNode(input, timeoutMs, maxOutputBytes);
   const stdoutBytes = outcome.stdout?.byteLength ?? 0;
   const stderrBytes = outcome.stderr?.byteLength ?? 0;
   const overflowed =

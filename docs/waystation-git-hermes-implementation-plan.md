@@ -944,6 +944,14 @@ Reconciliation checks evidence and ownership, not test success. A review-stage t
 
 Follow docs/release-packaging.md. One owner updates package.json, CLI version, and MCP version together. If 0.5.0 remains the baseline, the planned release is 0.6.0; otherwise use the next appropriate minor. The plugin has its own package metadata without an extra core bump.
 
+Reconciliation update (2026-09-27): the started foundation packages are integrated
+as 0.6.0; the full-feature W10 release remains backlog and will choose the next
+minor then (currently 0.7.0). W08a supplies a tested registry abstraction and an
+importable no-op package scaffold. W08b/W08d own the actual Python/TypeScript
+profile-state bridge, durable cross-process configuration lock and native-host
+acceptance. No runtime wiring is implied by the foundation's completion. See
+[the integration record](reconciliation-2026-09-27.md).
+
 Before rollout:
 
 - Recheck the actual Hermes executable/build stamp and backend/plugin API compatibility.

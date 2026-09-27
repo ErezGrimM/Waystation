@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { type PluginState, type RegistryRoute, registryStateKey } from "./storage.ts";
 import type {
   BindingReference,
@@ -24,6 +25,39 @@ class AsyncMutex {
     return release;
   }
 }
+
+// Facades sharing one adapter serialize their entire read-modify-write cycle.
+// Cross-process locking is required of the future W08 runtime adapter.
+const stateLocks = new WeakMap<PluginState, AsyncMutex>();
+const StateSchema = z.object({
+  registrations: z.record(
+    z.string(),
+    z.object({
+      key: z.string().min(1),
+      label: z.string().min(1),
+      ledger_root: z.string().min(1),
+      mcp_server: z.string().min(1),
+      revision: z.number().int().positive(),
+      state: z.enum(["active", "retired"]),
+    }),
+  ),
+  references: z.record(
+    z.string(),
+    z.object({
+      binding_id: z.string().min(1),
+      registration_key: z.string().min(1),
+      created_at: z.string().min(1),
+    }),
+  ),
+});
+class RegistryStateError extends Error {}
+const InputSchema = z
+  .object({
+    label: z.string().min(1),
+    ledger_root: z.string().min(1),
+    mcp_server: z.string().min(1),
+  })
+  .strict();
 
 function ok<T>(data: T, warnings: RegistryDiagnostic[] = []): RegistryResult<T> {
   return { ok: true, data, errors: [], warnings };
@@ -70,11 +104,13 @@ export class ProjectRegistry {
   private readonly route: RegistryRoute;
   private readonly fs: RegistryFilesystem;
   private readonly clock: RegistryClock;
-  private readonly lock = new AsyncMutex();
+  private readonly lock: AsyncMutex;
 
   constructor(options: ProjectRegistryOptions) {
     this.state = options.state;
-    this.route = options.route;
+    this.route = { ...options.route };
+    this.lock = stateLocks.get(options.state) ?? new AsyncMutex();
+    stateLocks.set(options.state, this.lock);
     this.fs = options.fs;
     this.clock = options.clock ?? {
       now: () => new Date().toISOString(),
@@ -89,23 +125,40 @@ export class ProjectRegistry {
   private async load(): Promise<RegistryState> {
     const raw = await this.state.get(this.stateKey());
     if (raw === undefined || raw === null) {
-      return { registrations: {}, references: {} };
+      return { registrations: Object.create(null), references: Object.create(null) };
     }
-    const parsed = raw as RegistryState;
+    const parsed = StateSchema.safeParse(raw);
+    if (!parsed.success) throw new RegistryStateError("Stored project registry is malformed");
+    const state = parsed.data;
+    for (const [key, registration] of Object.entries(state.registrations)) {
+      if (key !== registration.key)
+        throw new RegistryStateError("Registry key does not match its record");
+    }
+    for (const ref of Object.values(state.references)) {
+      if (!Object.hasOwn(state.registrations, ref.registration_key))
+        throw new RegistryStateError("Registry reference points to a missing project");
+    }
     return {
-      registrations: parsed.registrations ?? {},
-      references: parsed.references ?? {},
+      registrations: Object.assign(Object.create(null), state.registrations),
+      references: Object.assign(Object.create(null), state.references),
     };
   }
 
   private async save(value: RegistryState): Promise<void> {
-    await this.state.set(this.stateKey(), value);
+    await this.state.set(this.stateKey(), structuredClone(value));
   }
 
   private async withLock<T>(fn: () => Promise<RegistryResult<T>>): Promise<RegistryResult<T>> {
     const release = await this.lock.acquire();
     try {
       return await fn();
+    } catch (error) {
+      return fail(
+        error instanceof RegistryStateError ? "registry_invalid_state" : "registry_storage_error",
+        error instanceof RegistryStateError
+          ? error.message
+          : "Registry storage or filesystem operation failed",
+      );
     } finally {
       release();
     }
@@ -117,8 +170,15 @@ export class ProjectRegistry {
 
   async create(input: CreateRegistrationInput): Promise<RegistryResult<ProjectRegistration>> {
     return this.withLock(async () => {
+      if (!InputSchema.safeParse(input).success)
+        return fail("registry_invalid_input", "Registration fields must be nonempty strings");
       const state = await this.load();
       const canonical = await this.fs.canonicalize(input.ledger_root);
+      if (!(await this.fs.rootExists(canonical)))
+        return fail(
+          "registry_missing_root",
+          "A registration must point to an existing Waystation ledger",
+        );
 
       for (const existing of Object.values(state.registrations)) {
         if (existing.state === "retired") continue;
@@ -133,10 +193,12 @@ export class ProjectRegistry {
       }
 
       const key = this.clock.randomUUID();
+      if (Object.hasOwn(state.registrations, key))
+        return fail("registry_key_collision", "Generated registration key already exists");
       const registration: ProjectRegistration = {
         key,
         label: input.label,
-        ledger_root: input.ledger_root,
+        ledger_root: canonical,
         mcp_server: input.mcp_server,
         revision: 1,
         state: "active",
@@ -149,12 +211,14 @@ export class ProjectRegistry {
   }
 
   async get(key: string): Promise<RegistryResult<ProjectRegistration>> {
-    const state = await this.load();
-    const registration = state.registrations[key];
-    if (registration === undefined) {
-      return fail<ProjectRegistration>("registry_missing_registration", `No registration ${key}`);
-    }
-    return ok(registration);
+    return this.withLock(async () => {
+      const state = await this.load();
+      const registration = state.registrations[key];
+      if (registration === undefined) {
+        return fail<ProjectRegistration>("registry_missing_registration", `No registration ${key}`);
+      }
+      return ok(registration);
+    });
   }
 
   /**
@@ -164,12 +228,14 @@ export class ProjectRegistry {
   async list(options?: {
     includeRetired?: boolean;
   }): Promise<RegistryResult<ProjectRegistration[]>> {
-    const state = await this.load();
-    const registrations = Object.values(state.registrations);
-    if (options?.includeRetired === true) {
-      return ok(registrations);
-    }
-    return ok(registrations.filter((r) => r.state === "active"));
+    return this.withLock(async () => {
+      const state = await this.load();
+      const registrations = Object.values(state.registrations);
+      if (options?.includeRetired === true) {
+        return ok(registrations);
+      }
+      return ok(registrations.filter((r) => r.state === "active"));
+    });
   }
 
   async retire(key: string): Promise<RegistryResult<ProjectRegistration>> {
@@ -225,6 +291,11 @@ export class ProjectRegistry {
     input: UpdateRegistrationInput,
   ): Promise<RegistryResult<ProjectRegistration>> {
     return this.withLock(async () => {
+      if (!InputSchema.partial().safeParse(input).success)
+        return fail(
+          "registry_invalid_input",
+          "Updated registration fields must be nonempty strings",
+        );
       const state = await this.load();
       const registration = state.registrations[key];
       if (registration === undefined) {
@@ -247,8 +318,14 @@ export class ProjectRegistry {
         }
       }
 
+      let canonical: string | undefined;
       if (input.ledger_root !== undefined) {
-        const canonical = await this.fs.canonicalize(input.ledger_root);
+        canonical = await this.fs.canonicalize(input.ledger_root);
+        if (!(await this.fs.rootExists(canonical)))
+          return fail(
+            "registry_missing_root",
+            "A registration must point to an existing Waystation ledger",
+          );
         for (const existing of Object.values(state.registrations)) {
           if (existing.key === key || existing.state === "retired") continue;
           const existingCanonical = await this.fs.canonicalize(existing.ledger_root);
@@ -264,7 +341,7 @@ export class ProjectRegistry {
       const updated: ProjectRegistration = {
         ...registration,
         ...(input.label !== undefined ? { label: input.label } : {}),
-        ...(input.ledger_root !== undefined ? { ledger_root: input.ledger_root } : {}),
+        ...(canonical !== undefined ? { ledger_root: canonical } : {}),
         ...(input.mcp_server !== undefined ? { mcp_server: input.mcp_server } : {}),
         revision: registration.revision + 1,
       };
@@ -279,6 +356,7 @@ export class ProjectRegistry {
     bindingId: string,
   ): Promise<RegistryResult<BindingReference>> {
     return this.withLock(async () => {
+      if (!bindingId) return fail("registry_invalid_input", "Binding identity must be nonempty");
       const state = await this.load();
       const registration = state.registrations[registrationKey];
       if (registration === undefined) {
@@ -287,16 +365,14 @@ export class ProjectRegistry {
           `No registration ${registrationKey}`,
         );
       }
+      const refKey = JSON.stringify([registrationKey, bindingId]);
+      const existingRef = state.references[refKey];
+      if (existingRef !== undefined) return ok(existingRef);
       if (registration.state !== "active") {
         return fail<BindingReference>(
           "registry_retired_project",
           `Registration ${registrationKey} is retired; new bindings are prohibited.`,
         );
-      }
-      const refKey = `${registrationKey}:${bindingId}`;
-      const existingRef = state.references[refKey];
-      if (existingRef !== undefined) {
-        return ok(existingRef);
       }
       const reference: BindingReference = {
         binding_id: bindingId,
@@ -315,7 +391,7 @@ export class ProjectRegistry {
   ): Promise<RegistryResult<BindingReference | null>> {
     return this.withLock(async () => {
       const state = await this.load();
-      const refKey = `${registrationKey}:${bindingId}`;
+      const refKey = JSON.stringify([registrationKey, bindingId]);
       const reference = state.references[refKey];
       if (reference === undefined) {
         return ok(null);
@@ -327,8 +403,10 @@ export class ProjectRegistry {
   }
 
   async listReferences(registrationKey: string): Promise<RegistryResult<BindingReference[]>> {
-    const state = await this.load();
-    return ok(this.referencesFor(state, registrationKey));
+    return this.withLock(async () => {
+      const state = await this.load();
+      return ok(this.referencesFor(state, registrationKey));
+    });
   }
 
   /**
@@ -337,20 +415,22 @@ export class ProjectRegistry {
    * retargeted to another location.
    */
   async validateRoot(key: string): Promise<RegistryResult<void>> {
-    const state = await this.load();
-    const registration = state.registrations[key];
-    if (registration === undefined) {
-      return fail<void>("registry_missing_registration", `No registration ${key}`);
-    }
-    const exists = await this.fs.rootExists(registration.ledger_root);
-    if (!exists) {
-      return fail<void>(
-        "registry_missing_root",
-        `Ledger root does not exist or is inaccessible: ${registration.ledger_root}`,
-        "Repair the path or create a new registration; the registry will not retarget.",
-      );
-    }
-    return ok(undefined);
+    return this.withLock(async () => {
+      const state = await this.load();
+      const registration = state.registrations[key];
+      if (registration === undefined) {
+        return fail<void>("registry_missing_registration", `No registration ${key}`);
+      }
+      const exists = await this.fs.rootExists(registration.ledger_root);
+      if (!exists) {
+        return fail<void>(
+          "registry_missing_root",
+          `Ledger root does not exist or is inaccessible: ${registration.ledger_root}`,
+          "Repair the path or create a new registration; the registry will not retarget.",
+        );
+      }
+      return ok(undefined);
+    });
   }
 }
 

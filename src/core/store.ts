@@ -328,6 +328,12 @@ function parseV1Intent(file: string, value: Record<string, unknown>): MutationIn
   ) {
     throw intentError(file, "malformed mutation intent");
   }
+  // Validate legacy payloads as strictly as current journals before any replay.
+  parseV2Intent(file, {
+    ...value,
+    version: 2,
+    events: events.map((payload, index) => ({ id: String(index), payload })),
+  });
   return { version: 1, id, kind, writes: writes as MutationIntentWrite[], events };
 }
 
@@ -351,7 +357,12 @@ function parseV2Intent(file: string, value: Record<string, unknown>): MutationIn
       throw intentError(file, "malformed mutation intent write entry");
     }
     const write = rawWrite as Record<string, unknown>;
-    if (typeof write.path !== "string" || write.path.length === 0 || !("value" in write)) {
+    if (
+      typeof write.path !== "string" ||
+      write.path.length === 0 ||
+      !("value" in write) ||
+      write.value === undefined
+    ) {
       throw intentError(file, "malformed mutation intent write entry");
     }
   }
@@ -367,6 +378,9 @@ function parseV2Intent(file: string, value: Record<string, unknown>): MutationIn
     }
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
       throw intentError(file, "malformed mutation intent event entry");
+    }
+    if (MUTATION_ID_KEY in payload || MUTATION_EVENT_KEY in payload) {
+      throw intentError(file, "event payload contains reserved recovery bookkeeping");
     }
     if (seenEventIds.has(event.id)) {
       throw intentError(file, `duplicate event identity in mutation intent: ${event.id}`);
@@ -497,7 +511,7 @@ function assertLedgerContained(file: string, ledger: string, target: string): vo
   try {
     realLedger = realpathSync(ledger);
   } catch {
-    return; // ledger not materialized; the string check above already passed
+    throw intentError(file, "cannot canonicalize the ledger directory");
   }
   let existing = target;
   while (!existsSync(existing)) {
@@ -509,7 +523,7 @@ function assertLedgerContained(file: string, ledger: string, target: string): vo
   try {
     realExisting = realpathSync(existing);
   } catch {
-    return;
+    throw intentError(file, `cannot canonicalize mutation target: ${target}`);
   }
   const rel = relative(realLedger, realExisting);
   if (rel === "") return;
@@ -579,6 +593,9 @@ export function recoverMutationIntentUnlocked(root: string): void {
 
 /** Persist a replayable multi-file mutation, then apply it to completion. */
 export function applyMutationIntentUnlocked(root: string, intent: MutationIntent): void {
+  parseV2Intent(intentFile(root), intent as unknown as Record<string, unknown>);
+  if (existsSync(intentFile(root)))
+    throw intentError(intentFile(root), "a pending mutation must be recovered before replacement");
   writeJsonAtomic(intentFile(root), intent);
   recoverMutationIntentUnlocked(root);
 }

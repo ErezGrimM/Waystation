@@ -19,5 +19,5 @@ export interface RegistryRoute {
 }
 
 export function registryStateKey(route: RegistryRoute): string {
-  return `waystation_registry:${route.runtime}:${route.profile}`;
+  return `waystation_registry:${JSON.stringify([route.runtime, route.profile])}`;
 }
