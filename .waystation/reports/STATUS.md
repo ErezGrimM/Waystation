@@ -6,7 +6,7 @@
 _none_
 
 ## In progress
-- `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
+_none_
 
 ## Review
 _none_
@@ -130,6 +130,7 @@ _none_
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
+- `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
