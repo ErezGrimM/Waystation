@@ -6,6 +6,7 @@ import { loadTasks, RecordError } from "./records.ts";
 import { type HandoffRecord, HandoffRecord as HandoffSchema } from "./schema.ts";
 import {
   applyMutationIntentUnlocked,
+  buildIntent,
   mutationWrite,
   readJsonFile,
   withLedgerLock,
@@ -57,23 +58,25 @@ export async function createHandoff(
       risks: input.risks ?? [],
       next_steps: input.next_steps ?? [],
     });
-    applyMutationIntentUnlocked(root, {
-      version: 1,
-      id: `mutation-handoff-${record.id}`,
-      kind: "handoff.create",
-      writes: [mutationWrite(root, handoffFile(root, record.id), record)],
-      events: [
-        {
-          type: "handoff.created",
-          task: input.task,
-          handoff: record.id,
-          from: input.from,
-          to: input.to ?? null,
-          actor: input.from,
-          ts,
-        },
-      ],
-    });
+    applyMutationIntentUnlocked(
+      root,
+      buildIntent({
+        id: `mutation-handoff-${record.id}`,
+        kind: "handoff.create",
+        writes: [mutationWrite(root, handoffFile(root, record.id), record)],
+        events: [
+          {
+            type: "handoff.created",
+            task: input.task,
+            handoff: record.id,
+            from: input.from,
+            to: input.to ?? null,
+            actor: input.from,
+            ts,
+          },
+        ],
+      }),
+    );
     return record;
   });
 }
