@@ -1,26 +1,31 @@
 {
   "id": "task-w07c-worker-gates",
-  "title": "W07c: worker setup and feasibility gate fixtures",
+  "title": "W07c: pre-implementation Hermes identity and dispatch feasibility gates",
   "status": "todo",
   "priority": 3,
   "scope": "scope-mcp",
   "path_hints": [
-    "docs/waystation-git-hermes-implementation-plan.md"
+    "integrations/hermes/",
+    "test/",
+    "docs/git-hermes-contract-freeze.md"
   ],
   "prompts": [
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w07b-forwarding"
+    "task-w00-contract-freeze",
+    "task-w06c-read-surfaces",
+    "task-w08b-plugin-backend"
   ],
   "created_at": "2026-09-26T02:39:33+03:00",
-  "updated_at": "2026-09-26T02:39:33+03:00",
+  "updated_at": "2026-09-27T20:05:22+03:00",
   "closed_at": null,
-  "description": "Provide the worker setup path and the fixtures that must pass before worker execution touches a real project: host identity supplied correctly for normal and delegated workers; parallel sessions in one profile staying separate; the native client dispatching the selected project server in the correct profile scope; per-call worker context reaching the correct core invocation; resumes and reconnects never reusing another binding; disabled plugins, absent allowlists and unavailable context producing refusal; and runtime plugin registration interoperating with packaged desktop and backend targets.",
+  "description": "Verify the host capabilities needed by W07a/W07b before those implementations begin. Recheck the selected native Hermes executable/build stamp and test host-provided durable session/lineage identity for normal and delegated workers, parallel sessions in one profile, reconnect/resume identity, runtime/profile-scoped native MCP dispatch to an explicit project server, required allowlists/grants, and adapter-supplied request context reaching the temporary Waystation server. Use a minimal temporary probe harness over the W06 contracts and W08b host bridge; this is capability evidence, not a second binding store or full worker adapter. A missing or ambiguous capability blocks worker implementation pending an explicit design decision; do not substitute model text, startup cwd, UI selection, one profile per worker or a Hermes core fork. Record actual commands, selected build, results and remaining host limits. W07a/W07b own production bindings/forwarding, W08d owns package assembly, and W09 owns installed end-to-end acceptance. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests.",
   "acceptance": [
-    "Every gate of plan 12.5 has a passing fixture, and a failing gate blocks worker execution with the blocker recorded instead of a fallback.",
-    "No gate is satisfied by falling back to a startup working directory, one profile per worker, or a Hermes core modification.",
-    "The fixtures run against a temporary ledger and a temporary Hermes home and leave both unchanged."
+    "Plan 12.5 host-capability prerequisites have reproducible pass/fail evidence against the selected Hermes build, including normal/delegated identity, parallel profile sessions, resume identity and native MCP project routing.",
+    "Disabled plugins, absent allowlists/grants and unavailable or ambiguous host context refuse explicitly; failure blocks W07a/W07b rather than selecting another architecture.",
+    "The probe uses isolated temporary ledgers and Hermes configuration, never mutates live project tasks or live plugin settings, and cleans up only its own fixture resources.",
+    "The probe requires neither production worker bindings nor the final assembled plugin; installed cross-component behavior remains W09 acceptance and no circular package dependency is introduced."
   ],
   "commits": [],
   "notes": "Gate failure is recorded for a separate design decision rather than silently choosing another architecture."

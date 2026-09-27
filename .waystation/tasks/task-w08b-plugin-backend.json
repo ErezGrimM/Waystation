@@ -1,29 +1,35 @@
 {
   "id": "task-w08b-plugin-backend",
-  "title": "W08b: read-only plugin backend endpoints",
+  "title": "W08b: shared Hermes profile-state bridge and read-only backend",
   "status": "todo",
   "priority": 3,
   "scope": "scope-dashboard",
   "path_hints": [
-    "docs/waystation-git-hermes-implementation-plan.md"
+    "integrations/hermes/registry/",
+    "integrations/hermes/dashboard/",
+    "integrations/hermes/",
+    "test/"
   ],
   "prompts": [
     "prompt-waystation-v1"
   ],
   "dependencies": [
     "task-w08a-registry-foundation",
-    "task-w06c-read-surfaces"
+    "task-w06c-read-surfaces",
+    "task-w06d-diagnostics-contract"
   ],
   "created_at": "2026-09-26T02:39:34+03:00",
-  "updated_at": "2026-09-27T12:10:39+03:00",
+  "updated_at": "2026-09-27T20:05:22+03:00",
   "closed_at": null,
-  "description": "Implement the plugin's namespaced read backend over the Waystation snapshot, detail, thread and history CLI, with that transport combination fixed: accept registration keys only, invoke allowlisted read commands through argument arrays, supply the explicit root, enforce timeout and output bounds, validate the command result and return its data. No direct canonical file parsing, no arbitrary command proxy, no sync, no repair and no task mutation. Registry settings stay separate from data endpoints, so a task or thread request can never substitute its own path.",
+  "description": "Implement the plugin's namespaced read backend over the Waystation snapshot, detail, thread and history CLI, with that transport combination fixed: accept registration keys only, invoke allowlisted read commands through argument arrays, supply the explicit root, enforce timeout and output bounds, validate the command result and return its data. No direct canonical file parsing, no arbitrary command proxy, no sync, no repair and no task mutation. Registry settings stay separate from data endpoints, so a task or thread request can never substitute its own path. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Also own the single production PluginState bridge shared by worker and Monitor: map the actual Hermes profile-scoped state API to the tested TypeScript registry, choose and document the language/runtime boundary, and supply durable cross-process serialization for the complete registry read-modify-write cycle. Python must not import TypeScript modules directly. The in-memory registry mutex is not a cross-process config lock. Never hold that lock during an MCP call or ledger lock. Preserve W08a's canonical roots, encoded route/reference keys and retired-reference semantics; own the plugin routing diagnostic catalog. Registry settings mutations operate only on local plugin configuration and remain separate from read-only ledger data endpoints. W07 owns bindings and W08d owns final package assembly.",
   "acceptance": [
     "Only allowlisted read commands are reachable, and no endpoint accepts a path, a command name or a ledger root from the caller.",
     "A command failure, a timeout, an oversized output and a malformed result each produce a typed error instead of partial data.",
     "The backend performs no canonical write and cannot mutate a task, and a corrupted or missing ledger returns an error rather than an empty board.",
-    "Backend enablement is checked separately from native enablement, and disabling the plugin leaves the ledger untouched and does not release claims."
+    "Backend enablement is checked separately from native enablement, and disabling the plugin leaves the ledger untouched and does not release claims.",
+    "Worker and Monitor adapters use one durable registry for the explicitly selected runtime/profile, with restart persistence and concurrent-process updates tested; no private registry file or browser database becomes authoritative.",
+    "The real Python/TypeScript boundary imports and runs in a temporary host configuration; config locking spans read-modify-write and is released before ledger/MCP work, with typed plugin-routing diagnostics."
   ],
   "commits": [],
-  "notes": "Acceptance group A15 backend half. One package carries plugin.yaml, the dashboard backend and the native desktop half; plugin code may import only the desktop SDK and react.\n\nReconciliation finding: W08a is a TypeScript registry library behind PluginState. Implement the actual profile-scoped host bridge and cross-process read-modify-write lock; do not import TypeScript from Python or assume ctx.state is already wired. Keep the config lock out of MCP/ledger waits. W08d verifies this integration in the native host."
+  "notes": "Acceptance groups A14 production-adapter portion and A15 backend portion. W08a registry semantics remain reusable; no duplicate registry is permitted. Native desktop SDK/react import restrictions apply to the desktop artifact, not this Python/backend adapter. See docs/reconciliation-2026-09-27.md."
 }

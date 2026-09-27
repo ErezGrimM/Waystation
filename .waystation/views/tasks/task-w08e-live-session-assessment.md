@@ -4,7 +4,7 @@
 status: todo  priority: 5  scope: scope-dashboard
 readiness: not_eligible  reason: status_todo
 
-After the baseline passes acceptance, assess the pinned host's transcript and activity APIs against the verified binding and session associations from W07, and report feasibility covering durable and live identity handling, pagination, profile routing and refresh tests\. If viable, provide an explicitly Hermes\-sourced read\-only view\. Never copy transcripts into the ledger, never guess associations by actor name, and never send prompts or control workers\.
+After the baseline passes acceptance, assess the pinned host's transcript and activity APIs against the verified binding and session associations from W07, and report feasibility covering durable and live identity handling, pagination, profile routing and refresh tests\. If viable, provide an explicitly Hermes\-sourced read\-only view\. Never copy transcripts into the ledger, never guess associations by actor name, and never send prompts or control workers\. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0\.6\.0 on Bun 1\.4\.1; see docs/reconciliation\-2026\-09\-27\.md\. Reuse the merged foundation and its tests\. Keep this optional and outside the baseline release critical path\. Canonical agent discussions are already covered by W08c; assess only the additional Hermes\-sourced session/activity view using W07's verified associations\. A negative feasibility assessment completes this task without a substitute transcript database\.
 
 ## Acceptance
 - The assessment reports, with evidence, whether a durable and live session identity can be mapped to a verified binding without guessing\.

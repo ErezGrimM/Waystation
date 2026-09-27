@@ -1,0 +1,10 @@
+{
+  "id": "message-task-refresh-post-merge-backlog-codex-reconcile-20260927-200522-d5g8",
+  "thread": "task-refresh-post-merge-backlog",
+  "from_agent": "codex-reconcile",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Updating the 19 unstarted task definitions and dependency graph after the 0.6.0 merge. Core/schema/context reuse, early host capability gates and shared adapter ownership are explicit; feature statuses remain todo.",
+  "in_reply_to": null,
+  "created_at": "2026-09-27T20:05:22+03:00"
+}

@@ -4,7 +4,7 @@
 status: todo  priority: 3  scope: scope-cli
 readiness: not_eligible  reason: status_todo
 
-Expose task transfer on both surfaces exactly as frozen in W00: CLI with \-\-agent, \-\-expected\-claim, \-\-to\-agent, \-\-worktree, \-\-reason, \-\-request\-id, \-\-previous\-worker\-stopped and optional \-\-handoff; MCP transfer\_task\_claim with previous\_worker\_stopped required true\. Preserve the observable retry contract: an exact retry returns no\_change with the original claim IDs, current ownership is reported separately, a reused request ID with different inputs is a conflict, and a stale expected claim is refused\.
+Expose task transfer on both surfaces exactly as frozen in W00: CLI with \-\-agent, \-\-expected\-claim, \-\-to\-agent, \-\-worktree, \-\-reason, \-\-request\-id, \-\-previous\-worker\-stopped and optional \-\-handoff; MCP transfer\_task\_claim with previous\_worker\_stopped required true\. Preserve the observable retry contract: an exact retry returns no\_change with the original claim IDs, current ownership is reported separately, a reused request ID with different inputs is a conflict, and a stale expected claim is refused\. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0\.6\.0 on Bun 1\.4\.1; see docs/reconciliation\-2026\-09\-27\.md\. Reuse the merged foundation and its tests\. Follow W06a in the shared CLI/MCP files, reusing its request\-local context plumbing and diagnostic mapping\. Forward to W04d without reproducing the transfer state machine or the administrative maintenance script\.
 
 ## Acceptance
 - Both surfaces accept the full input set and reject a missing stopped acknowledgement, a stale expected claim and a mismatched request ID with distinct coded diagnostics\.

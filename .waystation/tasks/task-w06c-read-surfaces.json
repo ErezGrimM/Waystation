@@ -7,18 +7,20 @@
   "path_hints": [
     "src/cli/index.ts",
     "src/mcp/server.ts",
-    "test/"
+    "test/",
+    "integrations/hermes/contracts/"
   ],
   "prompts": [
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w05b-bounded-reads"
+    "task-w05b-bounded-reads",
+    "task-w06b-transfer-surfaces"
   ],
   "created_at": "2026-09-26T02:39:31+03:00",
-  "updated_at": "2026-09-26T02:39:31+03:00",
+  "updated_at": "2026-09-27T20:05:22+03:00",
   "closed_at": null,
-  "description": "Expose the read model with the same contract on both surfaces: CLI snapshot --json with --if-revision, snapshot detail with --kind and --id, snapshot thread with --thread plus optional cursor and limit, snapshot history with --task plus optional cursor and limit; MCP get_ledger_snapshot, get_ledger_record_detail, get_ledger_thread_page and get_ledger_task_history. Maintain one allowlisted contract catalog for worker tools and generate or export from it the schemas the plugin consumes, so no handwritten copy of a core schema exists. The catalog identifies the caller-identity fields (agent, actor, from_agent) per operation so an adapter can bind them while preserving explicit recipients, successors, task IDs and evidence-source inputs; generated wrapper schemas omit injected caller and context fields from model-editable inputs.",
+  "description": "Expose the read model with the same contract on both surfaces: CLI snapshot --json with --if-revision, snapshot detail with --kind and --id, snapshot thread with --thread plus optional cursor and limit, snapshot history with --task plus optional cursor and limit; MCP get_ledger_snapshot, get_ledger_record_detail, get_ledger_thread_page and get_ledger_task_history. Maintain one allowlisted contract catalog for worker tools and generate or export from it the schemas the plugin consumes, so no handwritten copy of a core schema exists. The catalog identifies the caller-identity fields (agent, actor, from_agent) per operation so an adapter can bind them while preserving explicit recipients, successors, task IDs and evidence-source inputs; generated wrapper schemas omit injected caller and context fields from model-editable inputs. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Follow W06a and W06b in the shared CLI/MCP files. Export the complete catalog only after reconciliation and transfer contracts exist, including legacy worker operations and the new reads. Own integrations/hermes/contracts generated outputs; W07/W08 consume them without handwritten schema copies.",
   "acceptance": [
     "CLI and MCP read results are equivalent for the same ledger and inputs, including pagination and revision fields.",
     "Exported schemas are generated from the catalog, a drift check fails when a generated schema and the catalog disagree, and no handwritten copy of a core schema exists in the plugin.",

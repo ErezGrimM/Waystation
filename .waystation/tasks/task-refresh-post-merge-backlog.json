@@ -1,0 +1,29 @@
+{
+  "id": "task-refresh-post-merge-backlog",
+  "title": "Refresh remaining Git/Hermes tasks after foundation merge",
+  "status": "in_progress",
+  "priority": 2,
+  "scope": "scope-core",
+  "path_hints": [
+    ".waystation/tasks/",
+    "docs/waystation-git-hermes-implementation-plan.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-reconcile-started-wave"
+  ],
+  "created_at": "2026-09-27T20:05:21+03:00",
+  "updated_at": "2026-09-27T20:05:21+03:00",
+  "closed_at": null,
+  "description": "Align the remaining 19 feature tasks with merged 0.6.0 code, clarify ownership and prerequisites, and preserve the agreed product scope without starting the backlog.",
+  "acceptance": [
+    "All 19 remaining tasks describe the merged baseline and reuse their existing foundation.",
+    "Dependencies have no missing IDs or cycles and gate public closure on the lifecycle guard, worker implementation on host capability evidence, and final rollout on acceptance.",
+    "The unified plan reflects the execution order and non-overlapping ownership; every remaining feature task stays todo.",
+    "Ledger, generated views and required repository checks pass; task records implementation commit evidence before closure."
+  ],
+  "commits": [],
+  "notes": "User requested updating remaining tasks after reconciliation; no agents are dispatched and no feature task is promoted."
+}

@@ -2,7 +2,7 @@
   "id": "task-w06d-diagnostics-contract",
   "title": "W06d: diagnostic catalog declarations for the new families",
   "status": "todo",
-  "priority": 3,
+  "priority": 2,
   "scope": "scope-core",
   "path_hints": [
     "src/core/result.ts",
@@ -15,9 +15,9 @@
     "task-w00-contract-freeze"
   ],
   "created_at": "2026-09-26T02:39:32+03:00",
-  "updated_at": "2026-09-26T02:39:32+03:00",
+  "updated_at": "2026-09-27T20:05:22+03:00",
   "closed_at": null,
-  "description": "Declare every new diagnostic the plan requires, with severity, message, hint and class-level retryability, in the single core catalog, and name the existing codes the feature reuses instead of inventing synonyms: multiple_active_claims, claim_status_divergence, duplicate_id, invalid_commit_ref, no_git_claim_match, ambiguous_git_claim, no_active_claim, claim_owner_mismatch, task_done, invalid_transition, no_such_task, lock_contended, mutation_intent_invalid, ledger_not_found, git_not_repository, git_command_failed and unexpected_error. Cover the families of plan 14: Git input and source, intent, evidence, ledger, transfer, read model and adapter. Plugin-specific routing errors stay in the plugin's own namespaced catalog rather than copying business validation into the plugin.",
+  "description": "Declare every new diagnostic the plan requires, with severity, message, hint and class-level retryability, in the single core catalog, and name the existing codes the feature reuses instead of inventing synonyms: multiple_active_claims, claim_status_divergence, duplicate_id, invalid_commit_ref, no_git_claim_match, ambiguous_git_claim, no_active_claim, claim_owner_mismatch, task_done, invalid_transition, no_such_task, lock_contended, mutation_intent_invalid, ledger_not_found, git_not_repository, git_command_failed and unexpected_error. Cover the families of plan 14: Git input and source, intent, evidence, ledger, transfer, read model and adapter. Plugin-specific routing errors stay in the plugin's own namespaced catalog rather than copying business validation into the plugin. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Inventory CODES before adding declarations: the persistence and Git families already exist and W02 returns them. Own core catalog declarations and shared diagnostic contracts only; W08b owns the concrete plugin routing catalog and maps existing registry_* codes into it. Declare consumer requirements before W04/W05 implementation rather than adding synonymous errors later.",
   "acceptance": [
     "Every family in plan 14 has its required distinctions as named codes, and each code carries severity, message, hint and retryability.",
     "No consumer duplicates a catalogued code and no new code restates an existing code's meaning.",

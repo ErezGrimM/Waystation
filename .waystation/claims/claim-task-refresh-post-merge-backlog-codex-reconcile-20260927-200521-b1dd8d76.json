@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-refresh-post-merge-backlog-codex-reconcile-20260927-200521-b1dd8d76",
+  "task": "task-refresh-post-merge-backlog",
+  "agent": "codex-reconcile",
+  "status": "active",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-09-27T20:05:21+03:00",
+  "released_at": null,
+  "completed_at": null
+}

@@ -847,6 +847,37 @@ W07 + W08 Monitor ── W08 assembly ── W09 ── W10
 
 The diagram omits some direct testing prerequisites for readability; the table is authoritative. W08 foundation does not depend on W07. W08 assembly does. Never create a single indivisible W08 task with a reciprocal W07 dependency.
 
+Post-merge execution update (2026-09-27): the 0.6.0 foundation is complete. The
+remaining task graph now makes these prerequisites explicit:
+
+- W04a consumes completed W01d and adds only evidence schemas; the claim
+  passthrough migration is already implemented.
+- W06d declares core diagnostic contracts before W04/W05 consumers. W04b uses
+  the merged Git object/source, trailer, invocation-context and v2 intent helpers.
+- W04c's reopened-work guard must finish before W06a exposes reconciliation.
+  W06a, then W06b, then W06c serialize shared CLI/MCP edits; W06c exports the
+  complete operation catalog after reconciliation and transfer are registered.
+- W05a consumes W04a evidence schemas. W05b consumes the reconciliation/lifecycle
+  and transfer event contracts for bounded detail and history reads.
+- W08b owns the one production profile-state bridge, cross-process configuration
+  lock and plugin routing catalog, alongside its read-only backend. Both workers
+  and Monitor consume this adapter; neither creates another registry.
+- W07c is an early **host capability gate**, after W06c and W08b, before W07a
+  bindings and W07b forwarding. Its temporary probe verifies identity, profile
+  routing and native MCP dispatch without requiring production worker bindings
+  or the final package. A failed gate requires a design decision.
+- W08d assembles W07b and W08c into an installable candidate and tests the
+  installation procedure in isolation. W09 owns installed end-to-end acceptance;
+  W10 uses that procedure for the final versioned artifact and selected live
+  rollout. W08e remains optional after W09 and never gates W10.
+
+These refinements preserve product scope and the acceptance matrix. They remove
+the hidden requirement for W07c to test a package that W08d could not assemble
+until W07c was complete. Host feasibility belongs to W07c, production worker unit
+tests to W07a/W07b, package loading to W08d, and cross-component journeys to W09.
+All 19 remaining feature records stay `todo`; dependency satisfaction is not
+authorization to promote or dispatch them.
+
 Further overlap rules:
 
 - W01 ledger path/lock helpers and W02 Git evidence path helpers are distinct.

@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
 
 ## Ready
 _none_

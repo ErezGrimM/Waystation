@@ -6,7 +6,7 @@
 _none_
 
 ## In progress
-_none_
+- `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
 
 ## Review
 _none_
@@ -47,11 +47,11 @@ _none_
 - `task-w06a-reconcile-surfaces` [p2] — W06a: reconciliation CLI and MCP surfaces with worker context
 - `task-w06b-transfer-surfaces` [p3] — W06b: transfer CLI and MCP surfaces
 - `task-w06c-read-surfaces` [p2] — W06c: read surfaces and exported worker tool contracts
-- `task-w06d-diagnostics-contract` [p3] — W06d: diagnostic catalog declarations for the new families
+- `task-w06d-diagnostics-contract` [p2] — W06d: diagnostic catalog declarations for the new families
 - `task-w07a-binding-store` [p2] — W07a: worker binding store, generation and lifecycle
 - `task-w07b-forwarding` [p2] — W07b: worker call forwarding through the native MCP client
-- `task-w07c-worker-gates` [p3] — W07c: worker setup and feasibility gate fixtures
-- `task-w08b-plugin-backend` [p3] — W08b: read\-only plugin backend endpoints
+- `task-w07c-worker-gates` [p3] — W07c: pre\-implementation Hermes identity and dispatch feasibility gates
+- `task-w08b-plugin-backend` [p3] — W08b: shared Hermes profile\-state bridge and read\-only backend
 - `task-w08c-native-monitor` [p3] — W08c: native Monitor views and refresh behavior
 - `task-w08d-package-assembly` [p3] — W08d: package assembly and installation procedure
 - `task-w08e-live-session-assessment` [p5] — W08e: optional live Hermes session view assessment

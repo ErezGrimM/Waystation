@@ -6,18 +6,21 @@
   "scope": "scope-core",
   "path_hints": [
     "src/core/schema.ts",
+    "src/core/gitObject.ts",
+    "src/core/gitSource.ts",
     "test/"
   ],
   "prompts": [
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w00-contract-freeze"
+    "task-w00-contract-freeze",
+    "task-w01d-record-round-trip"
   ],
   "created_at": "2026-09-26T02:39:28+03:00",
-  "updated_at": "2026-09-26T02:39:28+03:00",
+  "updated_at": "2026-09-27T20:05:22+03:00",
   "closed_at": null,
-  "description": "Add the optional versioned TaskRecord.commit_evidence field and its schemas exactly as frozen in W00: schema_version 1, with entries carrying source_id, source_common_dir, object_format, oid, aliases, message, encoding, raw_message_base64, observed_at, observed_by and source_worktree. Keep TaskRecord.commits an ordered string array and never migrate it to objects. Absence of the new field stays valid and is not materialized during unrelated reads. Subjects and bodies are derived for display only and never replace task.description. If the claim round-trip fix from W01d has not landed, land the one-line claim schema change here as this package's early additive edit.",
+  "description": "Add the optional versioned TaskRecord.commit_evidence field and its schemas exactly as frozen in W00: schema_version 1, with entries carrying source_id, source_common_dir, object_format, oid, aliases, message, encoding, raw_message_base64, observed_at, observed_by and source_worktree. Keep TaskRecord.commits an ordered string array and never migrate it to objects. Absence of the new field stays valid and is not materialized during unrelated reads. Subjects and bodies are derived for display only and never replace task.description. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. ClaimRecord passthrough and source-record filename preservation already exist in W01d. This task adds evidence schemas only; do not repeat that migration.",
   "acceptance": [
     "Existing ledgers load unchanged with the field absent, and no read materializes it.",
     "Field names and schema version match the frozen W00 contract, with a test that fails if a name or the version drifts.",
