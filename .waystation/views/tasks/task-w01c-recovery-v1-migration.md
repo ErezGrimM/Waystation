@@ -3,7 +3,7 @@
 # task\-w01c\-recovery\-v1\-migration — W01c: version\-1 recovery compatibility and producer migration
 status: done  priority: 2  scope: scope-core
 readiness: not_eligible  reason: status_done
-commits: 6d5d77e, 7e0cf9e
+commits: 6d5d77e, 7e0cf9e, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Recover legacy version\-1 intents only when the events already present for the mutation match an exact expected prefix in order and count, comparing repeated identical payloads by position rather than by set membership, then append the missing suffix and preserve historical formatting and records\. A malformed event log that prevents trustworthy recovery causes refusal with repair guidance instead of being read as an empty log\. Then migrate every current intent producer to the version\-2 constructor so no feature package refactors persistence independently\.
 

@@ -3,7 +3,7 @@
 # task\-w02a\-process\-adapter — W02a: portable bounded process adapter for Git reads
 status: done  priority: 1  scope: scope-git
 readiness: not_eligible  reason: status_done
-commits: 88158d2
+commits: 88158d2, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Add one portable adapter for the new Git inspection code, callable from Bun and from the supported Node fallback, using argument arrays, bounded execution and output, structured errors, and no shell interpolation\. The current Git helper calls Bun\.spawnSync unconditionally and returns only an abbreviated HEAD, so it cannot serve the new callers and must not be used as the resolver for the new feature\.
 

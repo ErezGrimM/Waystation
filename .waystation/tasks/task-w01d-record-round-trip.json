@@ -17,7 +17,7 @@
     "task-w00-contract-freeze"
   ],
   "created_at": "2026-09-26T02:39:26+03:00",
-  "updated_at": "2026-09-26T12:23:32+03:00",
+  "updated_at": "2026-09-27T12:10:39+03:00",
   "closed_at": "2026-09-26T12:23:32+03:00",
   "description": "Provide the helpers that keep every mutation writing to the exact file a record was loaded from, and close the unknown-field round-trip gap for claims. TaskRecord already round-trips unknown fields through its passthrough schema; ClaimRecord does not, and every claim is loaded and written through that schema, so a claim mutation drops unknown keys today. Fix the claim path, or make claim round-trips raw-preserving, so unknown claim fields survive a mutation.",
   "acceptance": [
@@ -27,7 +27,8 @@
     "Ledger validation passes and the schema change does not weaken existing required-field validation."
   ],
   "commits": [
-    "39f4eff"
+    "39f4eff",
+    "6276d5fe0e2ffb0862a0fff9c511414916801ddd"
   ],
   "notes": "Coordinate with the open task-record-unknown-fields task, which owns the TaskRecord decision; if that task also fixes ClaimRecord, land the change there instead of duplicating it. ClaimRecord is in src/core/schema.ts, loadClaims and claimFile in src/core/store.ts, releaseTask and finishTask in src/core/mutate.ts."
 }

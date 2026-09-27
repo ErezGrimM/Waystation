@@ -6,10 +6,7 @@
 _none_
 
 ## In progress
-- `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
-- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
-- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
-- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
+_none_
 
 ## Review
 _none_
@@ -132,6 +129,7 @@ _none_
 - `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
+- `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
@@ -146,6 +144,9 @@ _none_
 - `task-w01c-recovery-v1-migration` [p2] — W01c: version\-1 recovery compatibility and producer migration
 - `task-w01d-record-round-trip` [p2] — W01d: record\-path preservation and claim round\-trip integrity
 - `task-w02a-process-adapter` [p1] — W02a: portable bounded process adapter for Git reads
+- `task-w02b-object-resolution` [p1] — W02b: commit object resolution and message capture
+- `task-w02c-source-identity` [p2] — W02c: repository source identity from the canonical common directory
+- `task-w02d-context-helpers` [p2] — W02d: invocation context and source\-path resolution helpers
 - `task-w03-trailer-parser` [p1] — W03: deterministic tolerant trailer parser
 - `task-w08a-registry-foundation` [p2] — W08a: project registry and package foundation
 
@@ -156,11 +157,4 @@ _none_
 _none_
 
 ## Coordination warnings
-- `task-reconcile-started-wave` / `task-w02d-context-helpers` — active claims share scope scope-core (advisory)
-- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims have overlapping path hints near src/core (advisory)
-- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims have overlapping path hints near test (advisory)
-- `task-w02b-object-resolution` / `task-w02c-source-identity` — active claims share scope scope-git (advisory)
-- `task-w02b-object-resolution` / `task-w02d-context-helpers` — active claims have overlapping path hints near src/core (advisory)
-- `task-w02b-object-resolution` / `task-w02d-context-helpers` — active claims have overlapping path hints near test (advisory)
-- `task-w02c-source-identity` / `task-w02d-context-helpers` — active claims have overlapping path hints near src/core (advisory)
-- `task-w02c-source-identity` / `task-w02d-context-helpers` — active claims have overlapping path hints near test (advisory)
+_none_

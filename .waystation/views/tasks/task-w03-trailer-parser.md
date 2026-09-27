@@ -3,7 +3,7 @@
 # task\-w03\-trailer\-parser — W03: deterministic tolerant trailer parser
 status: done  priority: 1  scope: scope-core
 readiness: not_eligible  reason: status_done
-commits: b3d9b2a
+commits: b3d9b2a, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Parse the chosen commit's message, never a parent's or HEAD's, with the grammar in plan 5\.3: ignore trailing blank lines; a subject alone is never a trailer block; the final paragraph after a blank separator is a candidate only when it starts with a trailer\-shaped key and value line or a recognizable malformed Waystation directive, and a final ordinary prose paragraph is not reinterpreted; inside a candidate parse trailer lines and valid continuations for unrelated trailers; match Waystation keys with ASCII case\-insensitivity while task ID values stay exact case\-sensitive record ids; require exactly one Waystation\-Task when present, rejecting duplicates under any key capitalization; reject empty or invalid task IDs, directive continuations, unknown Waystation\-prefixed keys and any Waystation\-Close inside the block; ignore marker\-shaped lines outside the final block, including body examples\. Behavior must not depend on the user's Git trailer configuration\.
 

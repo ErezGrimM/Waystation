@@ -14,7 +14,7 @@
     "task-w00-contract-freeze"
   ],
   "created_at": "2026-09-26T02:39:33+03:00",
-  "updated_at": "2026-09-26T12:23:33+03:00",
+  "updated_at": "2026-09-27T12:10:39+03:00",
   "closed_at": "2026-09-26T12:23:33+03:00",
   "description": "Build the integration package skeleton and the single versioned project registry shared by the worker adapter and the Monitor: registrations with a generated stable key, a label, the canonical ledger root, the profile's explicit project-bound MCP server entry, a revision and an active or retired state. A Waystation project_id, a folder name or a remote URL is never the key, and duplicate filesystem aliases are detected. Registry configuration is local operational state outside the ledger, stored through the plugin's own profile-scoped state facility rather than a private file, with access scoped to the selected runtime and profile route and never a silent current-profile substitution. Settings may select a local root, but data endpoints accept only a registration key and record identifiers. Reassigning a root or server for a registration that bindings or calls reference is refused; retirement hides the project from ordinary selection and prohibits new bindings while preserving the pinned routing of existing bindings across restart, and hard deletion is refused while referenced. A genuinely missing or corrupt root errors explicitly and is never retargeted elsewhere.",
   "acceptance": [
@@ -24,7 +24,8 @@
     "Configuration writes are atomic under a short plugin-config lock that is never held while waiting on a ledger lock or an MCP request."
   ],
   "commits": [
-    "a24599b"
+    "a24599b",
+    "6276d5fe0e2ffb0862a0fff9c511414916801ddd"
   ],
-  "notes": "Acceptance group A14. The integration lives at integrations/hermes/ in this repository with generic ledger behavior staying in src/core/. Adding or changing project MCP entries changes the tool surface and invalidates the provider prompt cache, so registration churn is a rollout-policy decision."
+  "notes": "Acceptance group A14. The integration lives at integrations/hermes/ in this repository with generic ledger behavior staying in src/core/. Adding or changing project MCP entries changes the tool surface and invalidates the provider prompt cache, so registration churn is a rollout-policy decision.\n\nReconciled 2026-09-27: registry abstraction and no-op importable package scaffold integrated and tested. Production Python/TypeScript state bridge and durable cross-process config lock remain owned by W08b/W08d; no native installation is claimed. See docs/reconciliation-2026-09-27.md."
 }

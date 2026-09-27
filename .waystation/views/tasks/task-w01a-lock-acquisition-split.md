@@ -3,7 +3,7 @@
 # task\-w01a\-lock\-acquisition\-split — W01a: split ledger lock acquisition into mutation and read paths
 status: done  priority: 1  scope: scope-core
 readiness: not_eligible  reason: status_done
-commits: af05667, 87b457d
+commits: af05667, 87b457d, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Implement the two lock policies of plan 9\.1\. The mutation path keeps today's behavior: create the ledger directory, sweep orphaned temporaries once per process, recover a pending intent, then run\. The read\-only snapshot/detail path acquires the same lock without creating the ledger, sweeping, recovering, or modifying canonical or derived data, and refuses to proceed while a pending intent exists\. Normalize ledger aliases so a junction or symlink cannot form a second lock for one ledger while user\-facing paths stay as expressed, release in finally, and keep the existing coded contention behavior\.
 

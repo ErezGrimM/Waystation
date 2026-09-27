@@ -3,7 +3,7 @@
 # task\-w01b\-intent\-v2 — W01b: version\-2 mutation intents with stable event identity
 status: done  priority: 1  scope: scope-core
 readiness: not_eligible  reason: status_done
-commits: 4428d32
+commits: 4428d32, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Replace the batch\-level any\-event\-exists check with per\-event identity: a unique mutation ID plus an ordinal or event ID for every expected event, a validated intent version and kind, complete record payloads, preflight validation of intent paths and payloads and the existing event prefix before any additional recovery write, canonical target containment including symlink and junction escapes rather than a string prefix, atomic per\-file replacement with the existing fsync guarantees, appending only the exact missing suffix, payload equality verified for any event identity already present, and intent removal only after the records and events are durably complete\. Duplicate, reordered, conflicting, unknown\-extra or torn relevant event data is a recovery error that preserves the intent and evidence for repair rather than trimming a corrupt tail or rewriting history\.
 

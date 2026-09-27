@@ -3,7 +3,7 @@
 # task\-w01d\-record\-round\-trip — W01d: record\-path preservation and claim round\-trip integrity
 status: done  priority: 2  scope: scope-core
 readiness: not_eligible  reason: status_done
-commits: 39f4eff
+commits: 39f4eff, 6276d5fe0e2ffb0862a0fff9c511414916801ddd
 
 Provide the helpers that keep every mutation writing to the exact file a record was loaded from, and close the unknown\-field round\-trip gap for claims\. TaskRecord already round\-trips unknown fields through its passthrough schema; ClaimRecord does not, and every claim is loaded and written through that schema, so a claim mutation drops unknown keys today\. Fix the claim path, or make claim round\-trips raw\-preserving, so unknown claim fields survive a mutation\.
 
