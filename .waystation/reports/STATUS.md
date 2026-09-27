@@ -6,7 +6,7 @@
 - `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
 
 ## In progress
-- `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
+_none_
 
 ## Review
 _none_
@@ -130,6 +130,7 @@ _none_
 - `task-phase9-migration-guide` [p2] — Write migration guide for importing other task systems
 - `task-phase9-normalize-timestamps` [p2] — Normalize or document legacy timestamp formats
 - `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
+- `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches

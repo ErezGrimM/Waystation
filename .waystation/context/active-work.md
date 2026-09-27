@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-- `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
+_none_
 
 ## Ready
 - `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
