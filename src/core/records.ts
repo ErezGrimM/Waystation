@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type TaskRecord, TaskRecord as TaskRecordSchema } from "./schema.ts";
@@ -63,4 +63,31 @@ export function loadTaskFiles(root?: string): LoadedTask[] {
  */
 export function loadTasks(root?: string): TaskRecord[] {
   return loadTaskFiles(root).map((t) => t.task);
+}
+
+/**
+ * Load a single task by id without scanning the whole directory. Canonical
+ * records are written to `<id>.json` (see createTask), so the record can be
+ * read directly. Because a record's id is not *guaranteed* to equal its
+ * filename (audit M7 — a hand-edited or renamed file may diverge), a direct
+ * hit is only trusted when the parsed record's id matches; any miss falls back
+ * to a full scan so behaviour is identical to `loadTasks().find()`.
+ */
+export function loadTaskById(id: string, root?: string): TaskRecord | null {
+  const file = join(ledgerPaths(root).tasks, `${id}.json`);
+  if (existsSync(file)) {
+    const parsed = TaskRecordSchema.safeParse(readJsonFile(file));
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const where = issue?.path.join(".") || "(root)";
+      throw new RecordError(
+        file,
+        `schema: ${where}: ${issue?.message ?? "invalid record"}`,
+        "schema_invalid",
+      );
+    }
+    if (parsed.data.id === id) return parsed.data;
+  }
+  // Filename did not carry the record (absent, or id diverged): scan.
+  return loadTasks(root).find((t) => t.id === id) ?? null;
 }

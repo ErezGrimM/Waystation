@@ -40,7 +40,7 @@ import {
 import { activeClaimOverlaps } from "../src/core/overlap.ts";
 import { LedgerResolutionError, resolveLedgerRoot } from "../src/core/paths.ts";
 import { renderPrompt, selectPrompts, substitute } from "../src/core/prompt.ts";
-import { loadTasks, RecordError } from "../src/core/records.ts";
+import { loadTaskById, loadTasks, RecordError } from "../src/core/records.ts";
 import { repairEventsJsonl } from "../src/core/repair.ts";
 import { CODES, diag, toResult } from "../src/core/result.ts";
 import type { TaskRecord } from "../src/core/schema.ts";
@@ -92,6 +92,35 @@ const A = { id: "task-a", title: "A", status: "done", priority: 1, dependencies:
 const B = { id: "task-b", title: "B", status: "ready", priority: 2, dependencies: ["task-a"] };
 const C = { id: "task-c", title: "C", status: "todo", priority: 1, dependencies: ["task-b"] };
 const D = { id: "task-d", title: "D", status: "ready", priority: 1, dependencies: [] };
+
+describe("loadTaskById", () => {
+  test("reads a task directly from <id>.json", () => {
+    const root = fixtureRoot([A, B, C]);
+    expect(loadTaskById("task-b", root)?.title).toBe("B");
+  });
+
+  test("returns null for an unknown id", () => {
+    const root = fixtureRoot([A]);
+    expect(loadTaskById("task-missing", root)).toBeNull();
+  });
+
+  test("falls back to a scan when the record's id diverges from its filename", () => {
+    // A hand-edited/renamed file whose id no longer matches its filename
+    // (audit M7): task-a's record lives in a file named task-renamed.json.
+    const root = fixtureRoot([B]);
+    writeFileSync(
+      join(root, ".waystation", "tasks", "task-renamed.json"),
+      JSON.stringify({ ...A, id: "task-a" }, null, 2),
+    );
+    // No task-a.json exists, so the direct read misses and the scan finds it.
+    expect(loadTaskById("task-a", root)?.title).toBe("A");
+  });
+
+  test("agrees with loadTasks().find() for a present task", () => {
+    const root = fixtureRoot([A, B, C, D]);
+    expect(loadTaskById("task-d", root)).toEqual(loadTasks(root).find((t) => t.id === "task-d")!);
+  });
+});
 
 describe("audit fixes", () => {
   test("a review task is not ready (awaiting review, not actionable)", () => {
