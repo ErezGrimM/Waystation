@@ -13,10 +13,11 @@
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w07a-binding-store"
+    "task-w07a-binding-store",
+    "task-poc-value-review"
   ],
   "created_at": "2026-09-26T02:39:33+03:00",
-  "updated_at": "2026-09-27T20:05:22+03:00",
+  "updated_at": "2026-09-27T20:25:35+03:00",
   "closed_at": null,
   "description": "Forward every supported worker call through Hermes's existing MCP client, with no private parallel client and no general shell proxy: obtain host-provided session, worker and profile context; resolve and validate exactly one binding; validate registration, pinned route, worktree, binding generation and required ownership context; resolve the operation from the generated allowlisted catalog; supply the bound actor and worker context and reject attempts to override them; forward to the project-bound server; decode transport and Waystation results separately while preserving both diagnostics; and release in-flight accounting without changing the binding. Validate the inner result rather than trusting transport success, never automatically replay a claim, message or handoff mutation on a lost response, and report an unknown outcome when a truncated response may follow a completed write. Read responses stay inside the payload budget with pagination or chunking, canonical message bodies are never truncated to fit a wrapper, and the adapter validates result shape and types rather than looking for prose such as success. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Use the host capability evidence from W07c, W07a binding state, W08b profile adapter, and the complete W06c generated operation catalog. Own the worker registration contribution; W08d alone assembles the package entrypoint and manifests. Unit tests cover forwarding; installed cross-component journeys belong to W09.",
   "acceptance": [
@@ -26,5 +27,5 @@
     "A disabled plugin, an absent MCP allowlist entry, an unavailable server and a missing grant each produce a distinct refusal instead of a degraded fallback."
   ],
   "commits": [],
-  "notes": "Acceptance group A13. Each project is one MCP server entry with the ledger encoded in its command arguments, so per-project isolation comes from the server name and explicit arguments, never from the caller's working directory."
+  "notes": "Acceptance group A13. Each project is one MCP server entry with the ledger encoded in its command arguments, so per-project isolation comes from the server name and explicit arguments, never from the caller's working directory.\n\nPOC-first decision (2026-09-27): deferred behind task-poc-value-review. Keep this full-plan task todo. A completed review, including a negative/stop decision, does not authorize promotion; the owner must explicitly select an MVP scope. Before implementation, inspect POC artifacts and acceptance evidence and reuse or retire them rather than duplicating native UI, adapters or assembly. Full requirements remain preserved here."
 }

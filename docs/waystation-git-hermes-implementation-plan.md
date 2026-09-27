@@ -1,17 +1,75 @@
 # Waystation Git reconciliation and Hermes integration
 
-Detailed implementation plan · revised 2026-09-26
+Detailed implementation plan · revised 2026-09-27
 
-Planning baseline: Waystation 0.5.0; native Windows Hermes build identified below.
+Original planning baseline: Waystation 0.5.0; merged foundation now 0.6.0.
+Recheck the selected native Windows Hermes build before the POC.
 
-Stage: design only. No implementation tasks, source changes, installations, or agent runs are authorized by this document alone.
+Current milestone: the owner-approved proof of concept below. The full production
+design is retained as deferred backlog. This document alone does not dispatch
+agents or authorize the whole production implementation.
 
 Audit revision 2026-09-26: corrected after the independent read-only audit recorded in
 [docs/audit-2026-09-26-waystation-git-hermes-plan.md](audit-2026-09-26-waystation-git-hermes-plan.md) —
 Hermes baseline re-pinned to the running build commit, the stale Kanban rationale replaced with measured
 current behavior, defect and ownership gaps assigned, and the verification run order corrected.
 
-## 1. Outcome and consistency assessment
+## 0. Current milestone: prove usefulness before building the full product
+
+Owner decision, 2026-09-27: test whether native Hermes visibility is useful before
+investing in the remaining 19 production tasks. Use the existing 0.6.0 ledger,
+read helpers and MCP operations. The POC is deliberately one project, one live
+Hermes agent and manual refresh. These limits apply to this experiment and do not
+silently change the retained production requirements below.
+
+| Order | Task | Deliverable | Initial status |
+| --- | --- | --- | --- |
+| 1 | `task-poc-native-load` | Minimal external Waystation page actually loads in the installed native Hermes app; document enable/disable/removal and the host build. | ready |
+| 2 | `task-poc-project-monitor` | One explicitly configured project: tasks, current owners, task details and canonical agent discussions, with manual refresh and clear errors. | todo, depends on 1 |
+| 3 | `task-poc-agent-workflow` | One actual Hermes session claims a demo task, performs a harmless change, posts progress and finishes through existing MCP tools; the native page reflects the workflow. | todo, depends on 2 |
+| 4 | `task-poc-value-review` | Owner compares this experience with the existing Waystation dashboard and chooses stop, one bounded iteration, or a scoped MVP. | todo, depends on 3 |
+
+Implementation boundaries:
+
+- POC 1 owns the minimal native loading/assembly experiment. Reuse its package in
+  POC 2 rather than creating a second plugin. If native loading needs substantial
+  Hermes changes, stop and report a blocker instead of expanding the scope.
+- POC 2 owns the read-only UI and only the small adapter it needs. Reuse existing
+  CLI/MCP reads or existing core helpers under the read-only lock. Validate the
+  actual command result shapes, use explicit roots and bounded subprocesses, and
+  never parse ledger files independently in plugin code. Missing, failed or
+  oversized reads must not masquerade as an empty project.
+- POC 3 owns the observed workflow, not a new execution architecture. Use one
+  existing project-bound MCP connection and one actual Hermes session against an
+  isolated demo ledger. Seeded discussion messages may demonstrate another
+  participant but must be distinguished from live Hermes messages. Do not claim
+  a live agent run on the strength of a different client's tool calls.
+- The value review owns the product decision. Judge whether the owner can tell
+  what is happening, who owns the work, what agents discussed and whether help is
+  needed. Record friction and effort alongside the comparison with the existing
+  dashboard. Technical success alone does not prove usefulness.
+
+Deferred from this experiment: multi-project selection, concurrent worker/session
+bindings, the production profile-state bridge, automatic refresh, paginated large
+project snapshots, live Hermes transcripts, new Git reconciliation/transfer and
+production packaging. The POC still requires explicit routing, escaped untrusted
+text, clear failures and preservation of live project data/settings.
+
+All 19 unfinished W04–W10 records remain `todo` and depend on
+`task-poc-value-review`. A completed review can record a **stop** decision;
+completion therefore never means permission to promote the production backlog.
+Only an explicit affirmative owner decision selects the next MVP tasks. If an
+early POC task is blocked, present that finding immediately; do not mark it done
+or cancel dependents merely to satisfy dependencies. Explicit owner cancellation
+can disposition those tasks before closing a negative review.
+
+Before further production work, map the POC's reusable files, tests and limitations
+onto the existing W tasks, amending remaining acceptance as appropriate. W08b/W08c
+reuse or replace the small adapter/UI, W08d reuses the loading experiment, and W09
+retains production integration acceptance. POC completion does not automatically
+complete any of these tasks or create parallel production implementations.
+
+## 1. Retained production outcome and consistency assessment
 
 Waystation remains the canonical project ledger. Agents can explicitly reconcile a local Git commit with a task, attach verified evidence, and optionally close work they own. Hermes workers use that ledger through a session-aware adapter. A native Hermes Monitor displays the same tasks, claims, evidence, issues, messages, and handoffs without creating Hermes Kanban cards.
 

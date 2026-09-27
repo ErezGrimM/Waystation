@@ -16,10 +16,11 @@
     "task-w04a-additive-schema",
     "task-w01d-record-round-trip",
     "task-w02d-context-helpers",
-    "task-w06d-diagnostics-contract"
+    "task-w06d-diagnostics-contract",
+    "task-poc-value-review"
   ],
   "created_at": "2026-09-26T02:39:30+03:00",
-  "updated_at": "2026-09-27T20:05:22+03:00",
+  "updated_at": "2026-09-27T20:25:35+03:00",
   "closed_at": null,
   "description": "Implement plan 8 as a separate core lifecycle operation, not a reconciliation override. For a new request require a consistent in_progress task, exactly the expected active claim, a different successor identity, valid successor context, a reason and the stopped acknowledgement; then release the old claim and create one active successor claim in a single intent, keeping the task in_progress, retaining evidence, updating updated_at and preserving the old claim and history. Append claim.released, task.claimed for the successor and task.claim_transferred with the exact request identity and inputs. A durable receipt makes the same request ID with the same inputs return no_change with the original old and new claim IDs while reporting current ownership separately; reusing an ID with different inputs is a conflict; an unseen request with a stale expected claim is refused; recovery never creates a second successor. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Use the merged v2 mutation and record-preservation primitives and W02d context validation. The one-off administrative release/reclaim used during reconciliation is historical maintenance, not the public atomic transfer implementation. Own the separate transfer core module; W06b alone adds its wrappers.",
   "acceptance": [
@@ -29,5 +30,5 @@
     "The operation never attaches commits, closes a task, kills a process, launches a worker, expires a claim or interprets a disconnect as release."
   ],
   "commits": [],
-  "notes": "Acceptance group A07. The existing release path returns the task to ready, so transfer must not reuse it. Actor text and the stopped acknowledgement are audit inputs, not authentication."
+  "notes": "Acceptance group A07. The existing release path returns the task to ready, so transfer must not reuse it. Actor text and the stopped acknowledgement are audit inputs, not authentication.\n\nPOC-first decision (2026-09-27): deferred behind task-poc-value-review. Keep this full-plan task todo. A completed review, including a negative/stop decision, does not authorize promotion; the owner must explicitly select an MVP scope. Before implementation, inspect POC artifacts and acceptance evidence and reuse or retire them rather than duplicating native UI, adapters or assembly. Full requirements remain preserved here."
 }

@@ -12,10 +12,11 @@
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w00-contract-freeze"
+    "task-w00-contract-freeze",
+    "task-poc-value-review"
   ],
   "created_at": "2026-09-26T02:39:32+03:00",
-  "updated_at": "2026-09-27T20:05:22+03:00",
+  "updated_at": "2026-09-27T20:25:35+03:00",
   "closed_at": null,
   "description": "Declare every new diagnostic the plan requires, with severity, message, hint and class-level retryability, in the single core catalog, and name the existing codes the feature reuses instead of inventing synonyms: multiple_active_claims, claim_status_divergence, duplicate_id, invalid_commit_ref, no_git_claim_match, ambiguous_git_claim, no_active_claim, claim_owner_mismatch, task_done, invalid_transition, no_such_task, lock_contended, mutation_intent_invalid, ledger_not_found, git_not_repository, git_command_failed and unexpected_error. Cover the families of plan 14: Git input and source, intent, evidence, ledger, transfer, read model and adapter. Plugin-specific routing errors stay in the plugin's own namespaced catalog rather than copying business validation into the plugin. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Inventory CODES before adding declarations: the persistence and Git families already exist and W02 returns them. Own core catalog declarations and shared diagnostic contracts only; W08b owns the concrete plugin routing catalog and maps existing registry_* codes into it. Declare consumer requirements before W04/W05 implementation rather than adding synonymous errors later.",
   "acceptance": [
@@ -25,5 +26,5 @@
     "Tests assert the catalog's shape and the absence of duplicates rather than freezing message text."
   ],
   "commits": [],
-  "notes": "src/core/result.ts is the catalog; the CLI, MCP and the plugin consume it, so declare before consumers need it."
+  "notes": "src/core/result.ts is the catalog; the CLI, MCP and the plugin consume it, so declare before consumers need it.\n\nPOC-first decision (2026-09-27): deferred behind task-poc-value-review. Keep this full-plan task todo. A completed review, including a negative/stop decision, does not authorize promotion; the owner must explicitly select an MVP scope. Before implementation, inspect POC artifacts and acceptance evidence and reuse or retire them rather than duplicating native UI, adapters or assembly. Full requirements remain preserved here."
 }

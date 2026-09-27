@@ -12,10 +12,11 @@
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w04b-reconcile-core"
+    "task-w04b-reconcile-core",
+    "task-poc-value-review"
   ],
   "created_at": "2026-09-26T02:39:29+03:00",
-  "updated_at": "2026-09-27T20:05:22+03:00",
+  "updated_at": "2026-09-27T20:25:35+03:00",
   "closed_at": null,
   "description": "Implement the reopened-work guard behind decision Q16: reconstruct earlier completion evidence from canonical lifecycle and reconciliation events in append order, not timestamp sorting alone, treating reopen events and historical completed claims as signals of an earlier lifecycle. A commit used to close an earlier lifecycle cannot close a later one, including when it is currently attached under another source. Where prior completion is indicated but earlier history cannot establish a reliable boundary, use the conservative fallback: require an object not already represented in the reopened task's existing evidence and disclose the fallback in diagnostics. An unresolved potentially matching historical reference blocks the check, and missing historical objects are reported as unavailable rather than reconstructed from a hash alone. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Integrate this guard into W04b's one reconciliation operation rather than creating a second mutation entrypoint. W06a is gated on this task so reopened-task protection cannot be omitted from a shipped close command.",
   "acceptance": [
@@ -25,5 +26,5 @@
     "An unresolved potentially matching historical reference refuses the mutation, and manually erased lifecycle history is reported as unknowable rather than guessed."
   ],
   "commits": [],
-  "notes": "Reopening retains commits and clears closed_at, so the guard cannot rely on a missing reference. Historical descriptions for references with unknown provenance stay unresolved, with a warning."
+  "notes": "Reopening retains commits and clears closed_at, so the guard cannot rely on a missing reference. Historical descriptions for references with unknown provenance stay unresolved, with a warning.\n\nPOC-first decision (2026-09-27): deferred behind task-poc-value-review. Keep this full-plan task todo. A completed review, including a negative/stop decision, does not authorize promotion; the owner must explicitly select an MVP scope. Before implementation, inspect POC artifacts and acceptance evidence and reuse or retire them rather than duplicating native UI, adapters or assembly. Full requirements remain preserved here."
 }

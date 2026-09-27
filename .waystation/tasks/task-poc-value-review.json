@@ -1,0 +1,29 @@
+{
+  "id": "task-poc-value-review",
+  "title": "POC decision: compare usefulness and choose stop, iterate or MVP",
+  "status": "todo",
+  "priority": 2,
+  "scope": "scope-dashboard",
+  "path_hints": [
+    "docs/waystation-git-hermes-implementation-plan.md",
+    ".waystation/tasks/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-poc-agent-workflow"
+  ],
+  "created_at": "2026-09-27T20:25:35+03:00",
+  "updated_at": "2026-09-27T20:25:35+03:00",
+  "closed_at": null,
+  "description": "Review the demonstrated POC with the owner before investing in the full implementation. Ask the owner to identify current work, its agent, the relevant discussion and whether intervention is needed; compare the same workflow in the existing Waystation dashboard. Record observed friction, context switching, loading/refresh behavior, integration effort, remaining host limits and whether the native view adds useful information or convenience. The outcome is an explicit owner choice: stop, make one bounded POC iteration, or define a small MVP with selected capabilities and acceptance. A negative result is useful evidence, not justification to continue the 19-task plan. Do not decide product value for the owner. If an earlier POC stage is blocked, present that finding immediately; only explicitly cancelled dependent tasks may be marked wont_do to let this review close without a successful demo. Completing or declining this task never automatically promotes full-plan work: only a separate affirmative owner decision may select tasks for an MVP.",
+  "acceptance": [
+    "The review compares the native POC and existing dashboard using the same project/workflow and records the owner's ability to understand work, ownership and discussions.",
+    "An explicit owner decision and its reasons are recorded as stop, bounded iteration or a scoped MVP; no inferred approval from silence or mere technical success.",
+    "The 19 full-plan tasks remain unpromoted unless the owner explicitly chooses specific next work; an MVP decision does not automatically authorize the entire original plan.",
+    "Reusable POC code, limitations and any superseded deliverables are mapped to existing W tasks before further implementation, preventing duplicate Monitor, read-adapter or packaging work."
+  ],
+  "commits": [],
+  "notes": "Current milestone is the proof of concept in section 0 of docs/waystation-git-hermes-implementation-plan.md. This bounded experiment does not complete or authorize the full W04-W10 implementation. Preserve the user's native Hermes app preference. No agents are dispatched by task creation."
+}

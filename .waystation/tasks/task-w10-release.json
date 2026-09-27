@@ -15,10 +15,11 @@
     "prompt-waystation-v1"
   ],
   "dependencies": [
-    "task-w09-integration-acceptance"
+    "task-w09-integration-acceptance",
+    "task-poc-value-review"
   ],
   "created_at": "2026-09-26T02:39:35+03:00",
-  "updated_at": "2026-09-27T20:05:22+03:00",
+  "updated_at": "2026-09-27T20:25:36+03:00",
   "closed_at": null,
   "description": "Perform the one coordinated release: update package.json, the CLI version and the MCP version together from the then-current version (0.6.0 after foundation reconciliation; next minor currently 0.7.0), keep the plugin's own package metadata separate without an extra core bump, follow docs/release-packaging.md, and produce the final versioned installable folder using W08d's already-tested assembly procedure. Before rollout, recheck the actual Hermes executable and build stamp and the backend and plugin API compatibility at that build, preserve prior artifacts and plugin configuration, settle pending mutation intents and coordinate all active writers, verify source and compiled Windows behavior with fixture ledgers, configure explicit project MCP routes, toolsets, plugin grants and both backend and native enablement, run read-only health checks before selecting real work, and record installed versions, paths and the supported compatibility range. Document rollback constraints for the new intent format and additive metadata, and preserve ledgers during uninstall. Implementation baseline: merged main 6276d5f / ledger closure e64d4bd, Waystation 0.6.0 on Bun 1.4.1; see docs/reconciliation-2026-09-27.md. Reuse the merged foundation and its tests. Own final version assignment, release artifact provenance and rollout to the selected real installation. Do not rebuild a second packager or duplicate W08d's installation design. Preserve 0.6.0 foundation history and record the new feature release separately.",
   "acceptance": [
@@ -28,5 +29,5 @@
     "Deployment covers local Waystation and the selected native Hermes installation only."
   ],
   "commits": [],
-  "notes": "Acceptance group A17. Excluded: DuckBrain deployment, cloud services, remote hosts and native Kanban migration.\n\nThe started-work foundation shipped as 0.6.0. This full-feature release remains unstarted; choose the next appropriate minor from the then-current version (currently 0.7.0), and keep all native rollout requirements."
+  "notes": "Acceptance group A17. Excluded: DuckBrain deployment, cloud services, remote hosts and native Kanban migration.\n\nThe started-work foundation shipped as 0.6.0. This full-feature release remains unstarted; choose the next appropriate minor from the then-current version (currently 0.7.0), and keep all native rollout requirements.\n\nPOC-first decision (2026-09-27): deferred behind task-poc-value-review. Keep this full-plan task todo. A completed review, including a negative/stop decision, does not authorize promotion; the owner must explicitly select an MVP scope. Before implementation, inspect POC artifacts and acceptance evidence and reuse or retire them rather than duplicating native UI, adapters or assembly. Full requirements remain preserved here."
 }

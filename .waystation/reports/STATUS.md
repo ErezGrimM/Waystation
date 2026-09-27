@@ -3,10 +3,10 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
 
 ## In progress
-_none_
+- `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
 
 ## Review
 _none_
@@ -31,6 +31,9 @@ _none_
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
 - `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
+- `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
+- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
+- `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
 - `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
 - `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
 - `task-remove-writeclaim-dead-code` [p4] — Remove the unused writeClaim helper
