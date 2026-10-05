@@ -30,6 +30,29 @@ interface TaskItem {
   status: string;
 }
 
+export function GitCommitButton({
+  selectedFileCount,
+  onClick,
+}: {
+  selectedFileCount: number;
+  onClick: () => void;
+}) {
+  const needsSelection = selectedFileCount === 0;
+
+  return (
+    <>
+      <button className="btn-primary" onClick={onClick} disabled={needsSelection}>
+        Commit
+      </button>
+      {needsSelection && (
+        <span role="status" style={{ fontSize: 11, color: "var(--text-dim)" }}>
+          Select one or more files to commit.
+        </span>
+      )}
+    </>
+  );
+}
+
 export function Git() {
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -308,9 +331,7 @@ export function Git() {
                   </option>
                 ))}
               </select>
-              <button className="btn-primary" onClick={commit}>
-                Commit
-              </button>
+              <GitCommitButton selectedFileCount={selectedFiles.size} onClick={commit} />
             </div>
           )}
 
