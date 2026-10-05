@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, spyOn, test } from "bun:test";
 import {
   existsSync,
   mkdirSync,
@@ -159,6 +159,19 @@ describe("W01a: lock acquisition split", () => {
       expect((err as LockError).code).toBe("lock_contended");
     } finally {
       await release();
+    }
+  });
+
+  test("lock acquisition failures other than contention remain unexpected", async () => {
+    const root = fixtureRoot([TASK_READY]);
+    const unexpected = Object.assign(new Error("lock backend unavailable"), { code: "EIO" });
+    const lockSpy = spyOn(lockfile, "lock").mockRejectedValue(unexpected);
+    try {
+      const err = await withLedgerLock(root, () => undefined).catch((e) => e);
+      expect(err).toBe(unexpected);
+      expect(err).not.toBeInstanceOf(LockError);
+    } finally {
+      lockSpy.mockRestore();
     }
   });
 });
