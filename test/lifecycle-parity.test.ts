@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import lockfile from "proper-lockfile";
 import { loadTasks } from "../src/core/records.ts";
 import type { CommandResult } from "../src/core/result.ts";
 import { loadClaims, loadIssues } from "../src/core/store.ts";
@@ -441,6 +442,33 @@ describe("lifecycle surface parity", () => {
         "duplicate_id",
       ]);
     } finally {
+      await Promise.all(surfaces.map((surface) => surface.close()));
+    }
+  }, 60_000);
+
+  test("lock contention maps to the same retryable diagnostic on every mutation surface", async () => {
+    const root = fixtureRoot();
+    const surfaces = await Promise.all(
+      (["cli", "mcp", "dashboard"] as const).map((name) => createSurface(name, root)),
+    );
+    const release = await lockfile.lock(join(root, ".waystation"), {
+      realpath: false,
+      retries: 0,
+      stale: 60_000,
+    });
+    try {
+      const results = await Promise.all(
+        surfaces.map((surface) =>
+          surface.invoke("claim_task", { id: "task-waiting", agent: "contention-test" }),
+        ),
+      );
+      for (const result of results) {
+        expect(result.ok).toBe(false);
+        expect(result.errors[0]?.code).toBe("lock_contended");
+        expect(result.errors[0]?.retryable).toBe(true);
+      }
+    } finally {
+      await release();
       await Promise.all(surfaces.map((surface) => surface.close()));
     }
   }, 60_000);

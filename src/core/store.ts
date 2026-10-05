@@ -636,6 +636,7 @@ async function acquireLedgerLock(dir: string): Promise<() => Promise<void>> {
       stale: 60_000,
     });
   } catch (err) {
+    if ((err as { code?: unknown } | null)?.code !== "ELOCKED") throw err;
     throw new LockError(`could not acquire ledger lock: ${(err as Error).message}`);
   }
 }
