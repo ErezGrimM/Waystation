@@ -54,6 +54,30 @@ program
 
 // Keep root selection in the core resolver, but make the CLI's explicit flag
 // available to every subcommand without duplicating root plumbing.
+/** Catch Commander variadic options swallowing the next option token before an action mutates data. */
+function findEmptyListOption(args: string[]): string | undefined {
+  if (args.includes("--help") || args.includes("-h")) return undefined;
+  const commandIndex = args.findIndex((arg) => arg === "task" || arg === "issue");
+  if (commandIndex < 0) return undefined;
+  const group = args[commandIndex];
+  const subcommand = args[commandIndex + 1];
+  const listOptions: Record<string, string[]> = {
+    "task create": ["--path-hint", "--prompt", "--depends-on", "--acceptance"],
+    "task update": ["--path-hint", "--prompt", "--depends-on", "--acceptance"],
+    "task finish": ["--commit"],
+    "issue create": ["--acceptance"],
+    "issue update": ["--acceptance"],
+  };
+  const flags = listOptions[`${group} ${subcommand}`];
+  if (!flags) return undefined;
+  for (let i = commandIndex + 2; i < args.length; i += 1) {
+    if (!flags.includes(args[i] ?? "")) continue;
+    const next = args[i + 1];
+    if (next === undefined || next.startsWith("-")) return args[i];
+  }
+  return undefined;
+}
+
 program.hook("preAction", (_command, action) => {
   if (action.name() === "init") return;
   const root = action.optsWithGlobals().root as string | undefined;
@@ -252,10 +276,14 @@ task
   .option("--priority <number>", "numeric priority")
   .option("--scope <id>", "scope id")
   .option("--path-hint <path...>", "replace path hints")
+  .option("--clear-path-hints", "clear all path hints")
   .option("--prompt <id...>", "replace prompt ids")
+  .option("--clear-prompts", "clear all prompt ids")
   .option("--depends-on <id...>", "replace dependency task ids")
+  .option("--clear-dependencies", "clear all dependency task ids")
   .option("--description <text>", "task description")
   .option("--acceptance <text...>", "replace acceptance criteria")
+  .option("--clear-acceptance", "clear all acceptance criteria")
   .option("--notes <text>", "coordination notes")
   .option("--actor <actor>", "mutation actor", "cli")
   .option("--json", "output JSON")
@@ -268,10 +296,14 @@ task
         priority?: string;
         scope?: string;
         pathHint?: string[];
+        clearPathHints?: boolean;
         prompt?: string[];
+        clearPrompts?: boolean;
         dependsOn?: string[];
+        clearDependencies?: boolean;
         description?: string;
         acceptance?: string[];
+        clearAcceptance?: boolean;
         notes?: string;
         actor: string;
         json?: boolean;
@@ -287,11 +319,15 @@ task
             if (priority !== undefined) patch.priority = priority;
           }
           if (opts.scope !== undefined) patch.scope = opts.scope;
-          if (opts.pathHint !== undefined) patch.path_hints = opts.pathHint;
-          if (opts.prompt !== undefined) patch.prompts = opts.prompt;
-          if (opts.dependsOn !== undefined) patch.dependencies = opts.dependsOn;
+          if (opts.pathHint !== undefined || opts.clearPathHints)
+            patch.path_hints = opts.clearPathHints ? [] : opts.pathHint;
+          if (opts.prompt !== undefined || opts.clearPrompts)
+            patch.prompts = opts.clearPrompts ? [] : opts.prompt;
+          if (opts.dependsOn !== undefined || opts.clearDependencies)
+            patch.dependencies = opts.clearDependencies ? [] : opts.dependsOn;
           if (opts.description !== undefined) patch.description = opts.description;
-          if (opts.acceptance !== undefined) patch.acceptance = opts.acceptance;
+          if (opts.acceptance !== undefined || opts.clearAcceptance)
+            patch.acceptance = opts.clearAcceptance ? [] : opts.acceptance;
           if (opts.notes !== undefined) patch.notes = opts.notes;
           requirePatch(patch, "task");
           return updateTask(findProjectRoot(), id, patch, opts.actor);
@@ -528,6 +564,7 @@ issue
   .option("--expected <text>", "expected behavior")
   .option("--actual <text>", "actual behavior")
   .option("--acceptance <text...>", "replace acceptance criteria")
+  .option("--clear-acceptance", "clear all acceptance criteria")
   .option("--resolution <text>", "resolution text")
   .option("--notes <text>", "issue notes")
   .option("--source <json>", "source metadata as JSON")
@@ -550,6 +587,7 @@ issue
         expected?: string;
         actual?: string;
         acceptance?: string[];
+        clearAcceptance?: boolean;
         resolution?: string;
         notes?: string;
         source?: string;
@@ -575,7 +613,8 @@ issue
           if (opts.evidence !== undefined) patch.evidence = opts.evidence;
           if (opts.expected !== undefined) patch.expected = opts.expected;
           if (opts.actual !== undefined) patch.actual = opts.actual;
-          if (opts.acceptance !== undefined) patch.acceptance = opts.acceptance;
+          if (opts.acceptance !== undefined || opts.clearAcceptance)
+            patch.acceptance = opts.clearAcceptance ? [] : opts.acceptance;
           if (opts.resolution !== undefined) patch.resolution = opts.resolution;
           if (opts.notes !== undefined) patch.notes = opts.notes;
           if (opts.source !== undefined) patch.source = parseJsonValue(opts.source);
@@ -1203,6 +1242,20 @@ program
   });
 
 try {
+  const rawArgs = process.argv.slice(2);
+  const invalidListOption = findEmptyListOption(rawArgs);
+  if (invalidListOption) {
+    emitResult(
+      toResult(null, [
+        diag("cli_option_value_required", {
+          message: `Option ${invalidListOption} requires at least one value.`,
+          details: { option: invalidListOption },
+        }),
+      ]),
+      rawArgs.includes("--json"),
+      () => {},
+    );
+  }
   await program.parseAsync(process.argv);
 } catch (err) {
   // Convert ANY error into a coded diagnostic line (no raw stack dump).
