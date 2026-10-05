@@ -1,7 +1,7 @@
 {
   "id": "task-bun-native-dashboard-router",
   "title": "Replace Hono dashboard routing with Bun.serve",
-  "status": "todo",
+  "status": "ready",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [

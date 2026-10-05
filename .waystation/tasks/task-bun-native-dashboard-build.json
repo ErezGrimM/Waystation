@@ -1,7 +1,7 @@
 {
   "id": "task-bun-native-dashboard-build",
   "title": "Replace Vite production dashboard build with Bun.build",
-  "status": "ready",
+  "status": "done",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -15,7 +15,7 @@
   "dependencies": [],
   "created_at": "2026-08-28T12:16:59+03:00",
   "updated_at": "2026-08-28T12:18:17+03:00",
-  "closed_at": null,
+  "closed_at": "2026-10-06T00:10:00+03:00",
   "description": "Replace Vite production building in src/dashboard/client/vite.config.ts with Bun.build. Preserve src/dashboard/client/index.html, src/dashboard/client/src/main.tsx, React JSX, CSS, asset imports, hashed assets, favicon, and the dist layout consumed by dashboardClientDir() and productionDashboardDir() in src/dashboard/server.ts. Preserve package scripts dashboard:build and build, including bun build --compile --asset src/dashboard/client/dist. Keep or replace dashboard:dev with an explicitly tested local watch workflow.",
   "acceptance": [
     "dashboard:build produces the asset layout expected by productionDashboardDir and compiled binary tests.",
