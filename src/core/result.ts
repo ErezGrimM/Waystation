@@ -37,6 +37,12 @@ interface CodeSpec {
 
 /** The code catalog. `code` values are stable, lower_snake_case contracts. */
 export const CODES = {
+  cli_option_value_required: {
+    severity: "error",
+    message: "A list-valued CLI option requires at least one value.",
+    hint: "Provide one or more values after the option, or omit it.",
+    retryable: false,
+  },
   // validation (§18)
   invalid_json: {
     severity: "error",
