@@ -2,10 +2,10 @@
   "id": "claim-task-event-history-validation-codex-20261005-170305-3d4ed8cf",
   "task": "task-event-history-validation",
   "agent": "codex",
-  "status": "active",
+  "status": "completed",
   "branch": "codex/ledger-event-validation",
   "worktree": "C:/Projects/Waystation",
   "claimed_at": "2026-10-05T17:03:05+03:00",
   "released_at": null,
-  "completed_at": null
+  "completed_at": "2026-10-05T17:11:35+03:00"
 }
