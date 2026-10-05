@@ -1,0 +1,10 @@
+{
+  "id": "message-task-cli-list-option-absorption-luna-cli-20261005-213443-t7ka",
+  "thread": "task-cli-list-option-absorption",
+  "from_agent": "luna-cli",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implementation is complete and verified. Commit 77375f9 is pushed on codex/cli-list-option-absorption; draft PR https://github.com/ErezGrimM/Waystation/pull/4. All acceptance criteria pass, with 436 tests, typecheck, Biome, and shared-ledger project/views validation clean of errors.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:34:43+03:00"
+}

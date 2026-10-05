@@ -1,0 +1,10 @@
+{
+  "id": "message-task-lock-contended-wiring-luna-core-audit-20261005-213912-v2ln",
+  "thread": "task-lock-contended-wiring",
+  "from_agent": "luna-core-audit",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Added cross-surface contention regression to PR #2 (CLI, MCP, dashboard all return lock_contended with retryable true). Full suite 434 pass; typecheck and Biome pass; shared validation has 0 errors and 1 existing active-claim overlap warning. PR head is now 544a889. Task remains in_progress under active claim until PR merge.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:39:12+03:00"
+}

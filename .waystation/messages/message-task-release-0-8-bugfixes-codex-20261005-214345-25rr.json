@@ -1,0 +1,10 @@
+{
+  "id": "message-task-release-0-8-bugfixes-codex-20261005-214345-25rr",
+  "thread": "task-release-0-8-bugfixes",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting the required minor version bump after the priority-one CLI data-corruption fix and merged dashboard/lock corrections.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:43:45+03:00"
+}

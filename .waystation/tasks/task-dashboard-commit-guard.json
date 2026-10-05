@@ -1,7 +1,7 @@
 {
   "id": "task-dashboard-commit-guard",
   "title": "Guard dashboard git commit against blind git add -A",
-  "status": "todo",
+  "status": "done",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -13,14 +13,17 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-05T21:37:50+03:00",
+  "closed_at": "2026-10-05T21:37:50+03:00",
   "description": "From the 2026-08-15 complete code audit: POST /api/git/commit (src/dashboard/server.ts:579-590) runs `git add -A` whenever the request has no `files`, and the Git page (src/dashboard/client/src/pages/Git.tsx:90-112) omits `files` when the user has not selected any. One click on Commit can therefore stage and commit every change in the repo, including unrelated untracked files and the .waystation ledger. Fix: require an explicit file selection in the UI and reject file-less commit requests server-side (or require an explicit `addAll` flag).",
   "acceptance": [
     "POST /api/git/commit without `files` returns an error telling the user to select files (or explicitly confirm add-all); it never silently stages everything.",
     "The Git page Commit button is disabled or prompts when no files are selected.",
     "Committing with explicit files behaves exactly as before.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
+  ],
+  "commits": [
+    "ba80f60465290c049b331b643635cc7c70b52c1c"
   ],
   "notes": "Reported as audit finding #4 (medium)."
 }

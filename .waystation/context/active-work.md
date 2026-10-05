@@ -6,7 +6,7 @@
 _none_
 
 ## Ready
-- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
+_none_
 
 ## Coordination warnings
 _none_

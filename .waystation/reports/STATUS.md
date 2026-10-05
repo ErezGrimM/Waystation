@@ -3,7 +3,7 @@
 # Waystation Status
 
 ## Ready to claim
-- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
+_none_
 
 ## In progress
 _none_
@@ -12,7 +12,7 @@ _none_
 _none_
 
 ## Marked blocked
-_none_
+- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
 
 ## Waiting (blocked by dependencies)
 _none_
@@ -21,15 +21,12 @@ _none_
 - `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
 - `task-bun-native-dashboard-build` [p2] — Replace Vite production dashboard build with Bun\.build
 - `task-bun-native-dashboard-router` [p2] — Replace Hono dashboard routing with Bun\.serve
-- `task-cli-list-option-absorption` [p1] — CLI list\-valued options must not absorb the following option token
-- `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
-- `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
 - `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
@@ -91,7 +88,9 @@ _none_
 - `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
+- `task-cli-list-option-absorption` [p1] — CLI list\-valued options must not absorb the following option token
 - `task-cli-option-coverage` [p2] — Add CLI option coverage
+- `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
 - `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
@@ -111,6 +110,7 @@ _none_
 - `task-handoff-id-collision` [p3] — Fix handoff id collision on same\-second creation
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
 - `task-init` [p1] — Implement \`waystation init\`
+- `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
 - `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
@@ -136,6 +136,7 @@ _none_
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
 - `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
+- `task-release-0-8-bugfixes` [p2] — Bump version for the October bug fixes
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views

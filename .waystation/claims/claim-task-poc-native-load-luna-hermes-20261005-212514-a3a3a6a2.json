@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-poc-native-load-luna-hermes-20261005-212514-a3a3a6a2",
+  "task": "task-poc-native-load",
+  "agent": "luna-hermes",
+  "status": "released",
+  "branch": null,
+  "worktree": "C:/Users/User/.codex/worktrees/hermes-native-poc/Waystation",
+  "claimed_at": "2026-10-05T21:25:14+03:00",
+  "released_at": "2026-10-05T21:27:24+03:00",
+  "completed_at": null
+}

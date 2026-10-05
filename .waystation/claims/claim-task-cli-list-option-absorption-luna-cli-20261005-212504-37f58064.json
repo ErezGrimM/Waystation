@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-cli-list-option-absorption-luna-cli-20261005-212504-37f58064",
+  "task": "task-cli-list-option-absorption",
+  "agent": "luna-cli",
+  "status": "completed",
+  "branch": "codex/cli-list-option-absorption",
+  "worktree": "C:\\Users\\User\\.codex\\worktrees\\cli-option-fix\\Waystation",
+  "claimed_at": "2026-10-05T21:25:04+03:00",
+  "released_at": null,
+  "completed_at": "2026-10-05T21:34:43+03:00"
+}

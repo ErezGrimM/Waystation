@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-native-load-luna-hermes-20261005-212515-x8y5",
+  "thread": "task-poc-native-load",
+  "from_agent": "luna-hermes",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting native Hermes loading POC investigation in isolated worktree.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:25:15+03:00"
+}

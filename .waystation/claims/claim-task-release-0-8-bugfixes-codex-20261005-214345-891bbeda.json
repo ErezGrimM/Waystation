@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-release-0-8-bugfixes-codex-20261005-214345-891bbeda",
+  "task": "task-release-0-8-bugfixes",
+  "agent": "codex",
+  "status": "completed",
+  "branch": "main",
+  "worktree": "C:/Projects/Waystation",
+  "claimed_at": "2026-10-05T21:43:45+03:00",
+  "released_at": null,
+  "completed_at": "2026-10-05T21:45:36+03:00"
+}

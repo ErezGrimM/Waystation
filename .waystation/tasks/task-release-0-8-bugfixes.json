@@ -1,0 +1,34 @@
+{
+  "id": "task-release-0-8-bugfixes",
+  "title": "Bump version for the October bug fixes",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-cli",
+  "path_hints": [
+    "package.json",
+    "src/cli/index.ts",
+    "src/mcp/server.ts",
+    "docs/roadmap.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-cli-list-option-absorption",
+    "task-dashboard-commit-guard",
+    "task-lock-contended-wiring"
+  ],
+  "created_at": "2026-10-05T21:43:21+03:00",
+  "updated_at": "2026-10-05T21:45:36+03:00",
+  "closed_at": "2026-10-05T21:45:36+03:00",
+  "description": "The priority-one CLI list-option fix prevents silent writes of option names as user data. Per the project versioning rule, bump the minor version after this major bug fix and keep package, CLI, MCP, and roadmap versions aligned.",
+  "acceptance": [
+    "Package, CLI, MCP, and roadmap identify version 0.8.0.",
+    "The rebuilt executable reports 0.8.0 and passes ledger validation.",
+    "Tests, typecheck, and Biome are clean after the bump."
+  ],
+  "commits": [
+    "253a67b"
+  ],
+  "notes": "Follows merged PRs #2, #3, and #4; code changes are version metadata only."
+}

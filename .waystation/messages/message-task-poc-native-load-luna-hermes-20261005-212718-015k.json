@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-native-load-luna-hermes-20261005-212718-015k",
+  "thread": "task-poc-native-load",
+  "from_agent": "luna-hermes",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Verified installed native host metadata and loader only. Running Hermes.exe: C:\\Users\\User\\AppData\\Local\\hermes\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe. resources/install-stamp.json: commit 59004a62356f3a4697ab0fe8ad5086d2b405e2a6, builtAt 2026-09-25T13:55:07.298Z, dirty false, distribution desktop-app. Matching source checkout runtime-loader.ts documents the standalone plugin door at %LOCALAPPDATA%\\hermes\\desktop-plugins\\<id>\\plugin.js, live folder/file watchers and runtime removal/toggle. No native UI methods are exposed in this session: cua.listApps and cua.listWindows are undefined, and the app inventory reports no native apps. Therefore could not observe installation, enable/open, disable or removal; no Hermes settings/app files were changed. Blocked pending a native UI session to install an isolated plugin, observe its page, then disable/remove it and verify preserved config.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:27:18+03:00"
+}
