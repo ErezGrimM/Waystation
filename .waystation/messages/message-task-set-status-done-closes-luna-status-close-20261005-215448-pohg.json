@@ -1,0 +1,10 @@
+{
+  "id": "message-task-set-status-done-closes-luna-status-close-20261005-215448-pohg",
+  "thread": "task-set-status-done-closes",
+  "from_agent": "luna-status-close",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implementation evidence: main already includes the setTaskStatus done closure fix in 0527560c. Added explicit finish parity and nonterminal closed_at preservation regression coverage in PR #5; test commit 47d452616e31ce2b1449baeb1fa24f511df0bf83 is pushed for review.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:54:48+03:00"
+}

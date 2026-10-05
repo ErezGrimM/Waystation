@@ -1,0 +1,10 @@
+{
+  "id": "message-task-set-status-done-closes-luna-status-close-20261005-215003-1ok1",
+  "thread": "task-set-status-done-closes",
+  "from_agent": "luna-status-close",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting work. Main already contains the done closed_at fix from 0527560c; I am checking acceptance coverage and adding the missing finish parity regression.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T21:50:03+03:00"
+}

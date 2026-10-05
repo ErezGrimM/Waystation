@@ -35,7 +35,6 @@ _none_
 - `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
 - `task-remove-writeclaim-dead-code` [p4] — Remove the unused writeClaim helper
 - `task-repair-metric-consistency` [p4] — Align repair finalLines with physical line count
-- `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
 - `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
 - `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
 - `task-w04a-additive-schema` [p1] — W04a: additive CommitEvidence schema
@@ -138,6 +137,7 @@ _none_
 - `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
 - `task-release-0-8-bugfixes` [p2] — Bump version for the October bug fixes
 - `task-scaffold-cli` [p1] — Scaffold CLI project
+- `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
 - `task-skeleton-mutations` [p2] — Widen skeleton: claim/release/finish with events and locking
