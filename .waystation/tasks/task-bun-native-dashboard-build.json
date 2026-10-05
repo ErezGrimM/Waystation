@@ -1,7 +1,7 @@
 {
   "id": "task-bun-native-dashboard-build",
   "title": "Replace Vite production dashboard build with Bun.build",
-  "status": "todo",
+  "status": "ready",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -20,7 +20,7 @@
   "acceptance": [
     "dashboard:build produces the asset layout expected by productionDashboardDir and compiled binary tests.",
     "Bun.build handles React entry points, CSS, asset hashing, and SPA fallback inputs used by the dashboard.",
-    "Vite and its React plugin are removed only if an equivalent supported development workflow is demonstrated; otherwise their retained development-only role is documented.",
+    "The development workflow decision is explicit: either (a) a Bun-native watch/HMR workflow is implemented and tested, or (b) Vite is retained as a dev-only dependency with its role documented in the migration plan. The production build path must not depend on Vite.",
     "Bun 1.4 frozen install, tests, typecheck, Biome, build, and ledger validation pass."
   ],
   "commits": [],
