@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { addEventIntegrityDiagnostics } from "./eventIntegrity.ts";
 import { expectedGeneratedArtifacts } from "./generate.ts";
 import { activeClaimOverlaps } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
@@ -167,6 +168,7 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
   const paths = ledgerPaths(root);
   const diags: Diagnostic[] = [];
   const tasks: TaskRecord[] = [];
+  const claims: ClaimRecord[] = [];
   const seenTaskIds = new Set<string>();
   const seenIssueIds = new Set<string>();
 
@@ -185,6 +187,12 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
       ) {
         throw new Error("invalid shape");
       }
+      diags.push(
+        diag("mutation_intent_pending", {
+          message: `pending mutation ${intent.id} has not completed`,
+          details: { file: "mutation-intent.json", mutation: intent.id },
+        }),
+      );
     } catch {
       diags.push(diag("mutation_intent_invalid", { details: { file: "mutation-intent.json" } }));
     }
@@ -374,6 +382,7 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
       );
       continue;
     }
+    claims.push(parsed.data);
     if (seenClaimIds.has(parsed.data.id)) {
       diags.push(
         diag("duplicate_id", {
@@ -506,12 +515,18 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
   }
 
   // --- events: valid JSONL ---
+  const parsedEvents: Array<Record<string, unknown>> = [];
   if (existsSync(paths.events)) {
     const lines = readFileSync(paths.events, "utf8").split("\n");
     lines.forEach((lineText, i) => {
       if (!lineText.trim()) return;
       try {
-        JSON.parse(lineText);
+        const event: unknown = JSON.parse(lineText);
+        if (event && typeof event === "object" && !Array.isArray(event)) {
+          parsedEvents.push(event as Record<string, unknown>);
+        } else {
+          throw new Error("event must be an object");
+        }
       } catch {
         diags.push(
           diag("invalid_jsonl", {
@@ -521,6 +536,9 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
         );
       }
     });
+  }
+  if (!diags.some((d) => d.code === "invalid_jsonl")) {
+    addEventIntegrityDiagnostics(diags, tasks, claims, parsedEvents);
   }
 
   // --- messages: schema, dangling in_reply_to, orphan thread ---

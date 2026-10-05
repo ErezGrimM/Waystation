@@ -219,20 +219,27 @@ describe("ledger root resolution", () => {
 
   test("shared-ledger claims preserve the caller worktree and permit exactly one winner", async () => {
     const ledgerRoot = fixtureRoot([{ ...D, id: "task-shared" }]);
-    const caller = mkdtempSync(join(tmpdir(), "waystation-caller-worktree-"));
-    tmpRoots.push(caller);
-    Bun.spawnSync(["git", "init", "-q"], { cwd: caller });
+    const callers = [
+      mkdtempSync(join(tmpdir(), "waystation-caller-worktree-a-")),
+      mkdtempSync(join(tmpdir(), "waystation-caller-worktree-b-")),
+    ];
+    for (const caller of callers) {
+      tmpRoots.push(caller);
+      Bun.spawnSync(["git", "init", "-q"], { cwd: caller });
+    }
 
     const results = await Promise.allSettled([
-      claimTask(ledgerRoot, "task-shared", "first", undefined, { caller }),
-      claimTask(ledgerRoot, "task-shared", "second", undefined, { caller }),
+      claimTask(ledgerRoot, "task-shared", "first", undefined, { caller: callers[0] }),
+      claimTask(ledgerRoot, "task-shared", "second", undefined, { caller: callers[1] }),
     ]);
     const claims = results.filter(
       (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof claimTask>>> =>
         result.status === "fulfilled",
     );
     expect(claims).toHaveLength(1);
-    expect(claims[0]?.value.worktree?.replaceAll("\\", "/")).toBe(caller.replaceAll("\\", "/"));
+    expect(callers.map((caller) => caller.replaceAll("\\", "/"))).toContain(
+      claims[0]!.value.worktree!.replaceAll("\\", "/"),
+    );
     expect(loadClaims(ledgerRoot).filter((claim) => claim.status === "active")).toHaveLength(1);
   });
 });

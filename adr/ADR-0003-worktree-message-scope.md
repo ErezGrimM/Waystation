@@ -81,6 +81,13 @@ ledger, while claims record Git branch/worktree from the calling checkout. This
 keeps a shared ledger useful without treating it as a daemon or automatic
 cross-worktree transport.
 
+For a coordinated multi-worktree project, all agents select one ledger root.
+Feature branches carry code only; they do not merge checkout-local `.waystation/`
+snapshots. The owning checkout updates from its remote before committing ledger
+changes and validates the resulting history. This is required because a Git
+merge of independent JSON task/claim snapshots and an append-only event log
+cannot preserve the mutation ordering guaranteed by one ledger lock.
+
 ## Consequences
 
 Positive:

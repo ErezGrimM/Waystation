@@ -183,6 +183,28 @@ waystation gh import --repo <owner/name> [--force]
 waystation gh export --repo <owner/name>
 ```
 
+### One ledger across Git worktrees
+
+Choose one existing checkout as the coordination root and give every worker
+the same `WAYSTATION_ROOT` (or pass `--root` on each command). Run commands from
+each worker's own worktree so claim records retain its actual branch and path:
+
+```ps1
+$env:WAYSTATION_ROOT = "C:\Projects\MyProject" # contains .waystation/
+waystation task claim task-example --agent worker-a
+waystation validate
+```
+
+The lock and mutation journal live in that one selected ledger. A feature
+branch must not commit or merge its checkout-local `.waystation/` snapshot into
+the coordination branch; exclude those files from its PR. After integrating
+code, finish the task against the selected ledger and commit the ledger changes
+once from its owning checkout. Before doing so, update that checkout from the
+remote branch and run `waystation validate`. If Git reports a ledger conflict,
+resolve it against the shared ledger's current records and event history rather
+than choosing an older branch snapshot. See
+[ADR-0003](adr/ADR-0003-worktree-message-scope.md) for root selection rules.
+
 `gh import` skips issues that already exist locally; `gh import --force`
 refreshes existing `gh-<number>` records with their current GitHub state.
 
