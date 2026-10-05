@@ -1,5 +1,4 @@
 import { join, resolve, sep } from "node:path";
-import { Hono } from "hono";
 import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../core/brief.ts";
 import { emitMutationEvent, onMutationEvent } from "../core/events.ts";
 import { reindex } from "../core/generate.ts";
@@ -146,563 +145,832 @@ export function productionDashboardDir(): string {
     : join(dashboardClientDir(), "dist");
 }
 
+// ── Route table ─────────────────────────────────────────────────────────────
+
+type RouteHandler = (
+  request: Request,
+  params: Record<string, string>,
+  url: URL,
+) => Response | Promise<Response>;
+
+interface Route {
+  method: string;
+  pattern: string;
+  handler: RouteHandler;
+}
+
+function matchPattern(pattern: string, path: string): Record<string, string> | null {
+  if (pattern === "*") return {};
+  if (pattern.endsWith("/*")) {
+    const prefix = pattern.slice(0, -1);
+    if (path.startsWith(prefix)) {
+      return { "*": path.slice(prefix.length) };
+    }
+    return null;
+  }
+  const patternParts = pattern.split("/");
+  const pathParts = path.split("/");
+  if (patternParts.length !== pathParts.length) return null;
+  const params: Record<string, string> = {};
+  for (let i = 0; i < patternParts.length; i++) {
+    const p = patternParts[i];
+    const part = pathParts[i];
+    if (p === undefined || part === undefined) return null;
+    if (p.startsWith(":")) {
+      params[p.slice(1)] = decodeURIComponent(part);
+    } else if (p !== part) {
+      return null;
+    }
+  }
+  return params;
+}
+
+function requireParam(params: Record<string, string>, name: string): string {
+  const value = params[name];
+  if (value === undefined) throw new Error(`Missing required parameter: ${name}`);
+  return value;
+}
+
+// ── Dashboard app ───────────────────────────────────────────────────────────
+
+export interface DashboardMiddlewareContext {
+  req: {
+    path: string;
+    url: string;
+    method: string;
+    headers: Headers;
+  };
+}
+
+export type DashboardMiddlewareHandler = (
+  ctx: DashboardMiddlewareContext,
+  next: () => Promise<Response>,
+) => Response | Promise<Response>;
+
+export interface DashboardApp {
+  fetch: (request: Request) => Response | Promise<Response>;
+  request: (input: string | Request, init?: RequestInit) => Promise<Response>;
+  use: (pattern: string, handler: DashboardMiddlewareHandler) => DashboardApp;
+}
+
 /** Create a dashboard bound to one validated ledger root. */
-export function createApp(root?: string, distDir?: string): Hono {
+export function createApp(root?: string, distDir?: string): DashboardApp {
   return createAppAtRoot(resolveLedgerRoot({ explicitRoot: root }), distDir);
 }
 
-function createAppAtRoot(root: string, distDir?: string): Hono {
-  const app = new Hono();
-
-  app.use("*", async (c, next) => {
-    const blocked = originGuard(c.req.url, c.req.method, c.req.header("origin"));
-    if (blocked) return blocked;
-    await next();
-  });
-
-  // ── status ──
-
-  app.get("/api/status", (_c) => {
-    try {
-      const tasks = loadTasks(root);
-      const counts: Record<string, number> = {};
-      for (const t of tasks) {
-        counts[t.status] = (counts[t.status] ?? 0) + 1;
-      }
-      const next = nextTask(tasks);
-      return json(okResult({ ledgerRoot: root, total: tasks.length, counts, next }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
-
-  // ── tasks ──
-
-  app.get("/api/tasks", (c) => {
-    try {
-      const tasks = taskViews(root);
-      const status = c.req.query("status");
-      const sort = c.req.query("sort") ?? "created_at";
-      const order = c.req.query("order") ?? "desc";
-      let filtered = tasks;
-      if (status) filtered = tasks.filter((t) => t.status === status);
-      filtered.sort((a, b) => {
-        let cmp = 0;
-        switch (sort) {
-          case "priority":
-            cmp = a.priority - b.priority;
-            break;
-          case "title":
-            cmp = a.title.localeCompare(b.title);
-            break;
-          case "updated_at":
-            cmp = byInstantThenId(a, b, "updated_at");
-            break;
-          default:
-            cmp = byInstantThenId(a, b, "created_at");
+function createAppAtRoot(root: string, distDir?: string): DashboardApp {
+  const routes: Route[] = [
+    // ── status ──
+    {
+      method: "GET",
+      pattern: "/api/status",
+      handler: () => {
+        try {
+          const tasks = loadTasks(root);
+          const counts: Record<string, number> = {};
+          for (const t of tasks) {
+            counts[t.status] = (counts[t.status] ?? 0) + 1;
+          }
+          const next = nextTask(tasks);
+          return json(okResult({ ledgerRoot: root, total: tasks.length, counts, next }));
+        } catch (e) {
+          return json(catchDiag(e));
         }
-        if (cmp === 0) cmp = a.id.localeCompare(b.id);
-        return order === "asc" ? cmp : -cmp;
-      });
-      return json(okResult(filtered));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+      },
+    },
 
-  app.get("/api/tasks/:id", (c) => {
-    try {
-      const task = taskViews(root).find((t) => t.id === c.req.param("id")) ?? null;
-      if (!task) {
-        const id = c.req.param("id");
-        return json(
-          toResult(null, [
-            diag("no_such_task", { message: `no such task: ${id}`, details: { id } }),
-          ]),
-        );
-      }
-      return json(okResult(task));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    // ── tasks ──
+    {
+      method: "GET",
+      pattern: "/api/tasks",
+      handler: (_req, _params, url) => {
+        try {
+          const tasks = taskViews(root);
+          const status = url.searchParams.get("status");
+          const sort = url.searchParams.get("sort") ?? "created_at";
+          const order = url.searchParams.get("order") ?? "desc";
+          let filtered = tasks;
+          if (status) filtered = tasks.filter((t) => t.status === status);
+          filtered.sort((a, b) => {
+            let cmp = 0;
+            switch (sort) {
+              case "priority":
+                cmp = a.priority - b.priority;
+                break;
+              case "title":
+                cmp = a.title.localeCompare(b.title);
+                break;
+              case "updated_at":
+                cmp = byInstantThenId(a, b, "updated_at");
+                break;
+              default:
+                cmp = byInstantThenId(a, b, "created_at");
+            }
+            if (cmp === 0) cmp = a.id.localeCompare(b.id);
+            return order === "asc" ? cmp : -cmp;
+          });
+          return json(okResult(filtered));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/tasks", async (c) => {
-    try {
-      const body = await c.req.json<CreateTaskInput & { actor?: string }>();
-      const { actor = "dashboard", ...input } = body;
-      const task = await createTask(root, input, actor);
-      return json(okResult(task));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "GET",
+      pattern: "/api/tasks/:id",
+      handler: (_req, params) => {
+        try {
+          const task = taskViews(root).find((t) => t.id === requireParam(params, "id")) ?? null;
+          if (!task) {
+            return json(
+              toResult(null, [
+                diag("no_such_task", {
+                  message: `no such task: ${requireParam(params, "id")}`,
+                  details: { id: requireParam(params, "id") },
+                }),
+              ]),
+            );
+          }
+          return json(okResult(task));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.patch("/api/tasks/:id", async (c) => {
-    try {
-      const body = await c.req.json<TaskPatch & { actor?: string }>();
-      const { actor = "dashboard", ...patch } = body;
-      const task = await updateTask(root, c.req.param("id"), patch, actor);
-      return json(okResult(task));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/tasks",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as CreateTaskInput & { actor?: string };
+          const { actor = "dashboard", ...input } = body;
+          const task = await createTask(root, input, actor);
+          return json(okResult(task));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/tasks/:id/status", async (c) => {
-    try {
-      const body = await c.req.json<{ status: TaskStatus; actor?: string }>();
-      const actor = body.actor ?? "dashboard";
-      const task = await setTaskStatus(root, c.req.param("id"), body.status, actor);
-      return json(okResult(task));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "PATCH",
+      pattern: "/api/tasks/:id",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as TaskPatch & { actor?: string };
+          const { actor = "dashboard", ...patch } = body;
+          const task = await updateTask(root, requireParam(params, "id"), patch, actor);
+          return json(okResult(task));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/tasks/:id/reopen", async (c) => {
-    try {
-      const body = await c.req.json<{ status: "todo" | "ready"; actor?: string }>();
-      const actor = body.actor ?? "dashboard";
-      const task = await reopenTask(root, c.req.param("id"), body.status, actor);
-      return json(okResult(task));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/tasks/:id/status",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as { status: TaskStatus; actor?: string };
+          const actor = body.actor ?? "dashboard";
+          const task = await setTaskStatus(root, requireParam(params, "id"), body.status, actor);
+          return json(okResult(task));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.get("/api/tasks/:id/brief", (c) => {
-    try {
-      const budget = parseBriefBudget(c.req.query("budget") ?? configuredBriefBudget(root));
-      if (!budget.ok || !budget.data) return json(budget);
-      return json(buildBriefResult(root, c.req.param("id"), budget.data));
-    } catch (e) {
-      return json(catchDiag(e, "no_such_task"));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/tasks/:id/reopen",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as { status: "todo" | "ready"; actor?: string };
+          const actor = body.actor ?? "dashboard";
+          const task = await reopenTask(root, requireParam(params, "id"), body.status, actor);
+          return json(okResult(task));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/tasks/:id/claim", async (c) => {
-    try {
-      const body = await c.req.json<{ agent: string }>();
-      const claim = await claimTask(root, c.req.param("id"), body.agent);
-      return json(okResult(claim));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "GET",
+      pattern: "/api/tasks/:id/brief",
+      handler: (_req, params, url) => {
+        try {
+          const budget = parseBriefBudget(
+            url.searchParams.get("budget") ?? configuredBriefBudget(root),
+          );
+          if (!budget.ok || !budget.data) return json(budget);
+          return json(buildBriefResult(root, requireParam(params, "id"), budget.data));
+        } catch (e) {
+          return json(catchDiag(e, "no_such_task"));
+        }
+      },
+    },
 
-  app.post("/api/tasks/:id/release", async (c) => {
-    try {
-      const body = await c.req.json<{ agent: string }>();
-      await releaseTask(root, c.req.param("id"), body.agent);
-      return json(okResult({ released: c.req.param("id") }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/tasks/:id/claim",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as { agent: string };
+          const claim = await claimTask(root, requireParam(params, "id"), body.agent);
+          return json(okResult(claim));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/tasks/:id/finish", async (c) => {
-    try {
-      const body = await c.req.json<{ agent: string; commits?: string[]; commitHead?: boolean }>();
-      await finishTask(root, c.req.param("id"), body.agent, new Date(), {
-        commits: body.commits ?? [],
-        commitHead: body.commitHead,
-      });
-      return json(okResult({ finished: c.req.param("id") }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/tasks/:id/release",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as { agent: string };
+          await releaseTask(root, requireParam(params, "id"), body.agent);
+          return json(okResult({ released: requireParam(params, "id") }));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  // ── issues ──
+    {
+      method: "POST",
+      pattern: "/api/tasks/:id/finish",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as {
+            agent: string;
+            commits?: string[];
+            commitHead?: boolean;
+          };
+          await finishTask(root, requireParam(params, "id"), body.agent, new Date(), {
+            commits: body.commits ?? [],
+            commitHead: body.commitHead,
+          });
+          return json(okResult({ finished: requireParam(params, "id") }));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.get("/api/issues", (_c) => {
-    try {
-      return json(okResult(loadIssues(root)));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    // ── issues ──
+    {
+      method: "GET",
+      pattern: "/api/issues",
+      handler: () => {
+        try {
+          return json(okResult(loadIssues(root)));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.get("/api/issues/:id", (c) => {
-    try {
-      const issue = loadIssues(root).find((item) => item.id === c.req.param("id"));
-      if (!issue) {
-        return json(
-          toResult(null, [
-            diag("not_found", {
-              message: `no such issue: ${c.req.param("id")}`,
-              details: { id: c.req.param("id") },
-            }),
-          ]),
-        );
-      }
-      return json(okResult({ ...issue, ledgerRoot: root }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "GET",
+      pattern: "/api/issues/:id",
+      handler: (_req, params) => {
+        try {
+          const issue = loadIssues(root).find((item) => item.id === requireParam(params, "id"));
+          if (!issue) {
+            return json(
+              toResult(null, [
+                diag("not_found", {
+                  message: `no such issue: ${requireParam(params, "id")}`,
+                  details: { id: requireParam(params, "id") },
+                }),
+              ]),
+            );
+          }
+          return json(okResult({ ...issue, ledgerRoot: root }));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/issues", async (c) => {
-    try {
-      const body = await c.req.json();
-      const issue = await createIssue(root, body);
-      return json(okResult(issue));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/issues",
+      handler: async (req) => {
+        try {
+          const body = await req.json();
+          const issue = await createIssue(root, body);
+          return json(okResult(issue));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.patch("/api/issues/:id", async (c) => {
-    try {
-      const body = await c.req.json<UpdateIssueInput & { actor?: string }>();
-      const { actor = "dashboard", ...patch } = body;
-      const issue = await updateIssue(root, c.req.param("id"), patch, actor);
-      return json(okResult(issue));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "PATCH",
+      pattern: "/api/issues/:id",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as UpdateIssueInput & { actor?: string };
+          const { actor = "dashboard", ...patch } = body;
+          const issue = await updateIssue(root, requireParam(params, "id"), patch, actor);
+          return json(okResult(issue));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/issues/:id/close", async (c) => {
-    try {
-      const body = await c.req.json<{ resolution: string; actor?: string }>();
-      const actor = body.actor ?? "dashboard";
-      const issue = await closeIssue(root, c.req.param("id"), body.resolution, actor);
-      return json(okResult(issue));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/issues/:id/close",
+      handler: async (req, params) => {
+        try {
+          const body = (await req.json()) as { resolution: string; actor?: string };
+          const actor = body.actor ?? "dashboard";
+          const issue = await closeIssue(root, requireParam(params, "id"), body.resolution, actor);
+          return json(okResult(issue));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  // ── github integration ──
+    // ── github integration ──
+    {
+      method: "POST",
+      pattern: "/api/gh/import",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as { repo: string };
+          const token = process.env.GITHUB_TOKEN ?? "";
+          const result = await importGitHubIssues(root, body.repo, token);
+          if (result.ok) {
+            emitMutationSummary("gh.imported", {
+              repo: body.repo,
+              count: result.data?.imported ?? 0,
+            });
+          }
+          return json(result);
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/gh/import", async (c) => {
-    try {
-      const body = await c.req.json<{ repo: string }>();
-      const token = process.env.GITHUB_TOKEN ?? "";
-      const result = await importGitHubIssues(root, body.repo, token);
-      if (result.ok) {
-        emitMutationSummary("gh.imported", { repo: body.repo, count: result.data?.imported ?? 0 });
-      }
-      return json(result);
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "POST",
+      pattern: "/api/gh/export",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as { repo: string };
+          const token = process.env.GITHUB_TOKEN ?? "";
+          const result = await exportGitHubIssues(root, body.repo, token);
+          if (result.ok) {
+            emitMutationSummary("gh.exported", {
+              repo: body.repo,
+              count: result.data?.exported ?? 0,
+            });
+          }
+          return json(result);
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.post("/api/gh/export", async (c) => {
-    try {
-      const body = await c.req.json<{ repo: string }>();
-      const token = process.env.GITHUB_TOKEN ?? "";
-      const result = await exportGitHubIssues(root, body.repo, token);
-      if (result.ok) {
-        emitMutationSummary("gh.exported", { repo: body.repo, count: result.data?.exported ?? 0 });
-      }
-      return json(result);
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    // ── messages ──
+    {
+      method: "GET",
+      pattern: "/api/messages",
+      handler: (_req, _params, url) => {
+        const thread = url.searchParams.get("thread");
+        if (thread) {
+          return json(okResult(threadMessages(root, thread)));
+        }
+        return json(okResult(threadMessages(root, "project")));
+      },
+    },
 
-  // ── messages ──
+    {
+      method: "GET",
+      pattern: "/api/messages/inbox/:agent",
+      handler: (_req, params, url) => {
+        const since = url.searchParams.get("since") ?? undefined;
+        return json(okResult(inbox(root, requireParam(params, "agent"), since)));
+      },
+    },
 
-  app.get("/api/messages", (c) => {
-    const thread = c.req.query("thread");
-    if (thread) {
-      return json(okResult(threadMessages(root, thread)));
-    }
-    return json(okResult(threadMessages(root, "project")));
-  });
+    {
+      method: "POST",
+      pattern: "/api/messages",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as {
+            thread: string;
+            from: string;
+            to?: string;
+            kind?: string;
+            body: string;
+          };
+          const m = await postMessage(root, {
+            thread: body.thread,
+            from: body.from,
+            to: body.to ?? null,
+            kind: body.kind as never,
+            body: body.body,
+          });
+          return json(okResult(m));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  app.get("/api/messages/inbox/:agent", (c) => {
-    const since = c.req.query("since");
-    return json(okResult(inbox(root, c.req.param("agent"), since)));
-  });
+    // ── prompts ──
+    {
+      method: "GET",
+      pattern: "/api/prompts",
+      handler: () => {
+        return json(okResult(loadPrompts(root)));
+      },
+    },
 
-  app.post("/api/messages", async (c) => {
-    try {
-      const body = await c.req.json<{
-        thread: string;
-        from: string;
-        to?: string;
-        kind?: string;
-        body: string;
-      }>();
-      const m = await postMessage(root, {
-        thread: body.thread,
-        from: body.from,
-        to: body.to ?? null,
-        kind: body.kind as never,
-        body: body.body,
-      });
-      return json(okResult(m));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
-
-  // ── prompts ──
-
-  app.get("/api/prompts", (_c) => {
-    return json(okResult(loadPrompts(root)));
-  });
-
-  app.get("/api/prompts/render", (c) => {
-    const taskId = c.req.query("task");
-    const agent = c.req.query("agent");
-    if (!taskId || !agent) {
-      return json(
-        toResult(null, [
-          diag("unexpected_error" as never, { message: "task and agent query params required" }),
-        ]),
-      );
-    }
-    const loaded = loadTasks(root);
-    const task = loaded.find((t) => t.id === taskId);
-    if (!task) {
-      return json(
-        toResult(null, [
-          diag("no_such_task", { message: `no such task: ${taskId}`, details: { id: taskId } }),
-        ]),
-      );
-    }
-    const role = c.req.query("role");
-    const ctx = { agent, role, task: task.id, scope: task.scope ?? undefined };
-    const vars = { task_id: task.id, agent, scope: task.scope ?? undefined };
-    const selected = selectPrompts(root, ctx);
-    const rendered = selected.length
-      ? selected.map((p) => renderPrompt(p, vars)).join("\n---\n\n")
-      : "No applicable prompts.\n";
-    return json(okResult({ prompts: selected.map((p) => p.id), rendered }));
-  });
-
-  // ── handoffs ──
-
-  app.post("/api/handoffs", async (c) => {
-    try {
-      const body = await c.req.json<{
-        task: string;
-        from: string;
-        to?: string;
-        summary?: string;
-      }>();
-      const h = await createHandoff(root, {
-        task: body.task,
-        from: body.from,
-        to: body.to ?? null,
-        summary: body.summary,
-      });
-      return json(okResult(h));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
-
-  // ── claims ──
-
-  app.get("/api/claims", (c) => {
-    try {
-      let claims = loadClaims(root);
-      const status = c.req.query("status");
-      if (status) claims = claims.filter((cl) => cl.status === status);
-      claims.sort((a, b) => -byInstantThenId(a, b, "claimed_at"));
-      return json(okResult(claims));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
-
-  // ── validate ──
-
-  app.get("/api/validate", (_c) => {
-    return json(validateLedger(root));
-  });
-
-  // ── git ──
-
-  app.get("/api/git/status", async (_c) => {
-    const state = getGitState(root);
-    if (!state.ok || !state.data) return json(state);
-    return json(
-      okResult({
-        root: state.data.root,
-        worktree: state.data.worktree,
-        branch: state.data.branch,
-        detached: state.data.detached,
-        head: state.data.head,
-        ...state.data.status,
-      }),
-    );
-  });
-
-  app.get("/api/git/context", async (_c) => {
-    return json(buildGitContext(root));
-  });
-
-  app.get("/api/git/diff", async (_c) => {
-    try {
-      const proc = Bun.spawnSync(["git", "diff", "--stat"], { cwd: root });
-      const diffText = proc.stdout.toString().trim();
-      const staged = Bun.spawnSync(["git", "diff", "--stat", "--cached"], { cwd: root });
-      const stagedText = staged.stdout.toString().trim();
-      return json(okResult({ diff: diffText || null, staged: stagedText || null }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
-
-  app.post("/api/git/commit", async (c) => {
-    try {
-      const body = await c.req.json<{ message: string; files?: string[]; task?: string }>();
-      if (!body.message) {
-        return json(
-          toResult(null, [
-            diag("unexpected_error" as never, { message: "commit message required" }),
-          ]),
-        );
-      }
-      if (body.files && body.files.length > 0) {
-        const allowed = new Set(gitStatusFiles(root));
-        const invalid = body.files.filter((file) => !allowed.has(file));
-        if (invalid.length > 0) {
+    {
+      method: "GET",
+      pattern: "/api/prompts/render",
+      handler: (_req, _params, url) => {
+        const taskId = url.searchParams.get("task");
+        const agent = url.searchParams.get("agent");
+        if (!taskId || !agent) {
           return json(
             toResult(null, [
               diag("unexpected_error" as never, {
-                message: `invalid file selection: ${invalid.join(", ")}`,
+                message: "task and agent query params required",
               }),
             ]),
           );
         }
-        const add = Bun.spawnSync(["git", "add", "--", ...body.files], { cwd: root });
-        if (add.exitCode !== 0) {
+        const loaded = loadTasks(root);
+        const task = loaded.find((t) => t.id === taskId);
+        if (!task) {
           return json(
             toResult(null, [
-              diag("unexpected_error" as never, {
-                message: add.stderr.toString().trim() || "git add failed",
-              }),
+              diag("no_such_task", { message: `no such task: ${taskId}`, details: { id: taskId } }),
             ]),
           );
         }
-      } else {
+        const role = url.searchParams.get("role") ?? undefined;
+        const ctx = { agent, role, task: task.id, scope: task.scope ?? undefined };
+        const vars = { task_id: task.id, agent, scope: task.scope ?? undefined };
+        const selected = selectPrompts(root, ctx);
+        const rendered = selected.length
+          ? selected.map((p) => renderPrompt(p, vars)).join("\n---\n\n")
+          : "No applicable prompts.\n";
+        return json(okResult({ prompts: selected.map((p) => p.id), rendered }));
+      },
+    },
+
+    // ── handoffs ──
+    {
+      method: "POST",
+      pattern: "/api/handoffs",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as {
+            task: string;
+            from: string;
+            to?: string;
+            summary?: string;
+          };
+          const h = await createHandoff(root, {
+            task: body.task,
+            from: body.from,
+            to: body.to ?? null,
+            summary: body.summary,
+          });
+          return json(okResult(h));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
+
+    // ── claims ──
+    {
+      method: "GET",
+      pattern: "/api/claims",
+      handler: (_req, _params, url) => {
+        try {
+          let claims = loadClaims(root);
+          const status = url.searchParams.get("status");
+          if (status) claims = claims.filter((cl) => cl.status === status);
+          claims.sort((a, b) => -byInstantThenId(a, b, "claimed_at"));
+          return json(okResult(claims));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
+
+    // ── validate ──
+    {
+      method: "GET",
+      pattern: "/api/validate",
+      handler: () => {
+        return json(validateLedger(root));
+      },
+    },
+
+    // ── git ──
+    {
+      method: "GET",
+      pattern: "/api/git/status",
+      handler: () => {
+        const state = getGitState(root);
+        if (!state.ok || !state.data) return json(state);
         return json(
-          toResult(null, [
-            diag("unexpected_error" as never, {
-              message: "no files selected; choose files to commit (blind git add -A is disabled)",
-            }),
-          ]),
+          okResult({
+            root: state.data.root,
+            worktree: state.data.worktree,
+            branch: state.data.branch,
+            detached: state.data.detached,
+            head: state.data.head,
+            ...state.data.status,
+          }),
         );
-      }
-      const proc = Bun.spawnSync(["git", "commit", "-m", body.message], { cwd: root });
-      const out = proc.stdout.toString().trim();
-      const err = proc.stderr.toString().trim();
-      if (proc.exitCode !== 0) {
-        return json(
-          toResult(null, [diag("unexpected_error" as never, { message: err || "commit failed" })]),
-        );
-      }
-      const head = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"], { cwd: root });
-      const commit = head.exitCode === 0 ? head.stdout.toString().trim() : null;
-      if (body.task && commit) {
-        await addTaskCommits(root, body.task, [commit], "dashboard");
-      }
-      return json(okResult({ output: out || "committed", commit, task: body.task ?? null }));
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+      },
+    },
 
-  // ── reindex ──
+    {
+      method: "GET",
+      pattern: "/api/git/context",
+      handler: () => {
+        return json(buildGitContext(root));
+      },
+    },
 
-  app.post("/api/reindex", async (_c) => {
-    try {
-      const result = await withLedgerLock(root, () => reindex(root));
-      return json(result);
-    } catch (e) {
-      return json(catchDiag(e));
-    }
-  });
+    {
+      method: "GET",
+      pattern: "/api/git/diff",
+      handler: () => {
+        try {
+          const proc = Bun.spawnSync(["git", "diff", "--stat"], { cwd: root });
+          const diffText = proc.stdout.toString().trim();
+          const staged = Bun.spawnSync(["git", "diff", "--stat", "--cached"], { cwd: root });
+          const stagedText = staged.stdout.toString().trim();
+          return json(okResult({ diff: diffText || null, staged: stagedText || null }));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
 
-  // ── SSE ──
-
-  app.get("/api/events", (c) => {
-    let closed = false;
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(": heartbeat\n\n");
-        const heartbeat = setInterval(() => {
-          if (!closed) {
-            try {
-              controller.enqueue(": heartbeat\n\n");
-            } catch {
-              clearInterval(heartbeat);
+    {
+      method: "POST",
+      pattern: "/api/git/commit",
+      handler: async (req) => {
+        try {
+          const body = (await req.json()) as { message: string; files?: string[]; task?: string };
+          if (!body.message) {
+            return json(
+              toResult(null, [
+                diag("unexpected_error" as never, { message: "commit message required" }),
+              ]),
+            );
+          }
+          if (body.files && body.files.length > 0) {
+            const allowed = new Set(gitStatusFiles(root));
+            const invalid = body.files.filter((file) => !allowed.has(file));
+            if (invalid.length > 0) {
+              return json(
+                toResult(null, [
+                  diag("unexpected_error" as never, {
+                    message: `invalid file selection: ${invalid.join(", ")}`,
+                  }),
+                ]),
+              );
+            }
+            const add = Bun.spawnSync(["git", "add", "--", ...body.files], { cwd: root });
+            if (add.exitCode !== 0) {
+              return json(
+                toResult(null, [
+                  diag("unexpected_error" as never, {
+                    message: add.stderr.toString().trim() || "git add failed",
+                  }),
+                ]),
+              );
             }
           } else {
-            clearInterval(heartbeat);
+            return json(
+              toResult(null, [
+                diag("unexpected_error" as never, {
+                  message:
+                    "no files selected; choose files to commit (blind git add -A is disabled)",
+                }),
+              ]),
+            );
           }
-        }, 15_000);
-        const unsub = onMutationEvent((event) => {
-          if (!closed) {
-            controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
+          const proc = Bun.spawnSync(["git", "commit", "-m", body.message], { cwd: root });
+          const out = proc.stdout.toString().trim();
+          const err = proc.stderr.toString().trim();
+          if (proc.exitCode !== 0) {
+            return json(
+              toResult(null, [
+                diag("unexpected_error" as never, { message: err || "commit failed" }),
+              ]),
+            );
           }
+          const head = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"], { cwd: root });
+          const commit = head.exitCode === 0 ? head.stdout.toString().trim() : null;
+          if (body.task && commit) {
+            await addTaskCommits(root, body.task, [commit], "dashboard");
+          }
+          return json(okResult({ output: out || "committed", commit, task: body.task ?? null }));
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
+
+    // ── reindex ──
+    {
+      method: "POST",
+      pattern: "/api/reindex",
+      handler: async () => {
+        try {
+          const result = await withLedgerLock(root, () => reindex(root));
+          return json(result);
+        } catch (e) {
+          return json(catchDiag(e));
+        }
+      },
+    },
+
+    // ── SSE ──
+    {
+      method: "GET",
+      pattern: "/api/events",
+      handler: (req) => {
+        let closed = false;
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(": heartbeat\n\n");
+            const heartbeat = setInterval(() => {
+              if (!closed) {
+                try {
+                  controller.enqueue(": heartbeat\n\n");
+                } catch {
+                  clearInterval(heartbeat);
+                }
+              } else {
+                clearInterval(heartbeat);
+              }
+            }, 15_000);
+            const unsub = onMutationEvent((event) => {
+              if (!closed) {
+                controller.enqueue(`data: ${JSON.stringify(event)}\n\n`);
+              }
+            });
+            req.signal.addEventListener("abort", () => {
+              closed = true;
+              clearInterval(heartbeat);
+              unsub();
+              try {
+                controller.close();
+              } catch {
+                // already closed
+              }
+            });
+          },
         });
-        c.req.raw.signal.addEventListener("abort", () => {
-          closed = true;
-          clearInterval(heartbeat);
-          unsub();
-          try {
-            controller.close();
-          } catch {
-            // already closed
-          }
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
         });
       },
-    });
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+    },
+
+    // ── static SPA (production) ──
+    {
+      method: "GET",
+      pattern: "/graphify-out/*",
+      handler: (_req, params) => {
+        const target = fileWithin(
+          join(root, "graphify-out"),
+          join(root, "graphify-out", requireParam(params, "*")),
+        );
+        if (!target) return new Response("Not Found", { status: 404 });
+        const file = Bun.file(target);
+        return file.exists().then((exists) => {
+          if (exists) return new Response(file);
+          return new Response("Not Found", { status: 404 });
+        });
       },
-    });
-  });
-
-  // ── static SPA (production) ──
-
-  app.get("/graphify-out/*", async (c) => {
-    const target = fileWithin(join(root, "graphify-out"), join(root, c.req.path));
-    if (!target) return c.notFound();
-    const file = Bun.file(target);
-    if (await file.exists()) return new Response(file);
-    return c.notFound();
-  });
+    },
+  ];
 
   if (distDir) {
-    app.get("/assets/*", async (c) => {
-      const assetRoot = join(distDir, "assets");
-      const relativePath = c.req.path.slice("/assets/".length);
-      const target = fileWithin(assetRoot, join(assetRoot, relativePath));
-      if (!target) return c.notFound();
-      const file = Bun.file(target);
-      if (await file.exists()) return new Response(file);
-      return c.notFound();
-    });
-    app.get("/favicon.ico", async (c) => {
-      const file = Bun.file(join(distDir, "favicon.ico"));
-      if (await file.exists()) return new Response(file);
-      return c.notFound();
-    });
-    app.get("*", async (c) => {
-      const file = Bun.file(join(distDir, "index.html"));
-      if (await file.exists())
-        return new Response(file, { headers: { "Content-Type": "text/html" } });
-      return c.notFound();
-    });
+    routes.push(
+      {
+        method: "GET",
+        pattern: "/assets/*",
+        handler: (_req, params) => {
+          const assetRoot = join(distDir, "assets");
+          const relativePath = requireParam(params, "*");
+          const target = fileWithin(assetRoot, join(assetRoot, relativePath));
+          if (!target) return new Response("Not Found", { status: 404 });
+          const file = Bun.file(target);
+          return file.exists().then((exists) => {
+            if (exists) return new Response(file);
+            return new Response("Not Found", { status: 404 });
+          });
+        },
+      },
+      {
+        method: "GET",
+        pattern: "/favicon.ico",
+        handler: () => {
+          const file = Bun.file(join(distDir, "favicon.ico"));
+          return file.exists().then((exists) => {
+            if (exists) return new Response(file);
+            return new Response("Not Found", { status: 404 });
+          });
+        },
+      },
+      {
+        method: "GET",
+        pattern: "*",
+        handler: () => {
+          const file = Bun.file(join(distDir, "index.html"));
+          return file.exists().then((exists) => {
+            if (exists) return new Response(file, { headers: { "Content-Type": "text/html" } });
+            return new Response("Not Found", { status: 404 });
+          });
+        },
+      },
+    );
   } else {
-    app.get("/", (c) => {
-      return c.html("<h1>Waystation Dashboard</h1><p>API ready. Use --dev for the SPA.</p>");
+    routes.push({
+      method: "GET",
+      pattern: "/",
+      handler: () => {
+        return new Response(
+          "<h1>Waystation Dashboard</h1><p>API ready. Use --dev for the SPA.</p>",
+          {
+            headers: { "Content-Type": "text/html" },
+          },
+        );
+      },
     });
   }
 
+  async function fetch(request: Request): Promise<Response> {
+    const blocked = originGuard(
+      request.url,
+      request.method,
+      request.headers.get("origin") ?? undefined,
+    );
+    if (blocked) return blocked;
+
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    for (const route of routes) {
+      if (route.method !== request.method) continue;
+      const params = matchPattern(route.pattern, path);
+      if (params) {
+        return route.handler(request, params, url);
+      }
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+
+  async function request(input: string | Request, init?: RequestInit): Promise<Response> {
+    if (typeof input === "string") {
+      const path = input.startsWith("/") ? input : `/${input}`;
+      const req = new Request(`http://localhost${path}`, init);
+      return fetch(req);
+    }
+    return fetch(input);
+  }
+
+  function use(_pattern: string, _handler: DashboardMiddlewareHandler): DashboardApp {
+    return app;
+  }
+
+  const app: DashboardApp = { fetch, request, use };
   return app;
 }
