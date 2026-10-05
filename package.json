@@ -9,7 +9,7 @@
   },
   "scripts": {
     "waystation": "bun run src/cli/index.ts",
-    "dashboard:build": "vite build --config src/dashboard/client/vite.config.ts",
+    "dashboard:build": "bun run src/dashboard/client/build.ts",
     "build": "\"$npm_execpath\" run dashboard:build && \"$npm_execpath\" build --compile src/cli/index.ts --asset src/dashboard/client/dist --outfile waystation.exe",
     "test": "\"$npm_execpath\" test",
     "test:parallel": "\"$npm_execpath\" test --parallel=4 --isolate",
