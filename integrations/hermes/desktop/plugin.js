@@ -10,6 +10,26 @@ import {
 
 const POC_ROUTE = "/waystation-native-poc";
 
+// ─── Configurable ledger root ────────────────────────────────────────────────
+// Default root for normal use. Override via URL query parameter:
+//   /waystation-native-poc?root=C:/path/to/ledger
+// This allows the POC 3 demo to use an isolated ledger without touching production.
+
+const DEFAULT_ROOT = "C:/projects/Waystation";
+
+function resolveRoot() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const rootParam = params.get("root");
+    if (rootParam && rootParam.trim().length > 0) {
+      return rootParam.trim();
+    }
+  } catch {
+    // window.location not available (e.g., tests) — fall through to default
+  }
+  return DEFAULT_ROOT;
+}
+
 // ─── POC 1 static content ────────────────────────────────────────────────────
 
 function PocStaticContent() {
@@ -43,8 +63,6 @@ function PocStaticContent() {
 
 // ─── Project Monitor ─────────────────────────────────────────────────────────
 
-const DEMO_ROOT = "C:/projects/Waystation";
-
 function ProjectMonitor() {
   const [tasks, setTasks] = React.useState([]);
   const [claims, setClaims] = React.useState([]);
@@ -54,6 +72,7 @@ function ProjectMonitor() {
   const [error, setError] = React.useState(null);
   const [lastRead, setLastRead] = React.useState(null);
   const [stale, setStale] = React.useState(false);
+  const root = resolveRoot();
 
   async function refresh() {
     setLoading(true);
@@ -61,8 +80,8 @@ function ProjectMonitor() {
     setStale(false);
     try {
       const [taskList, claimList] = await Promise.all([
-        readTasks(DEMO_ROOT),
-        readClaims(DEMO_ROOT),
+        readTasks(root),
+        readClaims(root),
       ]);
       setTasks(taskList);
       setClaims(claimList);
@@ -82,7 +101,7 @@ function ProjectMonitor() {
     setMessages([]);
     if (!task) return;
     try {
-      const msgs = await readMessages(DEMO_ROOT, task.id);
+      const msgs = await readMessages(root, task.id);
       setMessages(msgs);
     } catch {
       setMessages([]);
@@ -133,7 +152,7 @@ function ProjectMonitor() {
         ],
       }),
       jsx("p", {
-        children: `Project: ${DEMO_ROOT}`,
+        children: `Project: ${root}`,
         style: {
           margin: "0 0 0.5rem",
           color: "var(--ui-text-secondary)",
