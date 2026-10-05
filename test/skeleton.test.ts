@@ -290,13 +290,39 @@ describe("mutation intent recovery", () => {
     expect(new Set(events.map((event) => event.mutation)).size).toBe(2);
   });
 
-  test("setTaskStatus closes a task transitioned to done", async () => {
-    const root = fixtureRoot([{ ...D, id: "task-review-done", status: "review" }]);
+  test("setTaskStatus and finishTask close done tasks at the same mutation time", async () => {
+    const setStatusRoot = fixtureRoot([{ ...D, id: "task-review-done", status: "review" }]);
+    const finishRoot = fixtureRoot([{ ...D, id: "task-review-finish", status: "review" }]);
     const now = new Date("2026-07-06T10:00:00.000Z");
-    const done = await setTaskStatus(root, "task-review-done", "done", "tester", now);
-    expect(done.status).toBe("done");
-    expect(done.closed_at).not.toBeNull();
-    expect(done.closed_at).toBe(done.updated_at);
+    const setStatusDone = await setTaskStatus(
+      setStatusRoot,
+      "task-review-done",
+      "done",
+      "tester",
+      now,
+    );
+    await finishTask(finishRoot, "task-review-finish", "tester", now);
+    const [finishDone] = loadTasks(finishRoot);
+
+    expect(setStatusDone.status).toBe("done");
+    expect(setStatusDone.closed_at).toBe(setStatusDone.updated_at);
+    expect(setStatusDone.closed_at).toBe(finishDone!.closed_at);
+  });
+
+  test("setTaskStatus leaves closed_at unchanged for nonterminal transitions", async () => {
+    const closedAt = "2026-07-05T10:00:00.000Z";
+    const root = fixtureRoot([
+      { ...D, id: "task-nonterminal-status", status: "todo", closed_at: closedAt },
+    ]);
+    const updated = await setTaskStatus(
+      root,
+      "task-nonterminal-status",
+      "ready",
+      "tester",
+      new Date("2026-07-06T10:00:00.000Z"),
+    );
+    expect(updated.status).toBe("ready");
+    expect(updated.closed_at).toBe(closedAt);
   });
 
   test("unknown TaskRecord fields survive a mutation round-trip (passthrough)", async () => {
