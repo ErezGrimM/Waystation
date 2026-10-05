@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-import { Command } from "commander";
 import { ZodError } from "zod";
 import {
   buildBriefResult,
@@ -43,963 +42,89 @@ import { auditPromotableTasks, nextTask, readyTasks } from "../core/tasks.ts";
 import { validateLedger } from "../core/validate.ts";
 import { backendWarnings } from "../index/ledgerIndex.ts";
 import { buildTaskIndex, readyFromIndex } from "../index/taskIndex.ts";
+import { generateHelp, generateVersion, parseArgv } from "./parser.ts";
+import type { CommandContext } from "./spec.ts";
 
-const program = new Command();
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-program
-  .name("waystation")
-  .description("Local-first ledger for coordinating humans and AI coding agents")
-  .option("--root <path>", "ledger root (overrides WAYSTATION_ROOT and upward discovery)")
-  .version("0.8.0");
-
-// Keep root selection in the core resolver, but make the CLI's explicit flag
-// available to every subcommand without duplicating root plumbing.
-/** Catch Commander variadic options swallowing the next option token before an action mutates data. */
-function findEmptyListOption(args: string[]): string | undefined {
-  if (args.includes("--help") || args.includes("-h")) return undefined;
-  const commandIndex = args.findIndex((arg) => arg === "task" || arg === "issue");
-  if (commandIndex < 0) return undefined;
-  const group = args[commandIndex];
-  const subcommand = args[commandIndex + 1];
-  const listOptions: Record<string, string[]> = {
-    "task create": ["--path-hint", "--prompt", "--depends-on", "--acceptance"],
-    "task update": ["--path-hint", "--prompt", "--depends-on", "--acceptance"],
-    "task finish": ["--commit"],
-    "issue create": ["--acceptance"],
-    "issue update": ["--acceptance"],
-  };
-  const flags = listOptions[`${group} ${subcommand}`];
-  if (!flags) return undefined;
-  for (let i = commandIndex + 2; i < args.length; i += 1) {
-    if (!flags.includes(args[i] ?? "")) continue;
-    const next = args[i + 1];
-    if (next === undefined || next.startsWith("-")) return args[i];
+function parsePriority(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new MutationError("priority must be a non-negative integer", "schema_invalid");
   }
-  return undefined;
+  return parsed;
 }
 
-program.hook("preAction", (_command, action) => {
-  if (action.name() === "init") return;
-  const root = action.optsWithGlobals().root as string | undefined;
-  if (root) process.env.WAYSTATION_ROOT = root;
-});
+function parseJsonValue(value: string | undefined): unknown {
+  if (value === undefined) return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new MutationError("source must be valid JSON", "invalid_json");
+  }
+}
 
-program
-  .command("init")
-  .description("Scaffold a new .waystation/ ledger in the current directory")
-  .option("--project <id>", "project id (default: folder name)")
-  .option(
-    "--force",
-    "re-scaffold an existing ledger: rewrites config.json and recreates missing directories; records, messages, and event history are PRESERVED (not a wipe)",
-  )
-  .option("--json", "output JSON")
-  .action(async (opts: { project?: string; force?: boolean; json?: boolean }) => {
-    const res = await initLedger(process.cwd(), { project: opts.project, force: opts.force });
-    emitResult(res, opts.json, () => {
-      const r = res.data;
-      if (r?.created) process.stdout.write(`initialized ${r.root} (project: ${r.project})\n`);
-      else process.stdout.write("already initialized (use --force to reinitialize)\n");
-    });
-  });
+function requirePatch(patch: object, kind: "task" | "issue"): void {
+  if (Object.keys(patch).length === 0) {
+    throw new MutationError(`no ${kind} fields were provided to update`, "schema_invalid");
+  }
+}
 
-const task = program.command("task").description("Task commands");
+function diagnosticFor(error: unknown) {
+  if (error instanceof MutationError) {
+    return diag(error.code as never, { message: error.message });
+  }
+  if (error instanceof RecordError || error instanceof LedgerResolutionError) {
+    return diag(error.code as never);
+  }
+  if (error instanceof LockError) {
+    return diag(error.code as never);
+  }
+  if (error instanceof ZodError) {
+    const message = error.issues[0]?.message ?? "Invalid command input.";
+    return diag("schema_invalid", { message: `Invalid command input: ${message}` });
+  }
+  return diag("unexpected_error");
+}
 
-task
-  .command("next")
-  .description("Show the next declared-ready task whose dependencies are done or wont_do")
-  .option("--json", "output JSON")
-  .option("--from-index", "resolve via the SQLite index instead of in-memory")
-  .action(async (opts: { json?: boolean; fromIndex?: boolean }) => {
-    const tasks = loadTasks();
-    const line = (t: { id: string; title: string; priority: number } | null) =>
-      process.stdout.write(t ? `${t.id}  [p${t.priority}]  ${t.title}\n` : "No ready tasks.\n");
+function emitResult<T>(
+  res: CommandResult<T>,
+  json: boolean | undefined,
+  renderText: () => void,
+): void {
+  if (json) {
+    process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+  } else {
+    renderText();
+    for (const w of res.warnings) process.stderr.write(`warning [${w.code}] ${w.message}\n`);
+    for (const e of res.errors) process.stderr.write(`error [${e.code}] ${e.message}\n`);
+  }
+  if (!res.ok) process.exit(1);
+}
 
-    if (opts.fromIndex) {
-      const root = findProjectRoot();
-      const db = await withLedgerLock(root, () => buildTaskIndex(ledgerPaths(root).index, tasks));
-      const ready = readyFromIndex(db);
-      const warnings = backendWarnings(db.backend);
-      db.close();
-      const chosen = ready[0] ?? null;
-      emitResult(okResult(chosen, warnings), opts.json, () => line(chosen));
-      return;
-    }
-    const chosen = nextTask(tasks);
-    emitResult(okResult(chosen), opts.json, () => line(chosen));
-  });
+async function runCommand<T>(
+  json: boolean | undefined,
+  fn: () => Promise<T>,
+  renderText: (data: T) => void,
+): Promise<void> {
+  try {
+    const data = await fn();
+    emitResult(okResult(data), json, () => renderText(data));
+  } catch (error) {
+    emitResult(toResult(null, [diagnosticFor(error)]), json, () => {});
+  }
+}
 
-task
-  .command("ready")
-  .description("List actionable declared-ready tasks, best-first")
-  .option("--json", "output JSON")
-  .action((opts: { json?: boolean }) => {
-    const ready = readyTasks(loadTasks());
-    emitResult(okResult(ready), opts.json, () => {
-      if (ready.length === 0) {
-        process.stdout.write("No ready tasks.\n");
-        return;
-      }
-      for (const t of ready) process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
-    });
-  });
-
-task
-  .command("list")
-  .description("List all tasks with their status")
-  .option("--json", "output JSON")
-  .option("--status <status>", "filter by status")
-  .action((opts: { json?: boolean; status?: string }) => {
-    let tasks = loadTasks();
-    if (opts.status) tasks = tasks.filter((t) => t.status === opts.status);
-    tasks.sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id));
-    emitResult(okResult(tasks), opts.json, () => {
-      if (tasks.length === 0) {
-        process.stdout.write("No tasks.\n");
-        return;
-      }
-      for (const t of tasks) {
-        process.stdout.write(`${t.id}  [p${t.priority}]  ${t.status.padEnd(11)}  ${t.title}\n`);
-      }
-    });
-  });
-
-task
-  .command("audit")
-  .description("List dependency-satisfied todo tasks (candidates for intentional promotion)")
-  .option("--json", "output JSON")
-  .action((opts: { json?: boolean }) => {
-    const tasks = auditPromotableTasks(loadTasks());
-    emitResult(okResult(tasks), opts.json, () => {
-      if (tasks.length === 0) {
-        process.stdout.write("No dependency-satisfied todo tasks.\n");
-        return;
-      }
-      process.stdout.write(
-        "dependency-satisfied todo tasks (promote to ready intentionally, never automatically):\n",
-      );
-      for (const t of tasks) {
-        process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
-      }
-    });
-  });
-
-task
-  .command("show")
-  .argument("<id>", "task id")
-  .description("Show a single task")
-  .option("--json", "output JSON")
-  .action((id: string, opts: { json?: boolean }) => {
-    const found = loadTaskById(id);
-    const res = found
-      ? okResult(found)
-      : toResult(null, [diag("no_such_task", { message: `no such task: ${id}`, details: { id } })]);
-    emitResult(res, opts.json, () => {
-      if (!found) return;
-      process.stdout.write(`${found.id}\n`);
-      process.stdout.write(`  title:        ${found.title}\n`);
-      process.stdout.write(`  status:       ${found.status}\n`);
-      process.stdout.write(`  priority:     ${found.priority}\n`);
-      if (found.scope) process.stdout.write(`  scope:        ${found.scope}\n`);
-      if (found.dependencies.length) {
-        process.stdout.write(`  dependencies: ${found.dependencies.join(", ")}\n`);
-      }
-      if (found.commits.length) {
-        process.stdout.write(`  commits:      ${found.commits.join(", ")}\n`);
-      }
-      if (found.description) process.stdout.write(`\n${found.description.trimEnd()}\n`);
-    });
-  });
-
-task
-  .command("create")
-  .argument("<id>", "task id")
-  .requiredOption("--title <title>", "task title")
-  .option("--status <status>", "initial status", "todo")
-  .option("--priority <number>", "numeric priority", "3")
-  .option("--scope <id>", "scope id")
-  .option("--path-hint <path...>", "path hint(s)")
-  .option("--prompt <id...>", "prompt id(s)")
-  .option("--depends-on <id...>", "dependency task id(s)")
-  .option("--description <text>", "task description")
-  .option("--acceptance <text...>", "acceptance criterion/criteria")
-  .option("--notes <text>", "coordination notes")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Create a task through the canonical core mutation path")
-  .action(
-    async (
-      id: string,
-      opts: {
-        title: string;
-        status: string;
-        priority: string;
-        scope?: string;
-        pathHint?: string[];
-        prompt?: string[];
-        dependsOn?: string[];
-        description?: string;
-        acceptance?: string[];
-        notes?: string;
-        actor: string;
-        json?: boolean;
-      },
-    ) => {
-      await runCommand(
-        opts.json,
-        () =>
-          createTask(
-            findProjectRoot(),
-            {
-              id,
-              title: opts.title,
-              status: opts.status as TaskStatus,
-              priority: parsePriority(opts.priority) ?? 3,
-              scope: opts.scope ?? null,
-              path_hints: opts.pathHint ?? [],
-              prompts: opts.prompt ?? [],
-              dependencies: opts.dependsOn ?? [],
-              description: opts.description,
-              acceptance: opts.acceptance ?? [],
-              notes: opts.notes,
-            },
-            opts.actor,
-          ),
-        (created) => process.stdout.write(`created ${created.id} (${created.status})\n`),
-      );
-    },
+async function runMutation(json: boolean | undefined, fn: () => Promise<string>): Promise<void> {
+  await runCommand(
+    json,
+    async () => ({ message: await fn() }),
+    ({ message }) => process.stdout.write(`${message}\n`),
   );
+}
 
-task
-  .command("update")
-  .argument("<id>", "task id")
-  .option("--title <title>", "task title")
-  .option("--priority <number>", "numeric priority")
-  .option("--scope <id>", "scope id")
-  .option("--path-hint <path...>", "replace path hints")
-  .option("--clear-path-hints", "clear all path hints")
-  .option("--prompt <id...>", "replace prompt ids")
-  .option("--clear-prompts", "clear all prompt ids")
-  .option("--depends-on <id...>", "replace dependency task ids")
-  .option("--clear-dependencies", "clear all dependency task ids")
-  .option("--description <text>", "task description")
-  .option("--acceptance <text...>", "replace acceptance criteria")
-  .option("--clear-acceptance", "clear all acceptance criteria")
-  .option("--notes <text>", "coordination notes")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Update mutable task fields without changing lifecycle status")
-  .action(
-    async (
-      id: string,
-      opts: {
-        title?: string;
-        priority?: string;
-        scope?: string;
-        pathHint?: string[];
-        clearPathHints?: boolean;
-        prompt?: string[];
-        clearPrompts?: boolean;
-        dependsOn?: string[];
-        clearDependencies?: boolean;
-        description?: string;
-        acceptance?: string[];
-        clearAcceptance?: boolean;
-        notes?: string;
-        actor: string;
-        json?: boolean;
-      },
-    ) => {
-      await runCommand(
-        opts.json,
-        () => {
-          const patch: TaskPatch = {};
-          if (opts.title !== undefined) patch.title = opts.title;
-          if (opts.priority !== undefined) {
-            const priority = parsePriority(opts.priority);
-            if (priority !== undefined) patch.priority = priority;
-          }
-          if (opts.scope !== undefined) patch.scope = opts.scope;
-          if (opts.pathHint !== undefined || opts.clearPathHints)
-            patch.path_hints = opts.clearPathHints ? [] : opts.pathHint;
-          if (opts.prompt !== undefined || opts.clearPrompts)
-            patch.prompts = opts.clearPrompts ? [] : opts.prompt;
-          if (opts.dependsOn !== undefined || opts.clearDependencies)
-            patch.dependencies = opts.clearDependencies ? [] : opts.dependsOn;
-          if (opts.description !== undefined) patch.description = opts.description;
-          if (opts.acceptance !== undefined || opts.clearAcceptance)
-            patch.acceptance = opts.clearAcceptance ? [] : opts.acceptance;
-          if (opts.notes !== undefined) patch.notes = opts.notes;
-          requirePatch(patch, "task");
-          return updateTask(findProjectRoot(), id, patch, opts.actor);
-        },
-        (updated) => process.stdout.write(`updated ${updated.id}\n`),
-      );
-    },
-  );
-
-task
-  .command("set-status")
-  .argument("<id>", "task id")
-  .argument("<status>", "target task status")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Apply a valid non-claim task status transition")
-  .action(async (id: string, status: string, opts: { actor: string; json?: boolean }) => {
-    await runCommand(
-      opts.json,
-      () => setTaskStatus(findProjectRoot(), id, status as TaskStatus, opts.actor),
-      (updated) => process.stdout.write(`${updated.id} status: ${updated.status}\n`),
-    );
-  });
-
-task
-  .command("reopen")
-  .argument("<id>", "task id")
-  .requiredOption("--status <status>", "reopened status: todo or ready")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Reopen a done or wont_do task")
-  .action(async (id: string, opts: { status: string; actor: string; json?: boolean }) => {
-    if (opts.status !== "todo" && opts.status !== "ready") {
-      emitResult(
-        toResult(null, [
-          diag("schema_invalid", { message: "reopen status must be todo or ready" }),
-        ]),
-        opts.json,
-        () => {},
-      );
-      return;
-    }
-    await runCommand(
-      opts.json,
-      () => reopenTask(findProjectRoot(), id, opts.status as "todo" | "ready", opts.actor),
-      (updated) => process.stdout.write(`reopened ${updated.id} as ${updated.status}\n`),
-    );
-  });
-
-task
-  .command("claim")
-  .argument("<id>", "task id")
-  .requiredOption("--agent <agent>", "claiming agent")
-  .option("--branch <branch>", "git branch to record on the claim")
-  .option("--worktree <path>", "git worktree path to record on the claim")
-  .option("--json", "output JSON")
-  .description("Claim a task (creates an active claim, moves task to in_progress)")
-  .action(
-    async (
-      id: string,
-      opts: { agent: string; branch?: string; worktree?: string; json?: boolean },
-    ) => {
-      await runMutation(opts.json, async () => {
-        const claim = await claimTask(findProjectRoot(), id, opts.agent, new Date(), {
-          branch: opts.branch,
-          worktree: opts.worktree,
-          caller: process.cwd(),
-        });
-        return `claimed ${id} as ${claim.id}`;
-      });
-    },
-  );
-
-task
-  .command("release")
-  .argument("<id>", "task id")
-  .requiredOption("--agent <agent>", "releasing agent")
-  .option("--json", "output JSON")
-  .description("Release the active claim on a task (moves task back to ready)")
-  .action(async (id: string, opts: { agent: string; json?: boolean }) => {
-    await runMutation(opts.json, async () => {
-      await releaseTask(findProjectRoot(), id, opts.agent);
-      return `released ${id}`;
-    });
-  });
-
-task
-  .command("finish")
-  .argument("<id>", "task id")
-  .requiredOption("--agent <agent>", "finishing agent")
-  .option("--commit <sha...>", "commit hash(es) to attach to the task")
-  .option("--commit-head", "attach the current git HEAD commit")
-  .option("--json", "output JSON")
-  .description("Finish a task (marks it done and completes any active claim)")
-  .action(
-    async (
-      id: string,
-      opts: { agent: string; commit?: string[]; commitHead?: boolean; json?: boolean },
-    ) => {
-      await runMutation(opts.json, async () => {
-        await finishTask(findProjectRoot(), id, opts.agent, new Date(), {
-          commits: opts.commit ?? [],
-          commitHead: opts.commitHead,
-        });
-        return `finished ${id}`;
-      });
-    },
-  );
-
-const issue = program.command("issue").description("Issue commands");
-
-issue
-  .command("list")
-  .description("List issue records")
-  .option("--status <status>", "filter by status")
-  .option("--json", "output JSON")
-  .action(async (opts: { status?: string; json?: boolean }) => {
-    await runCommand(
-      opts.json,
-      async () => {
-        let issues = loadIssues();
-        if (opts.status) issues = issues.filter((item) => item.status === opts.status);
-        return issues.sort((a, b) => a.id.localeCompare(b.id));
-      },
-      (issues) => {
-        if (issues.length === 0) {
-          process.stdout.write("No issues.\n");
-          return;
-        }
-        for (const item of issues) {
-          process.stdout.write(`${item.id}  ${item.status.padEnd(11)}  ${item.title}\n`);
-        }
-      },
-    );
-  });
-
-issue
-  .command("show")
-  .argument("<id>", "issue id")
-  .description("Show a single issue and its preserved context")
-  .option("--json", "output JSON")
-  .action(async (id: string, opts: { json?: boolean }) => {
-    await runCommand(
-      opts.json,
-      async () => {
-        const found = loadIssues().find((item) => item.id === id);
-        if (!found) throw new MutationError(`no such issue: ${id}`, "not_found");
-        return found;
-      },
-      (found) => process.stdout.write(renderIssue(found)),
-    );
-  });
-
-issue
-  .command("create")
-  .requiredOption("--title <title>", "issue title")
-  .option("--id <id>", "explicit issue id")
-  .option("--status <status>", "initial status")
-  .option("--severity <severity>", "issue severity")
-  .option("--type <type>", "issue type")
-  .option("--priority <number>", "numeric priority")
-  .option("--task <id>", "linked task id")
-  .option("--scope <id>", "scope id")
-  .option("--description <text>", "issue description")
-  .option("--evidence <text>", "textual evidence")
-  .option("--expected <text>", "expected behavior")
-  .option("--actual <text>", "actual behavior")
-  .option("--acceptance <text...>", "acceptance criterion/criteria")
-  .option("--resolution <text>", "resolution text")
-  .option("--notes <text>", "issue notes")
-  .option("--source <json>", "source metadata as JSON")
-  .option("--json", "output JSON")
-  .description("Create an issue through the canonical core mutation path")
-  .action(
-    async (opts: {
-      id?: string;
-      title: string;
-      status?: string;
-      severity?: string;
-      type?: string;
-      priority?: string;
-      task?: string;
-      scope?: string;
-      description?: string;
-      evidence?: string;
-      expected?: string;
-      actual?: string;
-      acceptance?: string[];
-      resolution?: string;
-      notes?: string;
-      source?: string;
-      json?: boolean;
-    }) => {
-      await runCommand(
-        opts.json,
-        () => {
-          const input: CreateIssueInput = {
-            id: opts.id,
-            title: opts.title,
-            status: opts.status,
-            severity: opts.severity,
-            type: opts.type,
-            priority: parsePriority(opts.priority),
-            task: opts.task,
-            scope: opts.scope,
-            description: opts.description,
-            evidence: opts.evidence,
-            expected: opts.expected,
-            actual: opts.actual,
-            acceptance: opts.acceptance,
-            resolution: opts.resolution,
-            notes: opts.notes,
-            source: parseJsonValue(opts.source),
-          };
-          return createIssue(findProjectRoot(), input);
-        },
-        (created) => process.stdout.write(`created ${created.id} (${created.status})\n`),
-      );
-    },
-  );
-
-issue
-  .command("update")
-  .argument("<id>", "issue id")
-  .option("--title <title>", "issue title")
-  .option("--status <status>", "issue status")
-  .option("--severity <severity>", "issue severity")
-  .option("--type <type>", "issue type")
-  .option("--priority <number>", "numeric priority")
-  .option("--task <id>", "linked task id")
-  .option("--scope <id>", "scope id")
-  .option("--description <text>", "issue description")
-  .option("--evidence <text>", "textual evidence")
-  .option("--expected <text>", "expected behavior")
-  .option("--actual <text>", "actual behavior")
-  .option("--acceptance <text...>", "replace acceptance criteria")
-  .option("--clear-acceptance", "clear all acceptance criteria")
-  .option("--resolution <text>", "resolution text")
-  .option("--notes <text>", "issue notes")
-  .option("--source <json>", "source metadata as JSON")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Update mutable issue fields")
-  .action(
-    async (
-      id: string,
-      opts: {
-        title?: string;
-        status?: string;
-        severity?: string;
-        type?: string;
-        priority?: string;
-        task?: string;
-        scope?: string;
-        description?: string;
-        evidence?: string;
-        expected?: string;
-        actual?: string;
-        acceptance?: string[];
-        clearAcceptance?: boolean;
-        resolution?: string;
-        notes?: string;
-        source?: string;
-        actor: string;
-        json?: boolean;
-      },
-    ) => {
-      await runCommand(
-        opts.json,
-        () => {
-          const patch: UpdateIssueInput = {};
-          if (opts.title !== undefined) patch.title = opts.title;
-          if (opts.status !== undefined) patch.status = opts.status;
-          if (opts.severity !== undefined) patch.severity = opts.severity;
-          if (opts.type !== undefined) patch.type = opts.type;
-          if (opts.priority !== undefined) {
-            const priority = parsePriority(opts.priority);
-            if (priority !== undefined) patch.priority = priority;
-          }
-          if (opts.task !== undefined) patch.task = opts.task;
-          if (opts.scope !== undefined) patch.scope = opts.scope;
-          if (opts.description !== undefined) patch.description = opts.description;
-          if (opts.evidence !== undefined) patch.evidence = opts.evidence;
-          if (opts.expected !== undefined) patch.expected = opts.expected;
-          if (opts.actual !== undefined) patch.actual = opts.actual;
-          if (opts.acceptance !== undefined || opts.clearAcceptance)
-            patch.acceptance = opts.clearAcceptance ? [] : opts.acceptance;
-          if (opts.resolution !== undefined) patch.resolution = opts.resolution;
-          if (opts.notes !== undefined) patch.notes = opts.notes;
-          if (opts.source !== undefined) patch.source = parseJsonValue(opts.source);
-          requirePatch(patch, "issue");
-          return updateIssue(findProjectRoot(), id, patch, opts.actor);
-        },
-        (updated) => process.stdout.write(`updated ${updated.id}\n`),
-      );
-    },
-  );
-
-issue
-  .command("close")
-  .argument("<id>", "issue id")
-  .requiredOption("--resolution <text>", "resolution summary")
-  .option("--actor <actor>", "mutation actor", "cli")
-  .option("--json", "output JSON")
-  .description("Close an issue with a resolution")
-  .action(async (id: string, opts: { resolution: string; actor: string; json?: boolean }) => {
-    await runCommand(
-      opts.json,
-      () => closeIssue(findProjectRoot(), id, opts.resolution, opts.actor),
-      (closed) => process.stdout.write(`closed ${closed.id}: ${closed.resolution ?? ""}\n`),
-    );
-  });
-
-program
-  .command("brief")
-  .description(
-    "Generate a task-scoped context brief (auto-detects task from git claim if --task is omitted)",
-  )
-  .option("--task <id>", "task id (auto-detected from current git branch claim if omitted)")
-  .option("--budget <budget>", "small|medium|large|full (defaults to project config)")
-  .option("--json", "output JSON")
-  .action((opts: { task?: string; budget?: string; json?: boolean }) => {
-    const root = findProjectRoot();
-    const budget = parseBriefBudget(opts.budget ?? configuredBriefBudget(root));
-    if (!budget.ok || !budget.data) {
-      emitResult(budget as CommandResult<unknown>, opts.json, () => {});
-      return;
-    }
-
-    if (opts.task) {
-      try {
-        const result = buildBriefResult(root, opts.task, budget.data);
-        emitResult(result, opts.json, () => {
-          if (result.data) process.stdout.write(renderBrief(result.data));
-        });
-      } catch (e) {
-        const code =
-          e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
-        const res = toResult(null, [
-          diag(code as never, { message: (e as Error).message, details: { task: opts.task } }),
-        ]);
-        emitResult(res, opts.json, () => {});
-      }
-      return;
-    }
-
-    // auto-detect task from git claim
-    const resolved = resolveTaskFromGitClaim(root);
-    if (!resolved.ok || !resolved.data) {
-      emitResult(resolved as CommandResult<unknown>, opts.json, () => {});
-      return;
-    }
-
-    try {
-      const result = buildBriefResult(root, resolved.data, budget.data);
-      emitResult(result, opts.json, () => {
-        if (result.data) process.stdout.write(renderBrief(result.data));
-      });
-    } catch (e) {
-      const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
-      const res = toResult(null, [
-        diag(code as never, { message: (e as Error).message, details: { task: resolved.data } }),
-      ]);
-      emitResult(res, opts.json, () => {});
-    }
-  });
-
-program
-  .command("validate")
-  .description("Validate the ledger (schemas, references, cycles, claims, events)")
-  .option("--project", "also validate caller-project paths and generated report freshness")
-  .option("--views", "also freshness-check generated task views (implies --project)")
-  .option("--json", "output JSON")
-  .action((opts: { project?: boolean; views?: boolean; json?: boolean }) => {
-    const res = validateLedger(findProjectRoot(), {
-      project: opts.project || opts.views,
-      projectRoot: process.cwd(),
-      views: opts.views,
-    });
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
-    } else if (res.ok && res.warnings.length === 0) {
-      process.stdout.write("ok: no problems found.\n");
-    } else {
-      for (const d of res.errors) process.stdout.write(`ERROR [${d.code}] ${d.message}\n`);
-      for (const d of res.warnings) process.stdout.write(`WARNING [${d.code}] ${d.message}\n`);
-      process.stdout.write(`\n${res.errors.length} error(s), ${res.warnings.length} warning(s)\n`);
-    }
-    if (!res.ok) process.exit(1);
-  });
-
-program
-  .command("reindex")
-  .description("Rebuild the SQLite index from canonical records")
-  .option("--json", "output JSON")
-  .action(async (opts: { json?: boolean }) => {
-    const root = findProjectRoot();
-    const res = await withLedgerLock(root, () => reindex(root));
-    emitResult(res, opts.json, () => {
-      const c = res.data;
-      if (c) {
-        process.stdout.write(
-          `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims_total} claims (${c.claims_active} active), ${c.messages} messages\n`,
-        );
-      }
-    });
-  });
-
-program
-  .command("repair")
-  .description("Repair events.jsonl: split }{-concatenated lines, normalize trailing newlines")
-  .option("--json", "output JSON")
-  .action(async (opts: { json?: boolean }) => {
-    const res = await repairEventsJsonl(findProjectRoot());
-    emitResult(res, opts.json, () => {
-      const r = res.data;
-      if (!r) return;
-      if (!r.rewritten) {
-        process.stdout.write("events.jsonl is clean; nothing to repair.\n");
-        return;
-      }
-      const details = [`${r.finalLines} event line(s)`];
-      if (r.fixedLines > 0) details.unshift(`split ${r.fixedLines} line(s)`);
-      if (r.newlineFixed) details.push("added trailing newline");
-      process.stdout.write(`repaired events.jsonl: ${details.join(", ")}\n`);
-    });
-  });
-
-program
-  .command("report")
-  .description(
-    "Regenerate STATUS.md and context files (active-work.md, blocked.md) from the ledger",
-  )
-  .option("--views", "also regenerate views/tasks/*.md")
-  .option("--json", "output JSON")
-  .action(async (opts: { views?: boolean; json?: boolean }) => {
-    const root = findProjectRoot();
-    // Under the lock like syncLedger: writeText temps in reports/, context/,
-    // and views/ are swept by locked writers, so an unlocked report could
-    // have its live temps deleted mid-write (audit finding #14 follow-up).
-    const written = await withLedgerLock(root, () => {
-      const files = generateReports(root);
-      if (opts.views) files.push(`views/tasks/ (${generateTaskViews(root)} files)`);
-      return files;
-    });
-    emitResult(okResult({ written }), opts.json, () => {
-      for (const f of written) process.stdout.write(`generated ${f}\n`);
-    });
-  });
-
-program
-  .command("sync")
-  .description("Validate, reindex, regenerate reports, and verify project freshness")
-  .option("--views", "also regenerate and validate views/tasks/*.md")
-  .option("--json", "output JSON")
-  .action(async (opts: { views?: boolean; json?: boolean }) => {
-    const res = await syncLedger(findProjectRoot(), {
-      projectRoot: process.cwd(),
-      views: opts.views,
-    });
-    emitResult(res, opts.json, () => {
-      const data = res.data;
-      if (!data) return;
-      process.stdout.write(
-        `synced ${data.index.tasks} tasks, ${data.index.issues} issues, ${data.index.claims_total} claims (${data.index.claims_active} active), ${data.index.messages} messages\n`,
-      );
-      for (const file of data.written) process.stdout.write(`generated ${file}\n`);
-    });
-  });
-
-const handoff = program.command("handoff").description("Agent handoffs (baton pass)");
-
-handoff
-  .command("create")
-  .description("Create a handoff for a task")
-  .requiredOption("--task <id>", "task id")
-  .requiredOption("--from <agent>", "handing-off agent")
-  .option("--to <agent>", "receiving agent (omit for next available)")
-  .option("--summary <text>", "summary of current state")
-  .option("--json", "output JSON")
-  .action(
-    async (opts: { task: string; from: string; to?: string; summary?: string; json?: boolean }) => {
-      await runMutation(opts.json, async () => {
-        const h = await createHandoff(findProjectRoot(), {
-          task: opts.task,
-          from: opts.from,
-          to: opts.to ?? null,
-          summary: opts.summary,
-        });
-        return `created ${h.id}`;
-      });
-    },
-  );
-
-handoff
-  .command("show")
-  .argument("<id>", "handoff id")
-  .option("--json", "output JSON")
-  .action((id: string, opts: { json?: boolean }) => {
-    const h = getHandoff(findProjectRoot(), id) ?? null;
-    const res = h
-      ? okResult(h)
-      : toResult(null, [diag("not_found", { message: `no such handoff: ${id}`, details: { id } })]);
-    emitResult(res, opts.json, () => {
-      if (!h) return;
-      process.stdout.write(`${h.id}\n`);
-      process.stdout.write(`  task:    ${h.task}\n`);
-      process.stdout.write(`  from:    ${h.from_agent}${h.to_agent ? ` -> ${h.to_agent}` : ""}\n`);
-      if (h.summary) process.stdout.write(`\n${h.summary.trimEnd()}\n`);
-      if (h.next_steps.length) {
-        process.stdout.write(`\nnext steps:\n${h.next_steps.map((s) => `  - ${s}`).join("\n")}\n`);
-      }
-    });
-  });
-
-const prompt = program.command("prompt").description("Prompt records");
-
-prompt
-  .command("list")
-  .description("List prompt records")
-  .option("--json", "output JSON")
-  .action((opts: { json?: boolean }) => {
-    const prompts = loadPrompts(findProjectRoot());
-    emitResult(okResult(prompts), opts.json, () => {
-      if (prompts.length === 0) {
-        process.stdout.write("No prompts.\n");
-        return;
-      }
-      for (const p of prompts) process.stdout.write(`${p.id}  [${p.status}]  ${p.title}\n`);
-    });
-  });
-
-prompt
-  .command("show")
-  .argument("<id>", "prompt id")
-  .option("--json", "output JSON")
-  .action((id: string, opts: { json?: boolean }) => {
-    const p = getPrompt(findProjectRoot(), id) ?? null;
-    const res = p
-      ? okResult(p)
-      : toResult(null, [diag("not_found", { message: `no such prompt: ${id}`, details: { id } })]);
-    emitResult(res, opts.json, () => {
-      if (p) process.stdout.write(renderPrompt(p, {}));
-    });
-  });
-
-prompt
-  .command("render")
-  .description("Render applicable prompts for a task/agent (spec §11)")
-  .requiredOption("--task <id>", "task id")
-  .requiredOption("--agent <agent>", "agent name")
-  .option("--role <role>", "agent role")
-  .option("--json", "output JSON")
-  .action((opts: { task: string; agent: string; role?: string; json?: boolean }) => {
-    const root = findProjectRoot();
-    const task = loadTasks(root).find((t) => t.id === opts.task);
-    if (!task) {
-      emitResult(
-        toResult(null, [
-          diag("no_such_task", {
-            message: `no such task: ${opts.task}`,
-            details: { id: opts.task },
-          }),
-        ]),
-        opts.json,
-        () => {},
-      );
-      return;
-    }
-    const ctx = {
-      agent: opts.agent,
-      role: opts.role,
-      task: task.id,
-      scope: task.scope ?? undefined,
-    };
-    const vars = { task_id: task.id, agent: opts.agent, scope: task.scope ?? undefined };
-    const selected = selectPrompts(root, ctx);
-    const rendered = selected.length
-      ? selected.map((p) => renderPrompt(p, vars)).join("\n---\n\n")
-      : "No applicable prompts.\n";
-    emitResult(okResult({ prompts: selected.map((p) => p.id), rendered }), opts.json, () =>
-      process.stdout.write(rendered.endsWith("\n") ? rendered : `${rendered}\n`),
-    );
-  });
-
-const message = program.command("message").description("Agent messages (async inbox)");
-
-message
-  .command("post")
-  .description("Post a message to a thread (a task/issue id or 'project')")
-  .requiredOption("--thread <id>", "task/issue id, or 'project' for the folder-wide channel")
-  .requiredOption("--from <agent>", "author")
-  .option("--to <agent>", "recipient; omit to broadcast to the thread")
-  .option("--kind <kind>", "update|question|verdict|note", "update")
-  .requiredOption("--body <text>", "message body")
-  .option("--in-reply-to <id>", "message id this replies to")
-  .option("--json", "output JSON")
-  .action(
-    async (opts: {
-      thread: string;
-      from: string;
-      to?: string;
-      kind: string;
-      body: string;
-      inReplyTo?: string;
-      json?: boolean;
-    }) => {
-      await runMutation(opts.json, async () => {
-        const m = await postMessage(findProjectRoot(), {
-          thread: opts.thread,
-          from: opts.from,
-          to: opts.to ?? null,
-          kind: opts.kind as never,
-          body: opts.body,
-          inReplyTo: opts.inReplyTo ?? null,
-        });
-        return `posted ${m.id}`;
-      });
-    },
-  );
-
-message
-  .command("list")
-  .description("List messages on a thread, oldest first")
-  .requiredOption("--thread <id>", "thread id")
-  .option("--json", "output JSON")
-  .action((opts: { thread: string; json?: boolean }) => {
-    const msgs = threadMessages(findProjectRoot(), opts.thread);
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(msgs, null, 2)}\n`);
-      return;
-    }
-    if (msgs.length === 0) {
-      process.stdout.write("No messages.\n");
-      return;
-    }
-    for (const m of msgs) process.stdout.write(renderMessage(m));
-  });
-
-program
-  .command("inbox")
-  .description("Show messages addressed to an agent (direct, project channel, or claimed threads)")
-  .requiredOption("--agent <agent>", "agent whose inbox to read")
-  .option("--since <cursor>", "ISO timestamp; only messages after it")
-  .option("--json", "output JSON")
-  .action((opts: { agent: string; since?: string; json?: boolean }) => {
-    const msgs = inbox(findProjectRoot(), opts.agent, opts.since);
-    if (opts.json) {
-      process.stdout.write(`${JSON.stringify(msgs, null, 2)}\n`);
-      return;
-    }
-    if (msgs.length === 0) {
-      process.stdout.write("Inbox empty.\n");
-      return;
-    }
-    for (const m of msgs) process.stdout.write(renderMessage(m));
-  });
-
-const git = program.command("git").description("Git/worktree commands");
-
-git
-  .command("status")
-  .description("Show current git branch, worktree, and status summary")
-  .option("--json", "output JSON")
-  .action((opts: { json?: boolean }) => {
-    const res = getGitState(findProjectRoot());
-    emitResult(res, opts.json, () => {
-      const state = res.data;
-      if (!state) return;
-      process.stdout.write(renderGitState(state));
-    });
-  });
+// ─── Render helpers ──────────────────────────────────────────────────────────
 
 function renderMessage(m: {
   from_agent: string;
@@ -1057,208 +182,848 @@ function renderIssue(issue: IssueRecord): string {
   return `${lines.join("\n")}\n`;
 }
 
-function parsePriority(value: string | undefined): number | undefined {
-  if (value === undefined) return undefined;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new MutationError("priority must be a non-negative integer", "schema_invalid");
+// ─── Command dispatch ────────────────────────────────────────────────────────
+
+function arg(ctx: CommandContext, index: number): string {
+  const val = ctx.args[index];
+  if (val === undefined) {
+    throw new MutationError(`missing argument at position ${index}`, "schema_invalid");
   }
-  return parsed;
+  return val;
 }
 
-function parseJsonValue(value: string | undefined): unknown {
-  if (value === undefined) return undefined;
-  try {
-    return JSON.parse(value);
-  } catch {
-    throw new MutationError("source must be valid JSON", "invalid_json");
-  }
-}
+async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<void> {
+  const [command, subcommand] = commandPath;
 
-function requirePatch(patch: object, kind: "task" | "issue"): void {
-  if (Object.keys(patch).length === 0) {
-    throw new MutationError(`no ${kind} fields were provided to update`, "schema_invalid");
+  // Global --version
+  if (!command && ctx.raw.includes("--version")) {
+    process.stdout.write(`${generateVersion()}\n`);
+    return;
   }
-}
 
-function diagnosticFor(error: unknown) {
-  if (error instanceof MutationError) {
-    return diag(error.code as never, { message: error.message });
+  // Global --help
+  if (!command || command === "--help" || command === "-h") {
+    process.stdout.write(generateHelp(null, null));
+    return;
   }
-  if (error instanceof RecordError || error instanceof LedgerResolutionError) {
-    return diag(error.code as never);
-  }
-  if (error instanceof LockError) {
-    return diag(error.code as never);
-  }
-  if (error instanceof ZodError) {
-    const message = error.issues[0]?.message ?? "Invalid command input.";
-    return diag("schema_invalid", { message: `Invalid command input: ${message}` });
-  }
-  return diag("unexpected_error");
-}
 
-/** Emit a CommandResult: JSON envelope with --json, else human text + any
- * warnings/errors on stderr. Exits non-zero when the result is not ok. */
-function emitResult<T>(
-  res: CommandResult<T>,
-  json: boolean | undefined,
-  renderText: () => void,
-): void {
-  if (json) {
-    process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
-  } else {
-    renderText();
-    for (const w of res.warnings) process.stderr.write(`warning [${w.code}] ${w.message}\n`);
-    for (const e of res.errors) process.stderr.write(`error [${e.code}] ${e.message}\n`);
+  // init
+  if (command === "init") {
+    const res = await initLedger(process.cwd(), {
+      project: ctx.opts.project as string | undefined,
+      force: ctx.opts.force as boolean | undefined,
+    });
+    emitResult(res, ctx.json, () => {
+      const r = res.data;
+      if (r?.created) process.stdout.write(`initialized ${r.root} (project: ${r.project})\n`);
+      else process.stdout.write("already initialized (use --force to reinitialize)\n");
+    });
+    return;
   }
-  if (!res.ok) process.exit(1);
-}
 
-async function runCommand<T>(
-  json: boolean | undefined,
-  fn: () => Promise<T>,
-  renderText: (data: T) => void,
-): Promise<void> {
-  try {
-    const data = await fn();
-    emitResult(okResult(data), json, () => renderText(data));
-  } catch (error) {
-    emitResult(toResult(null, [diagnosticFor(error)]), json, () => {});
+  // task commands
+  if (command === "task") {
+    if (!subcommand) {
+      process.stdout.write(
+        generateHelp(
+          commandPath.length === 1
+            ? null
+            : {
+                name: "task",
+                description: "Task commands",
+                options: [],
+                arguments: [],
+                subcommands: [],
+              },
+          null,
+        ),
+      );
+      return;
+    }
+    if (subcommand === "next") {
+      const tasks = loadTasks();
+      const line = (t: { id: string; title: string; priority: number } | null) =>
+        process.stdout.write(t ? `${t.id}  [p${t.priority}]  ${t.title}\n` : "No ready tasks.\n");
+      if (ctx.opts.fromIndex) {
+        const root = findProjectRoot();
+        const db = await withLedgerLock(root, () => buildTaskIndex(ledgerPaths(root).index, tasks));
+        const ready = readyFromIndex(db);
+        const warnings = backendWarnings(db.backend);
+        db.close();
+        const chosen = ready[0] ?? null;
+        emitResult(okResult(chosen, warnings), ctx.json, () => line(chosen));
+        return;
+      }
+      const chosen = nextTask(tasks);
+      emitResult(okResult(chosen), ctx.json, () => line(chosen));
+      return;
+    }
+    if (subcommand === "ready") {
+      const ready = readyTasks(loadTasks());
+      emitResult(okResult(ready), ctx.json, () => {
+        if (ready.length === 0) {
+          process.stdout.write("No ready tasks.\n");
+          return;
+        }
+        for (const t of ready) process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
+      });
+      return;
+    }
+    if (subcommand === "list") {
+      let tasks = loadTasks();
+      if (ctx.opts.status) tasks = tasks.filter((t) => t.status === ctx.opts.status);
+      tasks.sort((a, b) => a.priority - b.priority || a.id.localeCompare(b.id));
+      emitResult(okResult(tasks), ctx.json, () => {
+        if (tasks.length === 0) {
+          process.stdout.write("No tasks.\n");
+          return;
+        }
+        for (const t of tasks)
+          process.stdout.write(`${t.id}  [p${t.priority}]  ${t.status.padEnd(11)}  ${t.title}\n`);
+      });
+      return;
+    }
+    if (subcommand === "audit") {
+      const tasks = auditPromotableTasks(loadTasks());
+      emitResult(okResult(tasks), ctx.json, () => {
+        if (tasks.length === 0) {
+          process.stdout.write("No dependency-satisfied todo tasks.\n");
+          return;
+        }
+        process.stdout.write(
+          "dependency-satisfied todo tasks (promote to ready intentionally, never automatically):\n",
+        );
+        for (const t of tasks) process.stdout.write(`${t.id}  [p${t.priority}]  ${t.title}\n`);
+      });
+      return;
+    }
+    if (subcommand === "show") {
+      const id = arg(ctx, 0);
+      const found = loadTaskById(id);
+      const res = found
+        ? okResult(found)
+        : toResult(null, [
+            diag("no_such_task", { message: `no such task: ${id}`, details: { id } }),
+          ]);
+      emitResult(res, ctx.json, () => {
+        if (!found) return;
+        process.stdout.write(`${found.id}\n`);
+        process.stdout.write(`  title:        ${found.title}\n`);
+        process.stdout.write(`  status:       ${found.status}\n`);
+        process.stdout.write(`  priority:     ${found.priority}\n`);
+        if (found.scope) process.stdout.write(`  scope:        ${found.scope}\n`);
+        if (found.dependencies.length)
+          process.stdout.write(`  dependencies: ${found.dependencies.join(", ")}\n`);
+        if (found.commits.length)
+          process.stdout.write(`  commits:      ${found.commits.join(", ")}\n`);
+        if (found.description) process.stdout.write(`\n${found.description.trimEnd()}\n`);
+      });
+      return;
+    }
+    if (subcommand === "create") {
+      const id = arg(ctx, 0);
+      await runCommand(
+        ctx.json,
+        () =>
+          createTask(
+            findProjectRoot(),
+            {
+              id,
+              title: ctx.opts.title as string,
+              status: ctx.opts.status as TaskStatus,
+              priority: parsePriority(ctx.opts.priority as string) ?? 3,
+              scope: (ctx.opts.scope as string) ?? null,
+              path_hints: (ctx.opts.pathHint as string[]) ?? [],
+              prompts: (ctx.opts.prompt as string[]) ?? [],
+              dependencies: (ctx.opts.dependsOn as string[]) ?? [],
+              description: ctx.opts.description as string | undefined,
+              acceptance: (ctx.opts.acceptance as string[]) ?? [],
+              notes: ctx.opts.notes as string | undefined,
+            },
+            ctx.opts.actor as string,
+          ),
+        (created) => process.stdout.write(`created ${created.id} (${created.status})\n`),
+      );
+      return;
+    }
+    if (subcommand === "update") {
+      const id = arg(ctx, 0);
+      await runCommand(
+        ctx.json,
+        () => {
+          const patch: TaskPatch = {};
+          if (ctx.opts.title !== undefined) patch.title = ctx.opts.title as string;
+          if (ctx.opts.priority !== undefined) {
+            const p = parsePriority(ctx.opts.priority as string);
+            if (p !== undefined) patch.priority = p;
+          }
+          if (ctx.opts.scope !== undefined) patch.scope = ctx.opts.scope as string;
+          if (ctx.opts.pathHint !== undefined || ctx.opts.clearPathHints)
+            patch.path_hints = ctx.opts.clearPathHints ? [] : (ctx.opts.pathHint as string[]);
+          if (ctx.opts.prompt !== undefined || ctx.opts.clearPrompts)
+            patch.prompts = ctx.opts.clearPrompts ? [] : (ctx.opts.prompt as string[]);
+          if (ctx.opts.dependsOn !== undefined || ctx.opts.clearDependencies)
+            patch.dependencies = ctx.opts.clearDependencies ? [] : (ctx.opts.dependsOn as string[]);
+          if (ctx.opts.description !== undefined)
+            patch.description = ctx.opts.description as string;
+          if (ctx.opts.acceptance !== undefined || ctx.opts.clearAcceptance)
+            patch.acceptance = ctx.opts.clearAcceptance ? [] : (ctx.opts.acceptance as string[]);
+          if (ctx.opts.notes !== undefined) patch.notes = ctx.opts.notes as string;
+          requirePatch(patch, "task");
+          return updateTask(findProjectRoot(), id, patch, ctx.opts.actor as string);
+        },
+        (updated) => process.stdout.write(`updated ${updated.id}\n`),
+      );
+      return;
+    }
+    if (subcommand === "set-status") {
+      const id = arg(ctx, 0);
+      const status = arg(ctx, 1);
+      await runCommand(
+        ctx.json,
+        () => setTaskStatus(findProjectRoot(), id, status as TaskStatus, ctx.opts.actor as string),
+        (updated) => process.stdout.write(`${updated.id} status: ${updated.status}\n`),
+      );
+      return;
+    }
+    if (subcommand === "reopen") {
+      const id = arg(ctx, 0);
+      const status = ctx.opts.status as string;
+      if (status !== "todo" && status !== "ready") {
+        emitResult(
+          toResult(null, [
+            diag("schema_invalid", { message: "reopen status must be todo or ready" }),
+          ]),
+          ctx.json,
+          () => {},
+        );
+        return;
+      }
+      await runCommand(
+        ctx.json,
+        () =>
+          reopenTask(findProjectRoot(), id, status as "todo" | "ready", ctx.opts.actor as string),
+        (updated) => process.stdout.write(`reopened ${updated.id} as ${updated.status}\n`),
+      );
+      return;
+    }
+    if (subcommand === "claim") {
+      const id = arg(ctx, 0);
+      await runMutation(ctx.json, async () => {
+        const claim = await claimTask(findProjectRoot(), id, ctx.opts.agent as string, new Date(), {
+          branch: ctx.opts.branch as string | undefined,
+          worktree: ctx.opts.worktree as string | undefined,
+          caller: process.cwd(),
+        });
+        return `claimed ${id} as ${claim.id}`;
+      });
+      return;
+    }
+    if (subcommand === "release") {
+      const id = arg(ctx, 0);
+      await runMutation(ctx.json, async () => {
+        await releaseTask(findProjectRoot(), id, ctx.opts.agent as string);
+        return `released ${id}`;
+      });
+      return;
+    }
+    if (subcommand === "finish") {
+      const id = arg(ctx, 0);
+      await runMutation(ctx.json, async () => {
+        await finishTask(findProjectRoot(), id, ctx.opts.agent as string, new Date(), {
+          commits: (ctx.opts.commit as string[]) ?? [],
+          commitHead: ctx.opts.commitHead as boolean | undefined,
+        });
+        return `finished ${id}`;
+      });
+      return;
+    }
   }
-}
 
-/** Run a mutation, emitting a CommandResult. MutationError/RecordError map to
- * their code; anything else to unexpected_error. */
-async function runMutation(json: boolean | undefined, fn: () => Promise<string>): Promise<void> {
-  await runCommand(
-    json,
-    async () => ({ message: await fn() }),
-    ({ message }) => process.stdout.write(`${message}\n`),
-  );
-}
+  // issue commands
+  if (command === "issue") {
+    if (!subcommand) {
+      process.stdout.write(generateHelp(null, null));
+      return;
+    }
+    if (subcommand === "list") {
+      await runCommand(
+        ctx.json,
+        async () => {
+          let issues = loadIssues();
+          if (ctx.opts.status) issues = issues.filter((i) => i.status === ctx.opts.status);
+          return issues.sort((a, b) => a.id.localeCompare(b.id));
+        },
+        (issues) => {
+          if (issues.length === 0) {
+            process.stdout.write("No issues.\n");
+            return;
+          }
+          for (const item of issues)
+            process.stdout.write(`${item.id}  ${item.status.padEnd(11)}  ${item.title}\n`);
+        },
+      );
+      return;
+    }
+    if (subcommand === "show") {
+      const id = arg(ctx, 0);
+      await runCommand(
+        ctx.json,
+        async () => {
+          const found = loadIssues().find((i) => i.id === id);
+          if (!found) throw new MutationError(`no such issue: ${id}`, "not_found");
+          return found;
+        },
+        (found) => process.stdout.write(renderIssue(found)),
+      );
+      return;
+    }
+    if (subcommand === "create") {
+      await runCommand(
+        ctx.json,
+        () => {
+          const input: CreateIssueInput = {
+            id: ctx.opts.id as string | undefined,
+            title: ctx.opts.title as string,
+            status: ctx.opts.status as string | undefined,
+            severity: ctx.opts.severity as string | undefined,
+            type: ctx.opts.type as string | undefined,
+            priority: parsePriority(ctx.opts.priority as string),
+            task: ctx.opts.task as string | undefined,
+            scope: ctx.opts.scope as string | undefined,
+            description: ctx.opts.description as string | undefined,
+            evidence: ctx.opts.evidence as string | undefined,
+            expected: ctx.opts.expected as string | undefined,
+            actual: ctx.opts.actual as string | undefined,
+            acceptance: (ctx.opts.acceptance as string[]) ?? undefined,
+            resolution: ctx.opts.resolution as string | undefined,
+            notes: ctx.opts.notes as string | undefined,
+            source: parseJsonValue(ctx.opts.source as string),
+          };
+          return createIssue(findProjectRoot(), input);
+        },
+        (created) => process.stdout.write(`created ${created.id} (${created.status})\n`),
+      );
+      return;
+    }
+    if (subcommand === "update") {
+      const id = arg(ctx, 0);
+      await runCommand(
+        ctx.json,
+        () => {
+          const patch: UpdateIssueInput = {};
+          if (ctx.opts.title !== undefined) patch.title = ctx.opts.title as string;
+          if (ctx.opts.status !== undefined) patch.status = ctx.opts.status as string;
+          if (ctx.opts.severity !== undefined) patch.severity = ctx.opts.severity as string;
+          if (ctx.opts.type !== undefined) patch.type = ctx.opts.type as string;
+          if (ctx.opts.priority !== undefined) {
+            const p = parsePriority(ctx.opts.priority as string);
+            if (p !== undefined) patch.priority = p;
+          }
+          if (ctx.opts.task !== undefined) patch.task = ctx.opts.task as string;
+          if (ctx.opts.scope !== undefined) patch.scope = ctx.opts.scope as string;
+          if (ctx.opts.description !== undefined)
+            patch.description = ctx.opts.description as string;
+          if (ctx.opts.evidence !== undefined) patch.evidence = ctx.opts.evidence as string;
+          if (ctx.opts.expected !== undefined) patch.expected = ctx.opts.expected as string;
+          if (ctx.opts.actual !== undefined) patch.actual = ctx.opts.actual as string;
+          if (ctx.opts.acceptance !== undefined || ctx.opts.clearAcceptance)
+            patch.acceptance = ctx.opts.clearAcceptance ? [] : (ctx.opts.acceptance as string[]);
+          if (ctx.opts.resolution !== undefined) patch.resolution = ctx.opts.resolution as string;
+          if (ctx.opts.notes !== undefined) patch.notes = ctx.opts.notes as string;
+          if (ctx.opts.source !== undefined)
+            patch.source = parseJsonValue(ctx.opts.source as string);
+          requirePatch(patch, "issue");
+          return updateIssue(findProjectRoot(), id, patch, ctx.opts.actor as string);
+        },
+        (updated) => process.stdout.write(`updated ${updated.id}\n`),
+      );
+      return;
+    }
+    if (subcommand === "close") {
+      const id = arg(ctx, 0);
+      await runCommand(
+        ctx.json,
+        () =>
+          closeIssue(
+            findProjectRoot(),
+            id,
+            ctx.opts.resolution as string,
+            ctx.opts.actor as string,
+          ),
+        (closed) => process.stdout.write(`closed ${closed.id}: ${closed.resolution ?? ""}\n`),
+      );
+      return;
+    }
+  }
 
-program
-  .command("mcp")
-  .description("Start an MCP stdio server for coding agent integration")
-  .action(async () => {
+  // brief
+  if (command === "brief") {
+    const root = findProjectRoot();
+    const budget = parseBriefBudget((ctx.opts.budget as string) ?? configuredBriefBudget(root));
+    if (!budget.ok || !budget.data) {
+      emitResult(budget as CommandResult<unknown>, ctx.json, () => {});
+      return;
+    }
+    if (ctx.opts.task) {
+      try {
+        const result = buildBriefResult(root, ctx.opts.task as string, budget.data);
+        emitResult(result, ctx.json, () => {
+          if (result.data) process.stdout.write(renderBrief(result.data));
+        });
+      } catch (e) {
+        const code =
+          e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
+        emitResult(
+          toResult(null, [
+            diag(code as never, {
+              message: (e as Error).message,
+              details: { task: ctx.opts.task },
+            }),
+          ]),
+          ctx.json,
+          () => {},
+        );
+      }
+      return;
+    }
+    const resolved = resolveTaskFromGitClaim(root);
+    if (!resolved.ok || !resolved.data) {
+      emitResult(resolved as CommandResult<unknown>, ctx.json, () => {});
+      return;
+    }
+    try {
+      const result = buildBriefResult(root, resolved.data, budget.data);
+      emitResult(result, ctx.json, () => {
+        if (result.data) process.stdout.write(renderBrief(result.data));
+      });
+    } catch (e) {
+      const code = e instanceof RecordError || e instanceof MutationError ? e.code : "no_such_task";
+      emitResult(
+        toResult(null, [
+          diag(code as never, { message: (e as Error).message, details: { task: resolved.data } }),
+        ]),
+        ctx.json,
+        () => {},
+      );
+    }
+    return;
+  }
+
+  // validate
+  if (command === "validate") {
+    const res = validateLedger(findProjectRoot(), {
+      project: (ctx.opts.project as boolean) || (ctx.opts.views as boolean),
+      projectRoot: process.cwd(),
+      views: ctx.opts.views as boolean,
+    });
+    if (ctx.json) {
+      process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+    } else if (res.ok && res.warnings.length === 0) {
+      process.stdout.write("ok: no problems found.\n");
+    } else {
+      for (const d of res.errors) process.stdout.write(`ERROR [${d.code}] ${d.message}\n`);
+      for (const d of res.warnings) process.stdout.write(`WARNING [${d.code}] ${d.message}\n`);
+      process.stdout.write(`\n${res.errors.length} error(s), ${res.warnings.length} warning(s)\n`);
+    }
+    if (!res.ok) process.exit(1);
+    return;
+  }
+
+  // reindex
+  if (command === "reindex") {
+    const root = findProjectRoot();
+    const res = await withLedgerLock(root, () => reindex(root));
+    emitResult(res, ctx.json, () => {
+      const c = res.data;
+      if (c)
+        process.stdout.write(
+          `reindexed ${c.tasks} tasks, ${c.issues} issues, ${c.claims_total} claims (${c.claims_active} active), ${c.messages} messages\n`,
+        );
+    });
+    return;
+  }
+
+  // repair
+  if (command === "repair") {
+    const res = await repairEventsJsonl(findProjectRoot());
+    emitResult(res, ctx.json, () => {
+      const r = res.data;
+      if (!r) return;
+      if (!r.rewritten) {
+        process.stdout.write("events.jsonl is clean; nothing to repair.\n");
+        return;
+      }
+      const details = [`${r.finalLines} event line(s)`];
+      if (r.fixedLines > 0) details.unshift(`split ${r.fixedLines} line(s)`);
+      if (r.newlineFixed) details.push("added trailing newline");
+      process.stdout.write(`repaired events.jsonl: ${details.join(", ")}\n`);
+    });
+    return;
+  }
+
+  // report
+  if (command === "report") {
+    const root = findProjectRoot();
+    const written = await withLedgerLock(root, () => {
+      const files = generateReports(root);
+      if (ctx.opts.views) files.push(`views/tasks/ (${generateTaskViews(root)} files)`);
+      return files;
+    });
+    emitResult(okResult({ written }), ctx.json, () => {
+      for (const f of written) process.stdout.write(`generated ${f}\n`);
+    });
+    return;
+  }
+
+  // sync
+  if (command === "sync") {
+    const res = await syncLedger(findProjectRoot(), {
+      projectRoot: process.cwd(),
+      views: ctx.opts.views as boolean,
+    });
+    emitResult(res, ctx.json, () => {
+      const data = res.data;
+      if (!data) return;
+      process.stdout.write(
+        `synced ${data.index.tasks} tasks, ${data.index.issues} issues, ${data.index.claims_total} claims (${data.index.claims_active} active), ${data.index.messages} messages\n`,
+      );
+      for (const file of data.written) process.stdout.write(`generated ${file}\n`);
+    });
+    return;
+  }
+
+  // handoff
+  if (command === "handoff") {
+    if (!subcommand) {
+      process.stdout.write(generateHelp(null, null));
+      return;
+    }
+    if (subcommand === "create") {
+      await runMutation(ctx.json, async () => {
+        const h = await createHandoff(findProjectRoot(), {
+          task: ctx.opts.task as string,
+          from: ctx.opts.from as string,
+          to: (ctx.opts.to as string) ?? null,
+          summary: ctx.opts.summary as string | undefined,
+        });
+        return `created ${h.id}`;
+      });
+      return;
+    }
+    if (subcommand === "show") {
+      const id = arg(ctx, 0);
+      const h = getHandoff(findProjectRoot(), id) ?? null;
+      const res = h
+        ? okResult(h)
+        : toResult(null, [
+            diag("not_found", { message: `no such handoff: ${id}`, details: { id } }),
+          ]);
+      emitResult(res, ctx.json, () => {
+        if (!h) return;
+        process.stdout.write(`${h.id}\n`);
+        process.stdout.write(`  task:    ${h.task}\n`);
+        process.stdout.write(
+          `  from:    ${h.from_agent}${h.to_agent ? ` -> ${h.to_agent}` : ""}\n`,
+        );
+        if (h.summary) process.stdout.write(`\n${h.summary.trimEnd()}\n`);
+        if (h.next_steps.length)
+          process.stdout.write(
+            `\nnext steps:\n${h.next_steps.map((s) => `  - ${s}`).join("\n")}\n`,
+          );
+      });
+      return;
+    }
+  }
+
+  // prompt
+  if (command === "prompt") {
+    if (!subcommand) {
+      process.stdout.write(generateHelp(null, null));
+      return;
+    }
+    if (subcommand === "list") {
+      const prompts = loadPrompts(findProjectRoot());
+      emitResult(okResult(prompts), ctx.json, () => {
+        if (prompts.length === 0) {
+          process.stdout.write("No prompts.\n");
+          return;
+        }
+        for (const p of prompts) process.stdout.write(`${p.id}  [${p.status}]  ${p.title}\n`);
+      });
+      return;
+    }
+    if (subcommand === "show") {
+      const id = arg(ctx, 0);
+      const p = getPrompt(findProjectRoot(), id) ?? null;
+      const res = p
+        ? okResult(p)
+        : toResult(null, [
+            diag("not_found", { message: `no such prompt: ${id}`, details: { id } }),
+          ]);
+      emitResult(res, ctx.json, () => {
+        if (p) process.stdout.write(renderPrompt(p, {}));
+      });
+      return;
+    }
+    if (subcommand === "render") {
+      const root = findProjectRoot();
+      const task = loadTasks(root).find((t) => t.id === ctx.opts.task);
+      if (!task) {
+        emitResult(
+          toResult(null, [
+            diag("no_such_task", {
+              message: `no such task: ${ctx.opts.task}`,
+              details: { id: ctx.opts.task },
+            }),
+          ]),
+          ctx.json,
+          () => {},
+        );
+        return;
+      }
+      const c = {
+        agent: ctx.opts.agent as string,
+        role: ctx.opts.role as string | undefined,
+        task: task.id,
+        scope: task.scope ?? undefined,
+      };
+      const vars = {
+        task_id: task.id,
+        agent: ctx.opts.agent as string,
+        scope: task.scope ?? undefined,
+      };
+      const selected = selectPrompts(root, c);
+      const rendered = selected.length
+        ? selected.map((p) => renderPrompt(p, vars)).join("\n---\n\n")
+        : "No applicable prompts.\n";
+      emitResult(okResult({ prompts: selected.map((p) => p.id), rendered }), ctx.json, () =>
+        process.stdout.write(rendered.endsWith("\n") ? rendered : `${rendered}\n`),
+      );
+      return;
+    }
+  }
+
+  // message
+  if (command === "message") {
+    if (!subcommand) {
+      process.stdout.write(generateHelp(null, null));
+      return;
+    }
+    if (subcommand === "post") {
+      await runMutation(ctx.json, async () => {
+        const m = await postMessage(findProjectRoot(), {
+          thread: ctx.opts.thread as string,
+          from: ctx.opts.from as string,
+          to: (ctx.opts.to as string) ?? null,
+          kind: ctx.opts.kind as never,
+          body: ctx.opts.body as string,
+          inReplyTo: (ctx.opts.inReplyTo as string) ?? null,
+        });
+        return `posted ${m.id}`;
+      });
+      return;
+    }
+    if (subcommand === "list") {
+      const msgs = threadMessages(findProjectRoot(), ctx.opts.thread as string);
+      if (ctx.json) {
+        process.stdout.write(`${JSON.stringify(msgs, null, 2)}\n`);
+        return;
+      }
+      if (msgs.length === 0) {
+        process.stdout.write("No messages.\n");
+        return;
+      }
+      for (const m of msgs) process.stdout.write(renderMessage(m));
+      return;
+    }
+  }
+
+  // inbox
+  if (command === "inbox") {
+    const msgs = inbox(
+      findProjectRoot(),
+      ctx.opts.agent as string,
+      ctx.opts.since as string | undefined,
+    );
+    if (ctx.json) {
+      process.stdout.write(`${JSON.stringify(msgs, null, 2)}\n`);
+      return;
+    }
+    if (msgs.length === 0) {
+      process.stdout.write("Inbox empty.\n");
+      return;
+    }
+    for (const m of msgs) process.stdout.write(renderMessage(m));
+    return;
+  }
+
+  // git
+  if (command === "git") {
+    if (subcommand === "status") {
+      const res = getGitState(findProjectRoot());
+      emitResult(res, ctx.json, () => {
+        const state = res.data;
+        if (!state) return;
+        process.stdout.write(renderGitState(state));
+      });
+      return;
+    }
+  }
+
+  // mcp
+  if (command === "mcp") {
     const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
     const { buildServer } = await import("../mcp/server.ts");
     const root = findProjectRoot();
     const server = buildServer(root);
     const transport = new StdioServerTransport();
     await server.connect(transport);
-  });
+    return;
+  }
 
-const gh = program.command("gh").description("GitHub Issues integration");
-
-gh.command("import")
-  .description("Import issues from a GitHub repository into the ledger")
-  .requiredOption("--repo <repo>", "repository (owner/name)")
-  .option("--json", "output JSON")
-  .option("--force", "overwrite existing gh-<number> records with current GitHub state")
-  .action(async (opts: { repo: string; json?: boolean; force?: boolean }) => {
-    const root = findProjectRoot();
-    const token = process.env.GITHUB_TOKEN ?? "";
-    if (!token) {
-      const result = toResult(null, [diag("no_github_token" as never)]);
-      emitResult(result, opts.json, () => {});
+  // gh
+  if (command === "gh") {
+    if (!subcommand) {
+      process.stdout.write(generateHelp(null, null));
       return;
     }
-    const { importGitHubIssues } = await import("../core/gh.ts");
-    const result = await importGitHubIssues(root, opts.repo, token, opts.force ?? false);
-    emitResult(result, opts.json, () => {
-      const d = result.data;
-      if (d) {
-        process.stdout.write(`Imported ${d.imported} issues: ${d.ids.join(", ")}\n`);
+    if (subcommand === "import") {
+      const root = findProjectRoot();
+      const token = process.env.GITHUB_TOKEN ?? "";
+      if (!token) {
+        emitResult(toResult(null, [diag("no_github_token" as never)]), ctx.json, () => {});
+        return;
       }
-    });
-  });
-
-gh.command("export")
-  .description("Export ledger issues to a GitHub repository")
-  .requiredOption("--repo <repo>", "repository (owner/name)")
-  .option("--json", "output JSON")
-  .action(async (opts: { repo: string; json?: boolean }) => {
-    const root = findProjectRoot();
-    const token = process.env.GITHUB_TOKEN ?? "";
-    if (!token) {
-      const result = toResult(null, [diag("no_github_token" as never)]);
-      emitResult(result, opts.json, () => {});
+      const { importGitHubIssues } = await import("../core/gh.ts");
+      const result = await importGitHubIssues(
+        root,
+        ctx.opts.repo as string,
+        token,
+        (ctx.opts.force as boolean) ?? false,
+      );
+      emitResult(result, ctx.json, () => {
+        const d = result.data;
+        if (d) process.stdout.write(`Imported ${d.imported} issues: ${d.ids.join(", ")}\n`);
+      });
       return;
     }
-    const { exportGitHubIssues } = await import("../core/gh.ts");
-    const result = await exportGitHubIssues(root, opts.repo, token);
-    emitResult(result, opts.json, () => {
-      const d = result.data;
-      if (d) {
-        process.stdout.write(`Exported ${d.exported} issues: ${d.ids.join(", ")}\n`);
+    if (subcommand === "export") {
+      const root = findProjectRoot();
+      const token = process.env.GITHUB_TOKEN ?? "";
+      if (!token) {
+        emitResult(toResult(null, [diag("no_github_token" as never)]), ctx.json, () => {});
+        return;
       }
-    });
-  });
+      const { exportGitHubIssues } = await import("../core/gh.ts");
+      const result = await exportGitHubIssues(root, ctx.opts.repo as string, token);
+      emitResult(result, ctx.json, () => {
+        const d = result.data;
+        if (d) process.stdout.write(`Exported ${d.exported} issues: ${d.ids.join(", ")}\n`);
+      });
+      return;
+    }
+  }
 
-program
-  .command("dashboard")
-  .description("Start the local dashboard web UI (http://127.0.0.1:8787)")
-  .option("--dev", "start Vite dev server alongside and proxy to it")
-  .option("--port <port>", "port", "8787")
-  .action(async (opts: { dev?: boolean; port: string }) => {
+  // dashboard
+  if (command === "dashboard") {
     const { createApp, dashboardClientDir, productionDashboardDir } = await import(
       "../dashboard/server.ts"
     );
     const root = findProjectRoot();
-    const app = createApp(root, opts.dev ? undefined : productionDashboardDir());
-    const port = Number(opts.port);
-
-    if (opts.dev) {
+    const app = createApp(root, ctx.opts.dev ? undefined : productionDashboardDir());
+    const port = Number(ctx.opts.port);
+    if (ctx.opts.dev) {
       const vitePort = 5173;
       const vDir = dashboardClientDir();
       const bunExecutable = Bun.isStandaloneExecutable ? "bun" : process.execPath;
       const _viteProc = Bun.spawn(
         [bunExecutable, "x", "vite", "--port", String(vitePort), "--strictPort"],
-        {
-          cwd: vDir,
-          stdio: ["ignore", "inherit", "inherit"],
-        },
+        { cwd: vDir, stdio: ["ignore", "inherit", "inherit"] },
       );
-
       app.use("*", async (c, next) => {
         if (c.req.path.startsWith("/api/") || c.req.path.startsWith("/graphify-out/"))
           return next();
         const target = `http://127.0.0.1:${vitePort}${c.req.path}`;
         const res = await fetch(target);
-        return new Response(res.body, {
-          status: res.status,
-          headers: res.headers,
-        });
+        return new Response(res.body, { status: res.status, headers: res.headers });
       });
-
       process.stderr.write(`Vite dev server on http://127.0.0.1:${vitePort}\n`);
       process.stderr.write(`Dashboard on http://127.0.0.1:${port}\n`);
     }
-
     process.stderr.write(`Waystation dashboard listening on http://127.0.0.1:${port}\n`);
     Bun.serve({ hostname: "127.0.0.1", port, fetch: app.fetch });
-  });
-
-try {
-  const rawArgs = process.argv.slice(2);
-  const invalidListOption = findEmptyListOption(rawArgs);
-  if (invalidListOption) {
-    emitResult(
-      toResult(null, [
-        diag("cli_option_value_required", {
-          message: `Option ${invalidListOption} requires at least one value.`,
-          details: { option: invalidListOption },
-        }),
-      ]),
-      rawArgs.includes("--json"),
-      () => {},
-    );
+    return;
   }
-  await program.parseAsync(process.argv);
-} catch (err) {
-  // Convert ANY error into a coded diagnostic line (no raw stack dump).
+
+  // Unknown command
+  process.stderr.write(`error [unexpected_error]: unknown command: ${command}\n`);
+  process.exit(1);
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const rawArgs = process.argv.slice(2);
+
+  // Check for empty variadic options before dispatch
+  const listOptionNames = ["--depends-on", "--acceptance", "--path-hint", "--prompt", "--commit"];
+  const taskIssueIdx = rawArgs.findIndex((a) => a === "task" || a === "issue");
+  if (taskIssueIdx >= 0 && !rawArgs.includes("--help") && !rawArgs.includes("-h")) {
+    for (let i = taskIssueIdx + 1; i < rawArgs.length; i++) {
+      const arg = rawArgs[i] ?? "";
+      if (listOptionNames.includes(arg)) {
+        const next = rawArgs[i + 1];
+        if (next === undefined || next.startsWith("-")) {
+          emitResult(
+            toResult(null, [
+              diag("cli_option_value_required", {
+                message: `Option ${arg} requires at least one value.`,
+                details: { option: arg },
+              }),
+            ]),
+            rawArgs.includes("--json"),
+            () => {},
+          );
+          return;
+        }
+      }
+    }
+  }
+
+  const result = parseArgv(rawArgs);
+
+  if (result.error) {
+    process.stderr.write(`error [unexpected_error]: ${result.error}\n`);
+    process.exit(1);
+  }
+
+  if (result.versionRequested) {
+    process.stdout.write(`${generateVersion()}\n`);
+    return;
+  }
+
+  if (result.helpRequested) {
+    const path = result.command ? [result.command.name] : [];
+    if (result.parent) path.unshift(result.parent.name);
+    process.stdout.write(generateHelp(result.command, result.parent));
+    return;
+  }
+
+  // Set root env if provided
+  if (result.ctx.root) {
+    process.env.WAYSTATION_ROOT = result.ctx.root;
+  }
+
+  // Build command path from parsed result
+  const commandPath: string[] = [];
+  if (result.parent) commandPath.push(result.parent.name);
+  if (result.command) commandPath.push(result.command.name);
+
+  await dispatch(result.ctx, commandPath);
+}
+
+main().catch((err) => {
   const code =
     err instanceof RecordError ||
     err instanceof MutationError ||
@@ -1269,4 +1034,4 @@ try {
   process.stderr.write(`error [${code}]: ${(err as Error).message}\n`);
   if (spec?.hint) process.stderr.write(`  hint: ${spec.hint}\n`);
   process.exit(1);
-}
+});
