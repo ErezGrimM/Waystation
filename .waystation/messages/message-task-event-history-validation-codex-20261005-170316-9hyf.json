@@ -1,0 +1,10 @@
+{
+  "id": "message-task-event-history-validation-codex-20261005-170316-9hyf",
+  "thread": "task-event-history-validation",
+  "from_agent": "codex",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting validation of claim/finish event pairs and worktree ledger workflow. Existing v2 intent recovery and shared lock are already in place; adding historical consistency checks and regression coverage.",
+  "in_reply_to": null,
+  "created_at": "2026-10-05T17:03:16+03:00"
+}

@@ -122,6 +122,18 @@ export const CODES = {
     hint: "Run `waystation repair` to split }{-concatenated lines, or fix the offending line manually.",
     retryable: false,
   },
+  event_history_incomplete: {
+    severity: "error",
+    message: "A ledger mutation is missing an expected event.",
+    hint: "Inspect the named mutation and its task/claim records; restore the missing event from a trusted ledger copy.",
+    retryable: false,
+  },
+  event_status_divergence: {
+    severity: "error",
+    message: "Task status history does not match the event chain or current record.",
+    hint: "Compare the task record with its ordered status events and repair the missing or conflicting transition.",
+    retryable: false,
+  },
   missing_scope: {
     severity: "warning",
     message: "Task references a scope that does not exist.",
@@ -230,6 +242,12 @@ export const CODES = {
     message: "The pending mutation journal is malformed or unsafe.",
     hint: "Follow the manual-repair procedure in docs/error-philosophy.md (inspect mutation-intent.json, then restore or remove it).",
     retryable: false,
+  },
+  mutation_intent_pending: {
+    severity: "error",
+    message: "A ledger mutation is still pending recovery.",
+    hint: "Run a mutating Waystation command to replay the journal, then validate again.",
+    retryable: true,
   },
   claim_status_divergence: {
     severity: "warning",
