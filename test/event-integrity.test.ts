@@ -95,6 +95,31 @@ test("missing completion event and stale status history are both reported", asyn
   ).toBe(true);
 });
 
+test("a completion event from another mutation cannot cover a missing finish event", async () => {
+  const root = fixture();
+  const claim = await claimTask(root, "task-one", "test", new Date("2026-10-05T12:00:00Z"));
+  await finishTask(root, "task-one", "test", new Date("2026-10-05T12:01:00Z"));
+  const file = join(root, ".waystation", "events.jsonl");
+  const events = readFileSync(file, "utf8")
+    .trimEnd()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  const completion = events.find((event) => event.type === "claim.completed");
+  completion.mutation = "mutation-other";
+  writeFileSync(file, `${events.map((event) => JSON.stringify(event)).join("\n")}\n`);
+
+  const result = validateLedger(root);
+  expect(result.ok).toBe(false);
+  expect(
+    result.errors.some(
+      (error) =>
+        error.code === "event_history_incomplete" &&
+        error.message.includes(`claim.completed for ${claim.id}`) &&
+        String(error.details?.mutation).startsWith("mutation-finish-"),
+    ),
+  ).toBe(true);
+});
+
 test("a pending valid journal is an integrity error with its mutation ID", () => {
   const root = fixture();
   writeFileSync(
@@ -115,4 +140,52 @@ test("a pending valid journal is an integrity error with its mutation ID", () =>
       details: { file: "mutation-intent.json", mutation: "mutation-claim-interrupted" },
     }),
   );
+});
+
+test("pre-journal claim and finish events remain valid", () => {
+  const root = fixture();
+  const ledger = join(root, ".waystation");
+  writeFileSync(
+    join(ledger, "tasks", "task-one.json"),
+    JSON.stringify({ id: "task-one", title: "One", status: "done", priority: 1, dependencies: [] }),
+  );
+  mkdirSync(join(ledger, "claims"));
+  writeFileSync(
+    join(ledger, "claims", "claim-old.json"),
+    JSON.stringify({
+      id: "claim-old",
+      task: "task-one",
+      agent: "test",
+      status: "completed",
+      claimed_at: "2026-07-06T12:40:00+03:00",
+      completed_at: "2026-07-06T12:50:00+03:00",
+    }),
+  );
+  writeFileSync(
+    join(ledger, "events.jsonl"),
+    `${[
+      {
+        type: "task.claimed",
+        task: "task-one",
+        claim: "claim-old",
+        ts: "2026-07-06T12:40:00+03:00",
+      },
+      {
+        type: "task.status_changed",
+        task: "task-one",
+        from: "ready",
+        to: "done",
+        ts: "2026-07-06T12:50:00+03:00",
+      },
+      {
+        type: "claim.completed",
+        task: "task-one",
+        claim: "claim-old",
+        ts: "2026-07-06T12:50:00+03:00",
+      },
+    ]
+      .map((event) => JSON.stringify(event))
+      .join("\n")}\n`,
+  );
+  expect(validateLedger(root).ok).toBe(true);
 });

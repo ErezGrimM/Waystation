@@ -134,12 +134,34 @@ describe("sync", () => {
     writeFileSync(
       join(root, ".waystation", "events.jsonl"),
       `${[
-        { type: "task.claimed", task: "task-a", claim: "claim-released" },
-        { type: "task.status_changed", task: "task-a", from: "ready", to: "in_progress" },
+        {
+          type: "task.claimed",
+          task: "task-a",
+          claim: "claim-released",
+          mutation: "mutation-claim-claim-released",
+        },
+        {
+          type: "task.status_changed",
+          task: "task-a",
+          from: "ready",
+          to: "in_progress",
+          mutation: "mutation-claim-claim-released",
+        },
         { type: "claim.released", task: "task-a", claim: "claim-released" },
         { type: "task.status_changed", task: "task-a", from: "in_progress", to: "ready" },
-        { type: "task.claimed", task: "task-a", claim: "claim-active" },
-        { type: "task.status_changed", task: "task-a", from: "ready", to: "in_progress" },
+        {
+          type: "task.claimed",
+          task: "task-a",
+          claim: "claim-active",
+          mutation: "mutation-claim-claim-active",
+        },
+        {
+          type: "task.status_changed",
+          task: "task-a",
+          from: "ready",
+          to: "in_progress",
+          mutation: "mutation-claim-claim-active",
+        },
       ]
         .map((event) => JSON.stringify(event))
         .join("\n")}\n`,

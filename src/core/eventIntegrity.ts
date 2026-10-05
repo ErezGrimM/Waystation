@@ -22,8 +22,6 @@ export function addEventIntegrityDiagnostics(
 ): void {
   const batches = new Map<string, Event[]>();
   const lastStatus = new Map<string, string>();
-  const claimed = new Set<string>();
-  const completed = new Set<string>();
 
   for (const event of events) {
     const mutation = event.mutation;
@@ -32,9 +30,6 @@ export function addEventIntegrityDiagnostics(
       batch.push(event);
       batches.set(mutation, batch);
     }
-    if (event.type === "task.claimed" && typeof event.claim === "string") claimed.add(event.claim);
-    if (event.type === "claim.completed" && typeof event.claim === "string")
-      completed.add(event.claim);
     if (
       (event.type !== "task.status_changed" && event.type !== "task.reopened") ||
       typeof event.task !== "string"
@@ -92,8 +87,40 @@ export function addEventIntegrityDiagnostics(
 
   for (const claim of claims) {
     const claimMutation = `mutation-claim-${claim.id}`;
-    if (!claimed.has(claim.id)) missing(diags, claimMutation, claim.task, "task.claimed");
-    if (claim.status === "completed" && !completed.has(claim.id)) {
+    const claimBatch = batches.get(claimMutation) ?? [];
+    // Pre-journal ledgers have no mutation ids. Early hand-written claims did
+    // not always emit an in-progress transition, so require only their claim
+    // event. Journaled claims must contain both events in the same mutation.
+    const legacyClaim = events.find(
+      (event) =>
+        event.mutation === undefined &&
+        event.type === "task.claimed" &&
+        event.claim === claim.id &&
+        event.task === claim.task &&
+        event.ts === claim.claimed_at,
+    );
+    if (
+      !claimBatch.some(
+        (event) =>
+          event.type === "task.claimed" && event.claim === claim.id && event.task === claim.task,
+      ) &&
+      !legacyClaim
+    ) {
+      missing(diags, claimMutation, claim.task, `task.claimed for ${claim.id}`);
+    }
+    if (
+      claimBatch.length > 0 &&
+      !claimBatch.some(
+        (event) =>
+          event.type === "task.status_changed" &&
+          event.task === claim.task &&
+          event.from === "ready" &&
+          event.to === "in_progress",
+      )
+    ) {
+      missing(diags, claimMutation, claim.task, "ready → in_progress");
+    }
+    if (claim.status === "completed") {
       const finish = [...batches.entries()].find(([, batch]) =>
         batch.some(
           (event) =>
@@ -103,12 +130,38 @@ export function addEventIntegrityDiagnostics(
             event.ts === claim.completed_at,
         ),
       );
-      missing(
-        diags,
-        finish?.[0] ?? `mutation-finish-${claim.task} (unknown id)`,
-        claim.task,
-        `claim.completed for ${claim.id}`,
+      const legacyFinishIndex = events.findIndex(
+        (event) =>
+          event.mutation === undefined &&
+          event.type === "task.status_changed" &&
+          event.task === claim.task &&
+          event.to === "done" &&
+          event.ts === claim.completed_at,
       );
+      const legacyCompletion = legacyFinishIndex < 0 ? undefined : events[legacyFinishIndex + 1];
+      if (
+        !finish?.[1].some(
+          (event) =>
+            event.type === "claim.completed" &&
+            event.claim === claim.id &&
+            event.task === claim.task &&
+            event.ts === claim.completed_at,
+        ) &&
+        !(
+          legacyCompletion?.mutation === undefined &&
+          legacyCompletion?.type === "claim.completed" &&
+          legacyCompletion.claim === claim.id &&
+          legacyCompletion.task === claim.task &&
+          legacyCompletion.ts === claim.completed_at
+        )
+      ) {
+        missing(
+          diags,
+          finish?.[0] ?? `mutation-finish-${claim.task} (unknown id)`,
+          claim.task,
+          `claim.completed for ${claim.id}`,
+        );
+      }
     }
   }
 
