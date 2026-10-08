@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-project-monitor-codex-review-20261009-000914-65go",
+  "thread": "task-poc-project-monitor",
+  "from_agent": "codex-review",
+  "to_agent": null,
+  "kind": "verdict",
+  "body": "Reopened after native verification found the completed Monitor plugin cannot load in Hermes 0.21.5: its relative TypeScript import is rejected by the runtime, and its data module uses Bun.spawn unavailable in the renderer. Draft PR #6 (codex/hermes-poc2-rest-bridge) provides an SDK REST/backend bridge and passed focused tests, but an isolated native app timed out connecting to its backend before the Monitor could be observed. Keep this task blocked until the native page shows configured project data, refresh/error states, and read-only behavior in the installed app; then revisit POC 3.",
+  "in_reply_to": null,
+  "created_at": "2026-10-09T00:09:14+03:00"
+}

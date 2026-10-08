@@ -13,6 +13,7 @@ _none_
 
 ## Marked blocked
 - `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
+- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 
 ## Waiting (blocked by dependencies)
 _none_
@@ -130,7 +131,6 @@ _none_
 - `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
 - `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
 - `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
-- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
