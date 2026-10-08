@@ -1,6 +1,8 @@
 {
   "id": "waystation",
-  "name": "Waystation Monitor",
+  "name": "waystation-native-load-poc",
   "version": "0.1.0",
+  "api": "plugin_api.py",
+  "tab": { "hidden": true },
   "contributes": { "routes": [] }
 }

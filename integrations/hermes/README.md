@@ -66,3 +66,20 @@ during reconciliation. Registry operations serialize across facades sharing one
 state adapter; the future production adapter must additionally provide durable,
 cross-process serialization. Runtime/profile state keys use an encoded tuple to
 avoid delimiter collisions. There is no released legacy registry to migrate.
+
+## Native POC Monitor bridge
+
+The native desktop runtime accepts imports from `@hermes/plugin-sdk` and `react`
+only. The Monitor page uses the SDK's `ctx.rest` call to the paired Hermes
+backend route at `/api/plugins/waystation-native-load-poc`; its Python router is
+mounted from `dashboard/manifest.json` by the supported Hermes dashboard plugin
+API. The router reads `WAYSTATION_ROOT`, `WAYSTATION_REPO`, and `WAYSTATION_BUN`
+from the backend process environment. Those paths are fixed for that backend
+process; requests cannot select a ledger root or command. Missing configuration,
+failed reads, invalid output, timeouts, and oversized output return explicit
+errors.
+
+The Python backend plugin must be installed and enabled in the Hermes profile
+that serves the native renderer. This is a read-only single-project POC bridge;
+it does not configure profile routing or replace the deferred session-aware
+worker adapter.
