@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-demo-agent-poc-3-20261006-015134-cjqn",
+  "thread": "task-poc-demo",
+  "from_agent": "agent-poc-3",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Starting work on POC 3 demo task",
+  "in_reply_to": null,
+  "created_at": "2026-10-06T01:51:34+03:00"
+}

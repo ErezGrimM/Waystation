@@ -12,15 +12,12 @@ _none_
 _none_
 
 ## Marked blocked
-- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
+- `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
 
 ## Waiting (blocked by dependencies)
 _none_
 
 ## Backlog (todo)
-- `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
-- `task-bun-native-dashboard-build` [p2] — Replace Vite production dashboard build with Bun\.build
-- `task-bun-native-dashboard-router` [p2] — Replace Hono dashboard routing with Bun\.serve
 - `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
@@ -28,8 +25,6 @@ _none_
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
-- `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
-- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 - `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
 - `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
 - `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
@@ -85,6 +80,9 @@ _none_
 - `task-bun-1-4-embedded-dashboard` [p2] — Embed the dashboard in the Bun 1\.4 executable
 - `task-bun-1-4-parallel-verification` [p2] — Adopt Bun 1\.4 parallel verification and dependency checks
 - `task-bun-1-4-release` [p2] — Release Waystation 0\.5\.0 on Bun 1\.4\.0
+- `task-bun-native-cli-parser` [p2] — Replace Commander with a Bun\-native CLI parser
+- `task-bun-native-dashboard-build` [p2] — Replace Vite production dashboard build with Bun\.build
+- `task-bun-native-dashboard-router` [p2] — Replace Hono dashboard routing with Bun\.serve
 - `task-claim-git-context` [p2] — Record branch and worktree context on claims
 - `task-claim-id-collision` [p2] — Fix claim id collision on same\-second re\-claim
 - `task-cli-list-option-absorption` [p1] — CLI list\-valued options must not absorb the following option token
@@ -131,6 +129,8 @@ _none_
 - `task-phase9-normalize-timestamps` [p2] — Normalize or document legacy timestamp formats
 - `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
 - `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
+- `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
+- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches

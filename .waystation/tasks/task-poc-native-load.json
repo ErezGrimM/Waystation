@@ -1,7 +1,7 @@
 {
   "id": "task-poc-native-load",
   "title": "POC 1: load a minimal Waystation page in native Hermes",
-  "status": "blocked",
+  "status": "done",
   "priority": 2,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -15,8 +15,8 @@
     "task-reconcile-started-wave"
   ],
   "created_at": "2026-09-27T20:25:34+03:00",
-  "updated_at": "2026-10-05T21:27:24+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-05T22:09:10+03:00",
+  "closed_at": "2026-10-05T22:09:10+03:00",
   "description": "Prove the cheapest prerequisite before implementing a Monitor: a minimal external Waystation plugin page loads in the user's installed native Windows Hermes app. Recheck the executable/build stamp and supported runtime desktop loading contract, then build only a clearly labeled proof-of-concept page and the minimal package/entrypoint needed to open it. Reuse the integrations/hermes scaffold. Record the exact install, enable, open, disable and removal steps and the visible result. Preserve existing plugin settings and app data. Do not fork Hermes, add worker bindings, build a multi-project registry bridge, or connect a production ledger. If basic loading requires substantial host changes or the full production architecture, stop, mark the task blocked and report the specific limitation for an owner decision rather than expanding the experiment.",
   "acceptance": [
     "The proof-of-concept page opens in the selected installed native Hermes app, with the actual build, plugin path and observed result recorded; a browser-only page or mock is insufficient.",
@@ -24,6 +24,8 @@
     "No Hermes core modification or production worker/profile-state subsystem is required; an unsupported native contract is reported as a blocker rather than treated as success.",
     "The implementation record lists reusable files and prototype-only limitations so W08d can reuse or replace this assembly instead of rebuilding it blindly."
   ],
-  "commits": [],
+  "commits": [
+    "3bea545590cc6b79192bc3852bca2b248a495dbc"
+  ],
   "notes": "Current milestone is the proof of concept in section 0 of docs/waystation-git-hermes-implementation-plan.md. This bounded experiment does not complete or authorize the full W04-W10 implementation. Preserve the user's native Hermes app preference. No agents are dispatched by task creation."
 }
