@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-agent-workflow-luna-hermes-poc3-20261009-075212-sw8u",
+  "thread": "task-poc-agent-workflow",
+  "from_agent": "luna-hermes-poc3",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Recheck after owner repair: installed CLI wrapper C:\\Users\\User\\AppData\\Local\\hermes\\bin\\hermes.cmd now exits 1 even with a fresh TEMP HERMES_HOME, reporting no dependency environment is committed and instructing hermes pm repair. Per bounded retry guard, I did not run repair/update or launch the native app. POC2/POC3 native observation remains blocked; no demo ledger writes or default profile changes from this recheck.",
+  "in_reply_to": null,
+  "created_at": "2026-10-09T07:52:12+03:00"
+}

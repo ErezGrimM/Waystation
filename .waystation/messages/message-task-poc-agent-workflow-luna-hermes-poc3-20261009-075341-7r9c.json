@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-agent-workflow-luna-hermes-poc3-20261009-075341-7r9c",
+  "thread": "task-poc-agent-workflow",
+  "from_agent": "luna-hermes-poc3",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Read-only default-home check stopped before execution: hermes_cli/main.py calls _early_recovery.restore_interrupted_pull() before its --version fast path. The installed checkout currently contains .git/hermes-update-recovery, so --version could mutate checkout files. No default-home version command, repair/update, or native app launch was run. Default-home health is unverified; the TEMP-home wrapper health check had failed.",
+  "in_reply_to": null,
+  "created_at": "2026-10-09T07:53:41+03:00"
+}
