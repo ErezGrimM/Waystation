@@ -60,7 +60,7 @@ export async function initLedger(
         prompt_prefix: "prompt",
         scope_prefix: "scope",
       },
-      git: { track_branches: true, track_worktrees: true },
+      git: { track_branches: true, track_worktrees: true, ledger_root: "checkout" },
       generated_views: { enabled: true },
     });
 

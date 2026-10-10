@@ -195,6 +195,19 @@ waystation task claim task-example --agent worker-a
 waystation validate
 ```
 
+To make this the default for every worker, declare it in the tracked
+`.waystation/config.json`:
+
+```json
+{ "git": { "ledger_root": "main_worktree" } }
+```
+
+Upward discovery from a linked worktree then selects the main worktree's ledger
+instead of the worktree's own copy. `--root` and `WAYSTATION_ROOT` still take
+precedence. If the main worktree has no ledger (or the repository is bare) the
+command fails with `ledger_not_found` rather than falling back to the
+branch-local copy. See [ADR-0010](adr/ADR-0010-main-worktree-ledger-root.md).
+
 The lock and mutation journal live in that one selected ledger. A feature
 branch must not commit or merge its checkout-local `.waystation/` snapshot into
 the coordination branch; exclude those files from its PR. After integrating

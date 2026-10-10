@@ -19,6 +19,9 @@ export type RecordId = z.infer<typeof RecordId>;
 
 export const BriefBudgetValue = z.enum(["small", "medium", "large", "full"]);
 
+/** Where linked Git worktrees find their ledger (ADR-0010). */
+export const LedgerRootMode = z.enum(["checkout", "main_worktree"]);
+
 export const ProjectConfig = z
   .object({
     defaults: z
@@ -27,6 +30,12 @@ export const ProjectConfig = z
       })
       .passthrough()
       .default({ brief_budget: "medium" }),
+    git: z
+      .object({
+        ledger_root: LedgerRootMode.default("checkout"),
+      })
+      .passthrough()
+      .default({ ledger_root: "checkout" }),
   })
   .passthrough();
 export type ProjectConfig = z.infer<typeof ProjectConfig>;
