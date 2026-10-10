@@ -1,0 +1,33 @@
+{
+  "id": "task-merged-work-still-open",
+  "title": "Warn when an open task's commit is already merged into the coordination branch",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/validate.ts",
+    "src/core/sync.ts",
+    "src/core/trailers.ts",
+    "src/core/gitSafe.ts",
+    "src/core/result.ts",
+    "test/"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-10-10T23:00:00+03:00",
+  "updated_at": "2026-10-10T22:44:47+03:00",
+  "closed_at": null,
+  "description": "After a PR merges, its task often stays in_progress (or review) with an active claim because nobody ran `task finish`. Git already knows: the implementation commit is reachable from the coordination branch. Add a read-only check, surfaced by `validate` and `sync`, that finds tasks in a non-terminal status whose work has landed, and emits an actionable warning such as `task X is in_progress but commit <sha> is merged into main; run task finish X --commit <sha>`. Evidence sources, in order: (1) commits already recorded on the task (TaskRecord.commits), (2) commits on the coordination branch carrying a `Waystation-Task: <id>` trailer, parsed with the existing W03 parser in src/core/trailers.ts. Reachability is `git merge-base --is-ancestor <sha> <branch>` via runSafeGit. Bound the trailer scan (e.g. commits since the task's claimed_at or a fixed recent window) so validate stays fast. This check only warns; it never changes task status. Closing stays an explicit command, per the contract freeze (docs/git-hermes-contract-freeze.md section 2.5).",
+  "acceptance": [
+    "validate and sync emit a new warning code (declared in the result.ts CODES catalog with message, hint and retryable) for each non-terminal task with a recorded or trailer-linked commit reachable from the coordination branch.",
+    "The hint names the exact `task finish <id> --agent <claim agent> --commit <sha>` command to run.",
+    "No warning for done/wont_do tasks, for commits not yet reachable, or outside a Git repository; the check never mutates the ledger.",
+    "The coordination branch defaults to main and can be configured in config.json (shared with task-guard-branch-ledger-commits).",
+    "Tests use a real git fixture covering a recorded commit, a trailer-only commit, an unmerged commit, a terminal task, and a non-Git ledger.",
+    "bun test, typecheck, biome check and waystation validate are clean."
+  ],
+  "commits": [],
+  "notes": "Origin: discussion on 2026-10-10 while closing task-shared-ledger-main-worktree, whose merge had to be detected and finished by hand. Overlaps with the planned reconcile work: task-w04b-reconcile-core / task-w06a-reconcile-surfaces (both todo) add explicit `git reconcile`. Keep this check read-only so it complements reconcile rather than duplicating it; if W04b lands first, reuse its commit-evidence reading. Coordinate the coordination-branch setting with task-guard-branch-ledger-commits. Commits before 2026-10-10 used a `Task:` trailer, not `Waystation-Task:`, so they will only match via TaskRecord.commits.\n\nBranch/worktree inventory 2026-10-10: 17 local branches are fully merged into main but never deleted (claude/search-performance-66790a, 11 codex/* branches, wt/w01-persistence, wt/w02-git-context, wt/w03-parser-registry); 6 of them still exist on origin. 8 linked worktrees remain attached to merged branches or detached merged commits. Consider extending this read-only check (or a sibling) to report merged-but-undeleted branches and worktrees on merged branches, never deleting them automatically."
+}

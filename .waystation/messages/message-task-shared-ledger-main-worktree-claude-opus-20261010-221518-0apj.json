@@ -1,0 +1,10 @@
+{
+  "id": "message-task-shared-ledger-main-worktree-claude-opus-20261010-221518-0apj",
+  "thread": "task-shared-ledger-main-worktree",
+  "from_agent": "claude-opus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Implementation ready on branch claude/branch-changes-agent-visibility-d1464d (uncommitted): git.ledger_root config + resolver redirect in src/core/paths.ts, tests in test/shared-ledger-root.test.ts, ADR-0010 (Proposed). bun test 464/0, typecheck and biome clean. Awaiting owner review of ADR-0010 before commit/finish.",
+  "in_reply_to": null,
+  "created_at": "2026-10-10T22:15:18+03:00"
+}

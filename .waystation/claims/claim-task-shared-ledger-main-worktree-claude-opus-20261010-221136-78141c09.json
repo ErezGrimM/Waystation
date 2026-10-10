@@ -1,0 +1,11 @@
+{
+  "id": "claim-task-shared-ledger-main-worktree-claude-opus-20261010-221136-78141c09",
+  "task": "task-shared-ledger-main-worktree",
+  "agent": "claude-opus",
+  "status": "completed",
+  "branch": "claude/branch-changes-agent-visibility-d1464d",
+  "worktree": "C:/Projects/Waystation/.claude/worktrees/branch-changes-agent-visibility-d1464d",
+  "claimed_at": "2026-10-10T22:11:36+03:00",
+  "released_at": null,
+  "completed_at": "2026-10-10T22:39:33+03:00"
+}

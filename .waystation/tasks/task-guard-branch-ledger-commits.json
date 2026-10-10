@@ -1,0 +1,30 @@
+{
+  "id": "task-guard-branch-ledger-commits",
+  "title": "Reject .waystation/ changes committed on feature branches",
+  "status": "todo",
+  "priority": 3,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/validate.ts",
+    "src/core/paths.ts",
+    "README.md",
+    "docs/release-packaging.md"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [
+    "task-shared-ledger-main-worktree"
+  ],
+  "created_at": "2026-10-10T12:00:00+03:00",
+  "updated_at": "2026-10-10T22:44:47+03:00",
+  "closed_at": null,
+  "description": "README and ADR-0003 say feature branches must not commit or merge their checkout-local .waystation/ snapshot, but nothing enforces it. Add an enforcement point (pre-commit hook and/or CI check, optionally a validate diagnostic) that flags .waystation/** changes on branches other than the coordination branch, so stray branch-local ledger writes cannot silently diverge or be merged over the shared ledger's history.",
+  "acceptance": [
+    "A commit on a non-coordination branch that touches .waystation/** is rejected or flagged with an actionable message naming the shared ledger root.",
+    "Commits from the coordination checkout are unaffected.",
+    "The check is documented in README alongside the shared-ledger instructions."
+  ],
+  "commits": [],
+  "notes": "Decide whether the coordination branch name comes from config.json or defaults to main. Builds on the git.ledger_root setting from task-shared-ledger-main-worktree.\n\n2026-10-10: Waystation now declares git.ledger_root=main_worktree (commit 119c8f3). Worktrees created before that commit keep using their branch-local ledger copy until they merge main: C:/Projects/Waystation-wt/{w01-persistence,w02-git-context,w03-parser-registry,search-performance-66790a} and the three C:/Users/User/.codex/worktrees checkouts. Waystation-wt/w01..w03 also hold untracked AGENT-BRIEF.md files, and w02 an untracked src/core/gitSource.ts + test/git-source.test.ts that differ from main's merged versions."
+}

@@ -263,5 +263,5 @@ export function generateHelp(command: CommandSpec | null, parent: CommandSpec | 
 
 /** Generate version string */
 export function generateVersion(): string {
-  return "0.8.0";
+  return "0.9.0";
 }

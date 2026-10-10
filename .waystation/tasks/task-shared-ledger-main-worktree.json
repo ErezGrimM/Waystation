@@ -1,0 +1,36 @@
+{
+  "id": "task-shared-ledger-main-worktree",
+  "title": "Resolve linked worktrees to the main worktree's ledger when the project declares it",
+  "status": "done",
+  "priority": 2,
+  "scope": "scope-git",
+  "path_hints": [
+    "src/core/paths.ts",
+    "src/core/schema.ts",
+    "test/",
+    "adr/",
+    "README.md",
+    "docs/mcp.md",
+    ".waystation/config.json"
+  ],
+  "prompts": [
+    "prompt-waystation-v1"
+  ],
+  "dependencies": [],
+  "created_at": "2026-10-10T12:00:00+03:00",
+  "updated_at": "2026-10-10T22:39:33+03:00",
+  "closed_at": "2026-10-10T22:39:33+03:00",
+  "description": "Agents running in linked Git worktrees discover the worktree's own tracked copy of .waystation/ and write claims, messages and status changes into a branch-local snapshot that other agents never see. WAYSTATION_ROOT fixes this but is opt-in per agent and fails silently when forgotten. Add a project-level config setting git.ledger_root (\"checkout\" default | \"main_worktree\"). When upward discovery finds a ledger whose config declares main_worktree and the discovered directory is a linked worktree, resolve to the main worktree's ledger instead. --root and WAYSTATION_ROOT still take precedence. A missing main-worktree ledger or a bare repository is a ledger_not_found error, never a fallback to the branch-local copy. Record the decision in an ADR that amends ADR-0003.",
+  "acceptance": [
+    "resolveLedgerRoot redirects a linked worktree to the main worktree's ledger only when the discovered config declares git.ledger_root = main_worktree.",
+    "Default (no setting or \"checkout\") behavior is unchanged; --root and WAYSTATION_ROOT still win.",
+    "A declared redirect whose main worktree has no ledger, or whose repository is bare, fails with LedgerResolutionError rather than falling back.",
+    "Tests cover redirect, default, precedence and failure cases with a real git worktree fixture.",
+    "An ADR amending ADR-0003 records the decision; README and docs/mcp.md describe the setting.",
+    "bun test, typecheck, biome check and waystation validate are clean."
+  ],
+  "commits": [
+    "a2f9115"
+  ],
+  "notes": "Follow-up guard against leaking branch-local ledger snapshots into merges: task-guard-branch-ledger-commits."
+}

@@ -322,3 +322,4 @@ surface.
 | [ADR-0006](./ADR-0006-recoverable-ledger-mutations.md) | Accepted | Replay durable mutation intents |
 | [ADR-0007](./ADR-0007-lifecycle-transition-matrix.md) | Accepted | Core lifecycle transition matrix |
 | [ADR-0008](./ADR-0008-task-ranking-policy.md) | Accepted | Rank equal-priority tasks by created_at then id |
+| [ADR-0010](./ADR-0010-main-worktree-ledger-root.md) | Accepted | Project-declared main-worktree ledger root for linked worktrees |

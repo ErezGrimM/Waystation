@@ -13,6 +13,7 @@ _none_
 
 ## Marked blocked
 - `task-poc-agent-workflow` [p2] — POC 3: observe one Hermes agent completing a demo task
+- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 
 ## Waiting (blocked by dependencies)
 _none_
@@ -22,8 +23,10 @@ _none_
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
+- `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
+- `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
 - `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
@@ -130,7 +133,6 @@ _none_
 - `task-phase9-validation-import-hardening` [p2] — Harden validation for migrated and imported records
 - `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
 - `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
-- `task-poc-project-monitor` [p2] — POC 2: show one project's tasks, owners and agent discussions
 - `task-prompt-render` [p2] — Implement prompt list/show/render
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
@@ -138,6 +140,7 @@ _none_
 - `task-release-0-8-bugfixes` [p2] — Bump version for the October bug fixes
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
+- `task-shared-ledger-main-worktree` [p2] — Resolve linked worktrees to the main worktree's ledger when the project declares it
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
 - `task-skeleton-mutations` [p2] — Widen skeleton: claim/release/finish with events and locking

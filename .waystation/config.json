@@ -16,7 +16,8 @@
   },
   "git": {
     "track_branches": true,
-    "track_worktrees": true
+    "track_worktrees": true,
+    "ledger_root": "main_worktree"
   },
   "generated_views": {
     "enabled": true
