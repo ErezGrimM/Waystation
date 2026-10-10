@@ -4,6 +4,7 @@
 **Date:** 2026-07-06
 **Deciders:** Erez
 **Consulted:** Codex
+**Amended by:** [ADR-0010](./ADR-0010-main-worktree-ledger-root.md) (opt-in main-worktree root selection)
 
 ## Context
 

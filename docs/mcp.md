@@ -60,7 +60,10 @@ for the whole session. Resolution follows this order:
 1. `--root <path>` — explicit root wins over everything.
 2. `WAYSTATION_ROOT=<path>` environment variable.
 3. **Upward discovery** from the process working directory: the first ancestor
-   directory containing a `.waystation/` ledger.
+   directory containing a `.waystation/` ledger. If that ledger's
+   `config.json` declares `git.ledger_root: "main_worktree"` and it sits in a
+   linked Git worktree, the main worktree's ledger is selected instead
+   ([ADR-0010](../adr/ADR-0010-main-worktree-ledger-root.md)).
 
 Consequences:
 
