@@ -1,0 +1,10 @@
+{
+  "id": "message-task-shared-ledger-main-worktree-claude-opus-20261010-223933-1muo",
+  "thread": "task-shared-ledger-main-worktree",
+  "from_agent": "claude-opus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Merged to main in 9e6cda6 (PR #7, implementation a2f9115). Release 0.9.0 prepared in 7d10682, PR #8 awaiting owner merge. Finishing.",
+  "in_reply_to": null,
+  "created_at": "2026-10-10T22:39:33+03:00"
+}

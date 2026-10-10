@@ -23,6 +23,7 @@ _none_
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
+- `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
@@ -138,6 +139,7 @@ _none_
 - `task-release-0-8-bugfixes` [p2] — Bump version for the October bug fixes
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
+- `task-shared-ledger-main-worktree` [p2] — Resolve linked worktrees to the main worktree's ledger when the project declares it
 - `task-skeleton-brief` [p1] — Widen skeleton: \`waystation brief \-\-task \<id\>\`
 - `task-skeleton-generate` [p3] — Widen skeleton: reindex, STATUS, context, and Markdown views
 - `task-skeleton-mutations` [p2] — Widen skeleton: claim/release/finish with events and locking
