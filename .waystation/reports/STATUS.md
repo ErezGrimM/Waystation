@@ -26,6 +26,7 @@ _none_
 - `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
+- `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
 - `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
