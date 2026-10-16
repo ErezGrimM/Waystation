@@ -146,6 +146,12 @@ export const CODES = {
     hint: "Create the scope or clear the reference.",
     retryable: false,
   },
+  scope_not_committed: {
+    severity: "warning",
+    message: "A committed task references a scope record that is not tracked by git.",
+    hint: "Commit the scope record together with the task that references it.",
+    retryable: false,
+  },
   missing_prompt: {
     severity: "warning",
     message: "Task references a prompt that does not exist.",
