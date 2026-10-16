@@ -18,7 +18,7 @@ import {
   type UpdateIssueInput,
   updateIssue,
 } from "../core/issue.ts";
-import { commitLedger, ledgerStatus } from "../core/ledgerCommit.ts";
+import { commitLedger, ledgerStatus, settleLedger } from "../core/ledgerCommit.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import {
   claimTask,
@@ -888,6 +888,11 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
           process.stdout.write(`unattributed (${data.unattributed.length}):\n`);
           for (const f of data.unattributed) process.stdout.write(`  ${f}\n`);
         }
+        if (data.pendingMerge.length) {
+          process.stdout.write(`pending merge (${data.pendingMerge.length}):\n`);
+          for (const f of data.pendingMerge)
+            process.stdout.write(`  ${f.path}  [${f.branches.join(", ")}]\n`);
+        }
         if (data.generated.length)
           process.stdout.write(`generated: ${data.generated.length} file(s)\n`);
       });
@@ -908,6 +913,21 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
           `${verb} ${data.branch}: ${data.files.length} file(s), ${data.events} event(s)\n`,
         );
         for (const f of data.files) process.stdout.write(`  ${f}\n`);
+      });
+      return;
+    }
+    if (subcommand === "settle") {
+      const res = await settleLedger(findProjectRoot(), {
+        branch: ctx.opts.branch as string | undefined,
+        dryRun: ctx.opts.dryRun as boolean | undefined,
+      });
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        const verb = data.dryRun ? "would settle" : "settled";
+        process.stdout.write(`${verb} ${data.settled.length} file(s)\n`);
+        for (const f of data.settled) process.stdout.write(`  ${f}\n`);
+        for (const f of data.skipped) process.stdout.write(`  skipped ${f.path}: ${f.reason}\n`);
       });
       return;
     }

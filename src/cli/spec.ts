@@ -724,7 +724,30 @@ export const COMMAND_TREE: CommandSpec[] = [
         arguments: [],
         notes: [
           "Includes the scope and prompt records the actor's tasks reference, and only that actor's events.",
-          "The files stay modified in the shared checkout; after merging the branch, 'git checkout -- <files>' drops the duplicates.",
+          "The files stay modified in the shared checkout until you run 'ledger settle'; 'ledger status' lists them as pending merge meanwhile.",
+          "A file written by several actors is committed by each of them with its current content (a warning names the co-writers).",
+        ],
+        subcommands: [],
+      },
+      {
+        name: "settle",
+        description: "Drop working-tree copies of ledger files that a ledger branch already holds",
+        options: [
+          {
+            name: "branch",
+            flag: "--branch <name>",
+            description: "only files held by this branch (default: any ledger/* branch)",
+          },
+          {
+            name: "dryRun",
+            flag: "--dry-run",
+            description: "list the files without touching them",
+          },
+          { name: "json", flag: "--json", description: "output JSON" },
+        ],
+        arguments: [],
+        notes: [
+          "Run before merging a ledger branch. Only files byte-identical to the branch's version are touched, so nothing is lost.",
         ],
         subcommands: [],
       },

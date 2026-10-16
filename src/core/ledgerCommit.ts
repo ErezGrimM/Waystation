@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
-import { withLedgerReadLock } from "./store.ts";
+import { withLedgerLock } from "./store.ts";
 
 export type LedgerFileCategory = "owned" | "generated" | "unattributed";
 
@@ -24,14 +24,24 @@ export interface LedgerDirtyFile {
   state: "modified" | "untracked" | "deleted";
   /** Actor that last wrote the file, from the event log; null if unknown. */
   owner: string | null;
+  /** Every actor that wrote the file since the last committed event log, oldest first. */
+  owners: string[];
+  /** `ledger/*` branches that already hold exactly this content (awaiting merge). */
+  onBranches: string[];
   category: LedgerFileCategory;
 }
 
 export interface LedgerStatus {
+  /** Files not yet on any ledger branch. */
   files: LedgerDirtyFile[];
+  /** Every uncommitted file, including those already on a ledger branch. */
+  uncommitted: LedgerDirtyFile[];
+  /** Each actor's files; a file written by several actors is listed under each. */
   byOwner: Record<string, string[]>;
   generated: string[];
   unattributed: string[];
+  /** Files already committed to a `ledger/*` branch and waiting for a merge. */
+  pendingMerge: Array<{ path: string; branches: string[] }>;
 }
 
 export interface LedgerCommitOptions {
@@ -77,22 +87,57 @@ function tryGit(cwd: string, args: string[], env?: Record<string, string>): stri
   }
 }
 
-/** Last actor to write each ledger file, from `files` stamped on events. */
-export function ledgerFileOwners(root: string): Map<string, string> {
-  const owners = new Map<string, string>();
+/**
+ * Actors that wrote each ledger file, from `files` stamped on events, oldest
+ * first. Only events not yet in HEAD's event log count: those describe the
+ * uncommitted state, so a file written by A and then B lists both.
+ */
+export function ledgerFileOwners(root: string): Map<string, string[]> {
+  const owners = new Map<string, string[]>();
   const file = ledgerPaths(root).events;
   if (!existsSync(file)) return owners;
+  const ledger = ledgerPaths(root).ledger;
+  const prefix = tryGit(ledger, ["rev-parse", "--show-prefix"])?.trim() ?? "";
+  const committed = new Set(
+    (tryGit(ledger, ["show", `HEAD:${prefix}events.jsonl`]) ?? "").split("\n").filter(Boolean),
+  );
   for (const line of readFileSync(file, "utf8").split("\n")) {
-    if (!line.trim()) continue;
+    if (!line.trim() || committed.has(line)) continue;
     try {
       const event = JSON.parse(line) as { actor?: unknown; files?: unknown };
       if (typeof event.actor !== "string" || !Array.isArray(event.files)) continue;
-      for (const f of event.files) if (typeof f === "string") owners.set(f, event.actor);
+      for (const f of event.files) {
+        if (typeof f !== "string") continue;
+        const list = (owners.get(f) ?? []).filter((a) => a !== event.actor);
+        list.push(event.actor);
+        owners.set(f, list);
+      }
     } catch {
       // Malformed lines are validate's business, not ownership's.
     }
   }
   return owners;
+}
+
+/** Blob ids per `ledger/*` branch, keyed by ledger-relative path. */
+function ledgerBranchBlobs(ledger: string, prefix: string): Map<string, Map<string, string>> {
+  const out = new Map<string, Map<string, string>>();
+  const refs = tryGit(ledger, ["for-each-ref", "--format=%(refname:short)", "refs/heads/ledger/"]);
+  for (const branch of (refs ?? "").split("\n").filter(Boolean)) {
+    const tree = tryGit(ledger, ["ls-tree", "-r", branch, "--", "."]);
+    if (tree === null) continue;
+    const blobs = new Map<string, string>();
+    for (const line of tree.split("\n")) {
+      const tab = line.indexOf("\t");
+      if (tab < 0) continue;
+      const sha = line.slice(0, tab).split(" ")[2];
+      const path = line.slice(tab + 1);
+      // `ls-tree .` prints paths relative to the ledger directory already.
+      if (sha) blobs.set(path.startsWith(prefix) ? path.slice(prefix.length) : path, sha);
+    }
+    out.set(branch, blobs);
+  }
+  return out;
 }
 
 function categorize(path: string, owner: string | null): LedgerFileCategory {
@@ -122,34 +167,51 @@ export function ledgerStatus(root: string): CommandResult<LedgerStatus> {
   ]);
   if (listed === null) return notARepo<LedgerStatus>();
   const owners = ledgerFileOwners(root);
-  const files: LedgerDirtyFile[] = [];
+  const prefix = tryGit(ledger, ["rev-parse", "--show-prefix"])?.trim() ?? "";
+  const branchBlobs = ledgerBranchBlobs(ledger, prefix);
+  const all: LedgerDirtyFile[] = [];
   const tracked = new Set(
     (tryGit(ledger, ["ls-files", "-z", "--", "."]) ?? "").split("\0").filter(Boolean),
   );
   for (const path of new Set(listed.split("\0").filter(Boolean))) {
     if (SHARED_FILES.has(path)) continue;
-    const state = !existsSync(join(ledger, path))
-      ? "deleted"
-      : tracked.has(path)
-        ? "modified"
-        : "untracked";
-    const owner = owners.get(path) ?? null;
-    files.push({ path, state, owner, category: categorize(path, owner) });
+    const present = existsSync(join(ledger, path));
+    const state = !present ? "deleted" : tracked.has(path) ? "modified" : "untracked";
+    const writers = owners.get(path) ?? [];
+    const owner = writers.at(-1) ?? null;
+    const sha = present ? git(ledger, ["hash-object", "--", join(ledger, path)]).trim() : null;
+    const onBranches = [...branchBlobs]
+      .filter(([, blobs]) => (sha === null ? !blobs.has(path) : blobs.get(path) === sha))
+      .map(([branch]) => branch);
+    all.push({
+      path,
+      state,
+      owner,
+      owners: writers,
+      onBranches,
+      category: categorize(path, owner),
+    });
   }
-  files.sort((a, b) => a.path.localeCompare(b.path));
+  all.sort((a, b) => a.path.localeCompare(b.path));
+  const files = all.filter((f) => f.onBranches.length === 0);
   const byOwner: Record<string, string[]> = {};
   for (const f of files) {
-    if (!f.owner) continue;
-    const list = byOwner[f.owner] ?? [];
-    list.push(f.path);
-    byOwner[f.owner] = list;
+    for (const actor of f.owners) {
+      const list = byOwner[actor] ?? [];
+      list.push(f.path);
+      byOwner[actor] = list;
+    }
   }
   return toResult(
     {
       files,
+      uncommitted: all,
       byOwner,
       generated: files.filter((f) => f.category === "generated").map((f) => f.path),
       unattributed: files.filter((f) => f.category === "unattributed").map((f) => f.path),
+      pendingMerge: all
+        .filter((f) => f.onBranches.length > 0)
+        .map((f) => ({ path: f.path, branches: f.onBranches })),
     },
     [],
   );
@@ -196,24 +258,29 @@ export async function commitLedger(
     ]);
   }
 
-  return withLedgerReadLock(root, () => {
+  // The exclusive lock serializes concurrent commits (and blocks mutations
+  // while files are read); update-ref below also guards against a moved tip.
+  return withLedgerLock(root, () => {
     const status = ledgerStatus(root);
     if (!status.ok || !status.data) return status as unknown as CommandResult<LedgerCommitResult>;
-    const dirty = new Map(status.data.files.map((f) => [f.path, f]));
-    const mine = status.data.files.filter((f) => f.owner === agent).map((f) => f.path);
+    // A file already identical on the target branch has nothing left to commit
+    // there, but one that only matches another actor's branch still does.
+    const candidates = status.data.uncommitted.filter((f) => !f.onBranches.includes(branch));
+    const dirty = new Map(candidates.map((f) => [f.path, f]));
+    const mine = candidates.filter((f) => f.owners.includes(agent)).map((f) => f.path);
 
     const dependencies = referencedRecords(ledger, mine).filter(
       (p) => dirty.has(p) && !mine.includes(p),
     );
     const paths = [...new Set([...mine, ...dependencies])].sort();
     const warnings: Diagnostic[] = [];
-    for (const dep of dependencies) {
-      const owner = dirty.get(dep)?.owner;
-      if (owner && owner !== agent) {
+    for (const path of paths) {
+      const others = (dirty.get(path)?.owners ?? []).filter((a) => a !== agent);
+      if (others.length > 0) {
         warnings.push(
           diag("ledger_dependency_foreign", {
-            message: `${dep} is written by ${owner} but is referenced by ${agent}'s tasks; included`,
-            details: { path: dep, owner },
+            message: `${path} was also written by ${others.join(", ")}; the commit holds its current content, including their changes`,
+            details: { path, owners: others },
           }),
         );
       }
@@ -332,5 +399,92 @@ export async function commitLedger(
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+}
+
+export interface LedgerSettleOptions {
+  /** Only settle files held by this ledger branch; default: any `ledger/*` branch. */
+  branch?: string;
+  dryRun?: boolean;
+}
+
+export interface LedgerSettleResult {
+  settled: string[];
+  skipped: Array<{ path: string; reason: string }>;
+  dryRun: boolean;
+}
+
+/**
+ * Drop working-tree copies of ledger files whose exact content already lives
+ * on a `ledger/*` branch, so merging that branch is not blocked by "local
+ * changes would be overwritten". Lossless by construction: a file is touched
+ * only if its current bytes match the branch's blob, checked under the lock.
+ */
+export async function settleLedger(
+  root: string,
+  options: LedgerSettleOptions = {},
+): Promise<CommandResult<LedgerSettleResult>> {
+  const ledger = ledgerPaths(root).ledger;
+  if (tryGit(ledger, ["rev-parse", "--git-dir"]) === null) {
+    return notARepo<LedgerSettleResult>();
+  }
+  return withLedgerLock(root, () => {
+    const status = ledgerStatus(root);
+    if (!status.ok || !status.data) return status as unknown as CommandResult<LedgerSettleResult>;
+    const targets = status.data.uncommitted.filter((f) =>
+      options.branch ? f.onBranches.includes(options.branch) : f.onBranches.length > 0,
+    );
+    const settled: string[] = [];
+    const skipped: Array<{ path: string; reason: string }> = [];
+    for (const f of targets) {
+      if (options.dryRun) {
+        settled.push(f.path);
+        continue;
+      }
+      try {
+        if (f.state === "untracked") {
+          rmSync(join(ledger, f.path), { force: true });
+        } else {
+          git(ledger, ["checkout", "HEAD", "--", f.path]);
+        }
+        settled.push(f.path);
+      } catch (error) {
+        skipped.push({ path: f.path, reason: (error as Error).message });
+      }
+    }
+    // events.jsonl is shared by every actor, so it is only restored once every
+    // uncommitted event line is already present on a ledger branch.
+    const prefix = git(ledger, ["rev-parse", "--show-prefix"]).trim();
+    const eventsFile = ledgerPaths(root).events;
+    if (existsSync(eventsFile)) {
+      const head = new Set(
+        (tryGit(ledger, ["show", `HEAD:${prefix}events.jsonl`]) ?? "").split("\n").filter(Boolean),
+      );
+      const pending = readFileSync(eventsFile, "utf8")
+        .split("\n")
+        .filter((line) => line.trim() && !head.has(line));
+      const refs = options.branch
+        ? [options.branch]
+        : (
+            tryGit(ledger, ["for-each-ref", "--format=%(refname:short)", "refs/heads/ledger/"]) ??
+            ""
+          )
+            .split("\n")
+            .filter(Boolean);
+      const onBranches = new Set<string>();
+      for (const ref of refs) {
+        const text = tryGit(ledger, ["show", `${ref}:${prefix}events.jsonl`]);
+        for (const line of (text ?? "").split("\n")) if (line) onBranches.add(line);
+      }
+      if (pending.length > 0 && pending.every((line) => onBranches.has(line))) {
+        try {
+          if (!options.dryRun) git(ledger, ["checkout", "HEAD", "--", "events.jsonl"]);
+          settled.push("events.jsonl");
+        } catch (error) {
+          skipped.push({ path: "events.jsonl", reason: (error as Error).message });
+        }
+      }
+    }
+    return toResult({ settled, skipped, dryRun: options.dryRun === true }, []);
   });
 }

@@ -4,7 +4,7 @@ import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../co
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { closeIssue, createIssue, updateIssue } from "../core/issue.ts";
-import { commitLedger, ledgerStatus } from "../core/ledgerCommit.ts";
+import { commitLedger, ledgerStatus, settleLedger } from "../core/ledgerCommit.ts";
 import { inbox, postMessage } from "../core/messages.ts";
 import {
   addTaskCommits,
@@ -50,7 +50,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.10.0" },
+    { name: "waystation", version: "0.10.1" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -239,6 +239,19 @@ function buildServerAtRoot(root: string): McpServer {
   );
 
   // ── write tools ──
+
+  server.registerTool(
+    "ledger_settle",
+    {
+      description:
+        "Drop working-tree copies of ledger files whose exact content a ledger/* branch already holds, so merging that branch is not blocked. Lossless: only byte-identical files are touched",
+      inputSchema: {
+        branch: z.string().optional().describe("only files held by this branch"),
+        dry_run: z.boolean().optional().describe("list only; change nothing"),
+      },
+    },
+    async ({ branch, dry_run }) => toContent(await settleLedger(root, { branch, dryRun: dry_run })),
+  );
 
   server.registerTool(
     "ledger_commit",
