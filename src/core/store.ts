@@ -270,7 +270,15 @@ export function buildIntent(input: MutationIntentInput): MutationIntent {
     id: input.id,
     kind: input.kind,
     writes: input.writes,
-    events: input.events.map((payload, index) => ({ id: String(index), payload })),
+    events: input.events.map((payload, index) => ({
+      id: String(index),
+      // The first event of a mutation names the ledger files it wrote, so
+      // uncommitted files can later be attributed to the actor that wrote them.
+      payload:
+        index === 0 && input.writes.length > 0
+          ? { ...payload, files: input.writes.map((w) => w.path.split(sep).join("/")) }
+          : payload,
+    })),
   };
 }
 

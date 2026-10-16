@@ -146,6 +146,42 @@ export const CODES = {
     hint: "Create the scope or clear the reference.",
     retryable: false,
   },
+  ledger_not_in_git: {
+    severity: "error",
+    message: "The ledger is not inside a git repository.",
+    hint: "Run from a git checkout, or pass --root to a ledger that is in one.",
+    retryable: false,
+  },
+  ledger_nothing_to_commit: {
+    severity: "error",
+    message: "No uncommitted ledger files are attributed to this actor.",
+    hint: "Run 'ledger status' to see who owns the uncommitted files.",
+    retryable: false,
+  },
+  ledger_branch_checked_out: {
+    severity: "error",
+    message: "The target branch is checked out in a worktree.",
+    hint: "Choose a different branch with --branch; ledger commit never moves a checked-out branch.",
+    retryable: false,
+  },
+  ledger_commit_failed: {
+    severity: "error",
+    message: "Git failed while building the ledger commit.",
+    hint: "Nothing was changed in any checkout; fix the git error and retry.",
+    retryable: true,
+  },
+  ledger_dependency_foreign: {
+    severity: "warning",
+    message: "A committed task references a ledger file written by another actor.",
+    hint: "The file was included so the task is not committed without it.",
+    retryable: false,
+  },
+  ledger_dirty_foreign: {
+    severity: "warning",
+    message: "The shared ledger has uncommitted files written by other actors.",
+    hint: "Run 'ledger status'; use 'ledger commit --agent <name>' to commit only one actor's files.",
+    retryable: false,
+  },
   scope_not_committed: {
     severity: "warning",
     message: "A committed task references a scope record that is not tracked by git.",

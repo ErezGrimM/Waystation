@@ -4,6 +4,7 @@ import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../co
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { closeIssue, createIssue, updateIssue } from "../core/issue.ts";
+import { commitLedger, ledgerStatus } from "../core/ledgerCommit.ts";
 import { inbox, postMessage } from "../core/messages.ts";
 import {
   addTaskCommits,
@@ -49,7 +50,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.9.1" },
+    { name: "waystation", version: "0.10.0" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -228,7 +229,32 @@ function buildServerAtRoot(root: string): McpServer {
     },
   );
 
+  server.registerTool(
+    "ledger_status",
+    {
+      description:
+        "Uncommitted ledger files grouped by the actor that wrote them (read-only). Use before committing in a shared checkout.",
+    },
+    async () => toContent(ledgerStatus(root)),
+  );
+
   // ── write tools ──
+
+  server.registerTool(
+    "ledger_commit",
+    {
+      description:
+        "Commit only one actor's uncommitted ledger files (plus referenced scope/prompt records and that actor's events) to a branch, without changing HEAD, the index or any working tree",
+      inputSchema: {
+        agent: z.string().min(1).describe("actor whose files to commit"),
+        branch: z.string().optional().describe("target branch (default ledger/<agent>)"),
+        message: z.string().optional().describe("commit message"),
+        dry_run: z.boolean().optional().describe("report only; write nothing"),
+      },
+    },
+    async ({ agent, branch, message, dry_run }) =>
+      toContent(await commitLedger(root, { agent, branch, message, dryRun: dry_run })),
+  );
 
   server.registerTool(
     "create_task",

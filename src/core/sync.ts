@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { IndexCounts } from "../index/ledgerIndex.ts";
 import { generateReports, generateTaskViews, reindex } from "./generate.ts";
+import { ledgerStatus } from "./ledgerCommit.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, diag, toResult } from "./result.ts";
 import { withLedgerLock } from "./store.ts";
@@ -78,6 +79,22 @@ export async function syncLedger(
       return toResult<SyncSummary>(null, [...canonical.errors, ...canonical.warnings]);
     }
 
+    // Uncommitted files other actors left in a shared ledger: sync is about to
+    // add generated files on top of them.
+    const dirty = ledgerStatus(root);
+    const owners = Object.keys(dirty.data?.byOwner ?? {});
+    const dirtyWarnings =
+      owners.length > 0
+        ? [
+            diag("ledger_dirty_foreign", {
+              message: `uncommitted ledger files written by: ${owners
+                .map((o) => `${o} (${dirty.data?.byOwner[o]?.length})`)
+                .join(", ")}`,
+              details: { byOwner: dirty.data?.byOwner },
+            }),
+          ]
+        : [];
+
     const before = canonicalFingerprint(root);
     const indexed = await reindex(root);
     if (!indexed.ok || !indexed.data) {
@@ -102,6 +119,7 @@ export async function syncLedger(
       views: options.views,
     });
     return toResult<SyncSummary>({ index: indexed.data, written, task_views: taskViews }, [
+      ...dirtyWarnings,
       ...indexed.warnings,
       ...project.errors,
       ...project.warnings,

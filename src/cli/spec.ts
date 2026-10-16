@@ -683,6 +683,54 @@ export const COMMAND_TREE: CommandSpec[] = [
     subcommands: [],
   },
   {
+    name: "ledger",
+    description: "Uncommitted ledger files: who wrote them, and committing one actor's share",
+    options: [],
+    arguments: [],
+    notes: [
+      "Each mutation records the files it wrote, so uncommitted ledger files can be attributed to the actor that wrote them.",
+      "'ledger commit' builds a commit from a temporary index and writes it to a branch. HEAD, the index and the working tree of every checkout are left untouched.",
+    ],
+    subcommands: [
+      {
+        name: "status",
+        description: "List uncommitted ledger files grouped by the actor that wrote them",
+        options: [{ name: "json", flag: "--json", description: "output JSON" }],
+        arguments: [],
+        notes: [
+          "Read-only. 'unattributed' files were not written through Waystation (hand edits); 'generated' files come from report/sync.",
+        ],
+        subcommands: [],
+      },
+      {
+        name: "commit",
+        description: "Commit only one actor's uncommitted ledger files to a branch",
+        options: [
+          {
+            name: "agent",
+            flag: "--agent <name>",
+            description: "actor whose files to commit",
+            required: true,
+          },
+          {
+            name: "branch",
+            flag: "--branch <name>",
+            description: "target branch (default: ledger/<agent>); must not be checked out",
+          },
+          { name: "message", flag: "--message <text>", description: "commit message" },
+          { name: "dryRun", flag: "--dry-run", description: "show what would be committed" },
+          { name: "json", flag: "--json", description: "output JSON" },
+        ],
+        arguments: [],
+        notes: [
+          "Includes the scope and prompt records the actor's tasks reference, and only that actor's events.",
+          "The files stay modified in the shared checkout; after merging the branch, 'git checkout -- <files>' drops the duplicates.",
+        ],
+        subcommands: [],
+      },
+    ],
+  },
+  {
     name: "git",
     description: "Git/worktree commands",
     options: [],

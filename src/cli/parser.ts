@@ -276,5 +276,5 @@ export function generateHelp(command: CommandSpec | null, parent: CommandSpec | 
 
 /** Generate version string */
 export function generateVersion(): string {
-  return "0.9.1";
+  return "0.10.0";
 }

@@ -18,6 +18,7 @@ import {
   type UpdateIssueInput,
   updateIssue,
 } from "../core/issue.ts";
+import { commitLedger, ledgerStatus } from "../core/ledgerCommit.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import {
   claimTask,
@@ -869,6 +870,49 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       });
       return;
     }
+  }
+
+  // ledger
+  if (command === "ledger") {
+    if (subcommand === "status") {
+      const res = ledgerStatus(findProjectRoot());
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        if (data.files.length === 0) process.stdout.write("no uncommitted ledger files\n");
+        for (const [owner, files] of Object.entries(data.byOwner)) {
+          process.stdout.write(`${owner} (${files.length}):\n`);
+          for (const f of files) process.stdout.write(`  ${f}\n`);
+        }
+        if (data.unattributed.length) {
+          process.stdout.write(`unattributed (${data.unattributed.length}):\n`);
+          for (const f of data.unattributed) process.stdout.write(`  ${f}\n`);
+        }
+        if (data.generated.length)
+          process.stdout.write(`generated: ${data.generated.length} file(s)\n`);
+      });
+      return;
+    }
+    if (subcommand === "commit") {
+      const res = await commitLedger(findProjectRoot(), {
+        agent: ctx.opts.agent as string,
+        branch: ctx.opts.branch as string | undefined,
+        message: ctx.opts.message as string | undefined,
+        dryRun: ctx.opts.dryRun as boolean | undefined,
+      });
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        const verb = data.dryRun ? "would commit" : `committed ${data.commit?.slice(0, 7)} to`;
+        process.stdout.write(
+          `${verb} ${data.branch}: ${data.files.length} file(s), ${data.events} event(s)\n`,
+        );
+        for (const f of data.files) process.stdout.write(`  ${f}\n`);
+      });
+      return;
+    }
+    process.stdout.write(generateHelp(null, null));
+    return;
   }
 
   // mcp
