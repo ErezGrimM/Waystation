@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { ensureUnionMerge } from "./ledgerCommit.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, diag, okResult } from "./result.ts";
 import { appendEventUnlocked, withLedgerLock, writeJsonAtomic } from "./store.ts";
@@ -64,6 +65,7 @@ export async function initLedger(
       generated_views: { enabled: true },
     });
 
+    ensureUnionMerge(root);
     if (!existsSync(paths.events)) writeFileSync(paths.events, "");
     appendEventUnlocked(root, {
       type: "project.initialized",

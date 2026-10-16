@@ -50,7 +50,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.10.1" },
+    { name: "waystation", version: "0.10.2" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 

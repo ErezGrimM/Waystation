@@ -176,6 +176,12 @@ export const CODES = {
     hint: "The file was included so the task is not committed without it.",
     retryable: false,
   },
+  ledger_union_merge_missing: {
+    severity: "warning",
+    message: "events.jsonl is not set to merge=union, so merging ledger branches can conflict.",
+    hint: "Add '.waystation/events.jsonl merge=union' to .gitattributes (waystation init --force adds it).",
+    retryable: false,
+  },
   ledger_dirty_foreign: {
     severity: "warning",
     message: "The shared ledger has uncommitted files written by other actors.",

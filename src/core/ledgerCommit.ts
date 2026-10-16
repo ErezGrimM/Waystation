@@ -66,6 +66,22 @@ export interface LedgerCommitResult {
 const GENERATED_PREFIXES = ["reports/", "views/", "context/"];
 const SHARED_FILES = new Set(["events.jsonl"]);
 
+/** gitattributes rule that lets concurrent ledger branches merge the append-only event log. */
+export const EVENTS_UNION_RULE = ".waystation/events.jsonl merge=union";
+
+/** Add the union-merge rule to the project's .gitattributes; true if the file changed. */
+export function ensureUnionMerge(root: string): boolean {
+  const file = join(root, ".gitattributes");
+  const current = existsSync(file) ? readFileSync(file, "utf8") : "";
+  if (current.includes("events.jsonl merge=union")) return false;
+  const nl = String.fromCharCode(10);
+  const lead = current === "" || current.endsWith(nl) ? "" : nl;
+  const comment =
+    "# Waystation event log is append-only; ledger branches merge by keeping both sides.";
+  writeFileSync(file, `${current}${lead}${comment}${nl}${EVENTS_UNION_RULE}${nl}`);
+  return true;
+}
+
 class GitFailure extends Error {}
 
 function git(cwd: string, args: string[], env?: Record<string, string>): string {
@@ -274,12 +290,24 @@ export async function commitLedger(
     );
     const paths = [...new Set([...mine, ...dependencies])].sort();
     const warnings: Diagnostic[] = [];
+    const mergeAttr = tryGit(ledger, ["check-attr", "merge", "--", "events.jsonl"]) ?? "";
+    if (!mergeAttr.trim().endsWith(": union")) {
+      warnings.push(
+        diag("ledger_union_merge_missing", {
+          details: { rule: EVENTS_UNION_RULE },
+        }),
+      );
+    }
     for (const path of paths) {
       const others = (dirty.get(path)?.owners ?? []).filter((a) => a !== agent);
       if (others.length > 0) {
         warnings.push(
           diag("ledger_dependency_foreign", {
-            message: `${path} was also written by ${others.join(", ")}; the commit holds its current content, including their changes`,
+            message: `${path} was also written by ${others.join(", ")}; the commit holds its current content, including their changes. Merge ${others
+              .map((a) => `ledger/${a}`)
+              .join(
+                ", ",
+              )} first, then ${branch}: both branches changed this file, and a conflict there is resolved by keeping the later actor's version`,
             details: { path, owners: others },
           }),
         );
