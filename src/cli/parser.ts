@@ -5,7 +5,13 @@
  * global options, per-command options, help output, diagnostics, and exit codes.
  */
 
-import { COMMAND_TREE, type CommandContext, type CommandSpec, GLOBAL_OPTIONS } from "./spec.ts";
+import {
+  COMMAND_TREE,
+  type CommandContext,
+  type CommandSpec,
+  GLOBAL_NOTES,
+  GLOBAL_OPTIONS,
+} from "./spec.ts";
 
 export interface ParseResult {
   command: CommandSpec | null;
@@ -215,7 +221,7 @@ export function generateHelp(command: CommandSpec | null, parent: CommandSpec | 
     : "Local-first ledger for coordinating humans and AI coding agents";
 
   lines.push(
-    `Usage: waystation ${parent ? `${parent.name} ` : ""}${command ? command.name : "<command>"} [options]`,
+    `Usage: waystation ${parent ? `${parent.name} ` : ""}${command ? `${command.name}${command.arguments.map((a) => ` <${a.name}>`).join("")}` : "<command>"} [options]`,
   );
   lines.push("");
   lines.push(description);
@@ -255,6 +261,13 @@ export function generateHelp(command: CommandSpec | null, parent: CommandSpec | 
     for (const cmd of COMMAND_TREE) {
       lines.push(`  ${cmd.name.padEnd(20)} ${cmd.description}`);
     }
+    lines.push("");
+  }
+
+  const notes = command ? (command.notes ?? []) : GLOBAL_NOTES;
+  if (notes.length > 0) {
+    lines.push("Notes:");
+    for (const note of notes) lines.push(`  - ${note}`);
     lines.push("");
   }
 

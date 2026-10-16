@@ -210,7 +210,10 @@ function buildServerAtRoot(root: string): McpServer {
 
   server.registerTool(
     "validate_ledger",
-    { description: "Validate the entire ledger (schemas, references, cycles, events)" },
+    {
+      description:
+        "Validate the entire ledger (schemas, references, cycles, events). Read-only; unlike sync it writes nothing",
+    },
     async () => {
       const result = validateLedger(root);
       return toContent(result);
@@ -299,7 +302,8 @@ function buildServerAtRoot(root: string): McpServer {
   server.registerTool(
     "set_task_status",
     {
-      description: "Apply a valid non-claim task status transition",
+      description:
+        "Apply a valid non-claim task status transition (todo|ready|blocked -> wont_do cancels a task; in_progress only via claim)",
       inputSchema: {
         id: RecordId.describe("task id"),
         status: TaskStatus.describe("target status"),
