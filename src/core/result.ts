@@ -179,7 +179,7 @@ export const CODES = {
   ledger_union_merge_missing: {
     severity: "warning",
     message: "events.jsonl is not set to merge=union, so merging ledger branches can conflict.",
-    hint: "Add '.waystation/events.jsonl merge=union' to .gitattributes (waystation init --force adds it).",
+    hint: "Add '.waystation/events.jsonl merge=union' to .gitattributes and commit it; 'init --force' also adds it but rewrites config.json.",
     retryable: false,
   },
   ledger_dirty_foreign: {
