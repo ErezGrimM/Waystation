@@ -135,7 +135,10 @@ export async function setTaskStatus(
   return withLedgerLock(root, () => {
     const { task, file } = requireTask(root, id);
     if (to === "in_progress" || task.status === "done" || task.status === "wont_do")
-      throw new MutationError("use claim or reopen for this transition", "invalid_transition");
+      throw new MutationError(
+        `use claim (for in_progress) or reopen (from done/wont_do); cannot set ${task.status} -> ${to}. To cancel a todo/ready/blocked task, set status wont_do`,
+        "invalid_transition",
+      );
     const allowed: Record<TaskStatus, TaskStatus[]> = {
       todo: ["ready", "wont_do"],
       ready: ["todo", "blocked", "wont_do"],
@@ -146,7 +149,12 @@ export async function setTaskStatus(
       wont_do: [],
     };
     if (!allowed[task.status].includes(to))
-      throw new MutationError("invalid task status transition", "invalid_transition");
+      throw new MutationError(
+        `invalid task status transition ${task.status} -> ${to}; allowed from ${task.status}: ${
+          allowed[task.status].join(", ") || "none"
+        }`,
+        "invalid_transition",
+      );
     if (activeClaimForTask(root, id))
       throw new MutationError("active claim requires release or finish", "invalid_transition");
     const ts = nowIso(now);

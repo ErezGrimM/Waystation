@@ -30,6 +30,26 @@ function recordExists(dir: string, id: string): boolean {
   return existsSync(join(dir, `${id}.json`)) || existsSync(join(dir, `${id}.yaml`));
 }
 
+/**
+ * Ledger-relative paths (forward slashes) of git-tracked task and scope
+ * records, or null when the ledger is not inside a git repository.
+ */
+function trackedLedgerFiles(ledger: string): Set<string> | null {
+  try {
+    const proc = Bun.spawnSync(["git", "ls-files", "--", "tasks", "scopes"], { cwd: ledger });
+    if (proc.exitCode !== 0) return null;
+    return new Set(
+      proc.stdout
+        .toString()
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+    );
+  } catch {
+    return null;
+  }
+}
+
 function expectedJsonName(id: string): string {
   return `${id}.json`;
 }
@@ -240,6 +260,7 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
   // A dependency target counts as present if it exists as a JSON record OR as a
   // not-yet-migrated YAML file (transitional).
   const taskExists = (id: string) => seenTaskIds.has(id) || recordExists(paths.tasks, id);
+  const tracked = trackedLedgerFiles(paths.ledger);
   for (const t of tasks) {
     for (const dep of t.dependencies) {
       if (!taskExists(dep)) {
@@ -258,6 +279,16 @@ export function validateLedger(root?: string, options: ValidateOptions = {}): Co
           details: { task: t.id, scope: t.scope },
         }),
       );
+    }
+    if (t.scope && tracked?.has(`tasks/${t.id}.json`) && !tracked.has(`scopes/${t.scope}.json`)) {
+      if (recordExists(join(paths.ledger, "scopes"), t.scope)) {
+        diags.push(
+          diag("scope_not_committed", {
+            message: `${t.id} is committed but its scope ${t.scope} is not tracked by git`,
+            details: { task: t.id, scope: t.scope },
+          }),
+        );
+      }
     }
     for (const p of t.prompts) {
       if (!recordExists(join(paths.ledger, "prompts"), p)) {

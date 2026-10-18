@@ -7,3 +7,6 @@
 *.jpg binary
 *.gif binary
 *.ico binary
+
+# Event log is append-only; concurrent ledger branches merge by keeping both sides.
+.waystation/events.jsonl merge=union

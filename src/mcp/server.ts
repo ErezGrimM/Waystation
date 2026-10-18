@@ -4,6 +4,7 @@ import { buildBriefResult, configuredBriefBudget, parseBriefBudget } from "../co
 import { buildGitContext } from "../core/gitContext.ts";
 import { createHandoff } from "../core/handoff.ts";
 import { closeIssue, createIssue, updateIssue } from "../core/issue.ts";
+import { commitLedger, ledgerStatus, settleLedger } from "../core/ledgerCommit.ts";
 import { inbox, postMessage } from "../core/messages.ts";
 import {
   addTaskCommits,
@@ -49,7 +50,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.9.0" },
+    { name: "waystation", version: "0.10.3" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -210,7 +211,10 @@ function buildServerAtRoot(root: string): McpServer {
 
   server.registerTool(
     "validate_ledger",
-    { description: "Validate the entire ledger (schemas, references, cycles, events)" },
+    {
+      description:
+        "Validate the entire ledger (schemas, references, cycles, events). Read-only; unlike sync it writes nothing",
+    },
     async () => {
       const result = validateLedger(root);
       return toContent(result);
@@ -225,7 +229,45 @@ function buildServerAtRoot(root: string): McpServer {
     },
   );
 
+  server.registerTool(
+    "ledger_status",
+    {
+      description:
+        "Uncommitted ledger files grouped by the actor that wrote them (read-only). Use before committing in a shared checkout.",
+    },
+    async () => toContent(ledgerStatus(root)),
+  );
+
   // ── write tools ──
+
+  server.registerTool(
+    "ledger_settle",
+    {
+      description:
+        "Drop working-tree copies of ledger files whose exact content a ledger/* branch already holds, so merging that branch is not blocked. Lossless: only byte-identical files are touched",
+      inputSchema: {
+        branch: z.string().optional().describe("only files held by this branch"),
+        dry_run: z.boolean().optional().describe("list only; change nothing"),
+      },
+    },
+    async ({ branch, dry_run }) => toContent(await settleLedger(root, { branch, dryRun: dry_run })),
+  );
+
+  server.registerTool(
+    "ledger_commit",
+    {
+      description:
+        "Commit only one actor's uncommitted ledger files (plus referenced scope/prompt records and that actor's events) to a branch, without changing HEAD, the index or any working tree",
+      inputSchema: {
+        agent: z.string().min(1).describe("actor whose files to commit"),
+        branch: z.string().optional().describe("target branch (default ledger/<agent>)"),
+        message: z.string().optional().describe("commit message"),
+        dry_run: z.boolean().optional().describe("report only; write nothing"),
+      },
+    },
+    async ({ agent, branch, message, dry_run }) =>
+      toContent(await commitLedger(root, { agent, branch, message, dryRun: dry_run })),
+  );
 
   server.registerTool(
     "create_task",
@@ -299,7 +341,8 @@ function buildServerAtRoot(root: string): McpServer {
   server.registerTool(
     "set_task_status",
     {
-      description: "Apply a valid non-claim task status transition",
+      description:
+        "Apply a valid non-claim task status transition (todo|ready|blocked -> wont_do cancels a task; in_progress only via claim)",
       inputSchema: {
         id: RecordId.describe("task id"),
         status: TaskStatus.describe("target status"),

@@ -399,6 +399,12 @@ function normalize(value: unknown): unknown {
       normalized[key] = "<claim>";
       continue;
     }
+    if (key === "files" && Array.isArray(entry)) {
+      normalized[key] = entry.map((f) =>
+        typeof f === "string" ? f.replace(/^claims\/.*\.json$/, "claims/<claim>.json") : f,
+      );
+      continue;
+    }
     normalized[key] = normalize(entry);
   }
   return normalized;

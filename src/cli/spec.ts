@@ -29,6 +29,8 @@ export interface CommandSpec {
   options: OptionSpec[];
   arguments: ArgumentSpec[];
   subcommands: CommandSpec[];
+  /** Extra guidance shown under "Notes:" in this command's help */
+  notes?: string[];
   /** Action handler — receives parsed options and positional arguments */
   action?: (ctx: CommandContext) => Promise<void> | void;
 }
@@ -59,6 +61,16 @@ export const GLOBAL_OPTIONS: OptionSpec[] = [
     flag: "--json",
     description: "output JSON",
   },
+];
+
+/** Cross-cutting guidance shown at the bottom of global help. */
+export const GLOBAL_NOTES: string[] = [
+  "Ledger location: --root, then WAYSTATION_ROOT, then the nearest .waystation/ found upward.",
+  `With config git.ledger_root "main_worktree", a linked git worktree is redirected to the MAIN checkout ledger. All branches and sessions share one working tree of ledger files, so edits from other sessions can sit uncommitted beside yours. Commit only the ledger files you changed.`,
+  "Commit a task together with every scope record it references; a task committed alone fails validation elsewhere.",
+  "Claims record the git branch and worktree they were made from; 'task claim --branch/--worktree' overrides them.",
+  "Read-only checks: validate, task list/show/next/ready, inbox. Writers: sync, report, reindex, repair, and every task/message/handoff mutation.",
+  "Cancel a task that is not claimed or finished with: task set-status <id> wont_do (undo with task reopen).",
 ];
 
 export const COMMAND_TREE: CommandSpec[] = [
@@ -173,6 +185,10 @@ export const COMMAND_TREE: CommandSpec[] = [
         ],
         arguments: [{ name: "id", description: "task id", required: true }],
         subcommands: [],
+        notes: [
+          "Usage: waystation task create <id> --title <title> [options]. The id is the first positional argument.",
+          "Commit the referenced scope record (--scope) in the same commit as the task.",
+        ],
       },
       {
         name: "update",
@@ -241,6 +257,11 @@ export const COMMAND_TREE: CommandSpec[] = [
           { name: "status", description: "target task status", required: true },
         ],
         subcommands: [],
+        notes: [
+          "Allowed: todo -> ready|wont_do; ready -> todo|blocked|wont_do; blocked -> todo|ready|wont_do; review -> ready|done.",
+          "in_progress is reached only by 'task claim'; leave it with release or finish. done/wont_do are terminal: use 'task reopen'.",
+          "To cancel a task, set it to wont_do.",
+        ],
       },
       {
         name: "reopen",
@@ -465,6 +486,10 @@ export const COMMAND_TREE: CommandSpec[] = [
     ],
     arguments: [],
     subcommands: [],
+    notes: [
+      "Read-only: never writes ledger files. Use this, not sync, for a health check.",
+      "Warns when a task references a scope record that does not exist.",
+    ],
   },
   {
     name: "reindex",
@@ -472,6 +497,9 @@ export const COMMAND_TREE: CommandSpec[] = [
     options: [{ name: "json", flag: "--json", description: "output JSON" }],
     arguments: [],
     subcommands: [],
+    notes: [
+      "Writes the index under the resolved ledger root (see 'waystation --help' for how the root is chosen).",
+    ],
   },
   {
     name: "repair",
@@ -490,6 +518,9 @@ export const COMMAND_TREE: CommandSpec[] = [
     ],
     arguments: [],
     subcommands: [],
+    notes: [
+      "Writes report files into the resolved ledger root. In main_worktree mode that is the main checkout, shared with other sessions: review git status there before committing.",
+    ],
   },
   {
     name: "sync",
@@ -504,6 +535,9 @@ export const COMMAND_TREE: CommandSpec[] = [
     ],
     arguments: [],
     subcommands: [],
+    notes: [
+      "NOT read-only: rewrites the index and generated reports/views in the resolved ledger root. In main_worktree mode that is the main checkout, so changes can mix with other sessions' uncommitted edits. For a read-only check use 'validate'.",
+    ],
   },
   {
     name: "handoff",
@@ -647,6 +681,77 @@ export const COMMAND_TREE: CommandSpec[] = [
     ],
     arguments: [],
     subcommands: [],
+  },
+  {
+    name: "ledger",
+    description: "Uncommitted ledger files: who wrote them, and committing one actor's share",
+    options: [],
+    arguments: [],
+    notes: [
+      "Each mutation records the files it wrote, so uncommitted ledger files can be attributed to the actor that wrote them.",
+      "'ledger commit' builds a commit from a temporary index and writes it to a branch. HEAD, the index and the working tree of every checkout are left untouched.",
+    ],
+    subcommands: [
+      {
+        name: "status",
+        description: "List uncommitted ledger files grouped by the actor that wrote them",
+        options: [{ name: "json", flag: "--json", description: "output JSON" }],
+        arguments: [],
+        notes: [
+          "Read-only. 'unattributed' files were not written through Waystation (hand edits); 'generated' files come from report/sync.",
+        ],
+        subcommands: [],
+      },
+      {
+        name: "commit",
+        description: "Commit only one actor's uncommitted ledger files to a branch",
+        options: [
+          {
+            name: "agent",
+            flag: "--agent <name>",
+            description: "actor whose files to commit",
+            required: true,
+          },
+          {
+            name: "branch",
+            flag: "--branch <name>",
+            description: "target branch (default: ledger/<agent>); must not be checked out",
+          },
+          { name: "message", flag: "--message <text>", description: "commit message" },
+          { name: "dryRun", flag: "--dry-run", description: "show what would be committed" },
+          { name: "json", flag: "--json", description: "output JSON" },
+        ],
+        arguments: [],
+        notes: [
+          "Includes the scope and prompt records the actor's tasks reference, and only that actor's events.",
+          "The files stay modified in the shared checkout until you run 'ledger settle'; 'ledger status' lists them as pending merge meanwhile.",
+          "A file written by several actors is committed by each of them with its current content (a warning names the co-writers).",
+        ],
+        subcommands: [],
+      },
+      {
+        name: "settle",
+        description: "Drop working-tree copies of ledger files that a ledger branch already holds",
+        options: [
+          {
+            name: "branch",
+            flag: "--branch <name>",
+            description: "only files held by this branch (default: any ledger/* branch)",
+          },
+          {
+            name: "dryRun",
+            flag: "--dry-run",
+            description: "list the files without touching them",
+          },
+          { name: "json", flag: "--json", description: "output JSON" },
+        ],
+        arguments: [],
+        notes: [
+          "Run before merging a ledger branch. Only files byte-identical to the branch's version are touched, so nothing is lost.",
+        ],
+        subcommands: [],
+      },
+    ],
   },
   {
     name: "git",

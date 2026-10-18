@@ -18,6 +18,7 @@ import {
   type UpdateIssueInput,
   updateIssue,
 } from "../core/issue.ts";
+import { commitLedger, ledgerStatus, settleLedger } from "../core/ledgerCommit.ts";
 import { inbox, postMessage, threadMessages } from "../core/messages.ts";
 import {
   claimTask,
@@ -184,10 +185,10 @@ function renderIssue(issue: IssueRecord): string {
 
 // ─── Command dispatch ────────────────────────────────────────────────────────
 
-function arg(ctx: CommandContext, index: number): string {
+function arg(ctx: CommandContext, index: number, name: string): string {
   const val = ctx.args[index];
   if (val === undefined) {
-    throw new MutationError(`missing argument at position ${index}`, "schema_invalid");
+    throw new MutationError(`missing required argument <${name}>`, "schema_invalid");
   }
   return val;
 }
@@ -298,7 +299,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "show") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       const found = loadTaskById(id);
       const res = found
         ? okResult(found)
@@ -321,7 +322,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "create") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runCommand(
         ctx.json,
         () =>
@@ -347,7 +348,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "update") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runCommand(
         ctx.json,
         () => {
@@ -377,8 +378,8 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "set-status") {
-      const id = arg(ctx, 0);
-      const status = arg(ctx, 1);
+      const id = arg(ctx, 0, "id");
+      const status = arg(ctx, 1, "status");
       await runCommand(
         ctx.json,
         () => setTaskStatus(findProjectRoot(), id, status as TaskStatus, ctx.opts.actor as string),
@@ -387,7 +388,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "reopen") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       const status = ctx.opts.status as string;
       if (status !== "todo" && status !== "ready") {
         emitResult(
@@ -408,7 +409,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "claim") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runMutation(ctx.json, async () => {
         const claim = await claimTask(findProjectRoot(), id, ctx.opts.agent as string, new Date(), {
           branch: ctx.opts.branch as string | undefined,
@@ -420,7 +421,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "release") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runMutation(ctx.json, async () => {
         await releaseTask(findProjectRoot(), id, ctx.opts.agent as string);
         return `released ${id}`;
@@ -428,7 +429,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "finish") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runMutation(ctx.json, async () => {
         await finishTask(findProjectRoot(), id, ctx.opts.agent as string, new Date(), {
           commits: (ctx.opts.commit as string[]) ?? [],
@@ -466,7 +467,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "show") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runCommand(
         ctx.json,
         async () => {
@@ -507,7 +508,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "update") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runCommand(
         ctx.json,
         () => {
@@ -541,7 +542,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "close") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       await runCommand(
         ctx.json,
         () =>
@@ -712,7 +713,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "show") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       const h = getHandoff(findProjectRoot(), id) ?? null;
       const res = h
         ? okResult(h)
@@ -754,7 +755,7 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       return;
     }
     if (subcommand === "show") {
-      const id = arg(ctx, 0);
+      const id = arg(ctx, 0, "id");
       const p = getPrompt(findProjectRoot(), id) ?? null;
       const res = p
         ? okResult(p)
@@ -869,6 +870,69 @@ async function dispatch(ctx: CommandContext, commandPath: string[]): Promise<voi
       });
       return;
     }
+  }
+
+  // ledger
+  if (command === "ledger") {
+    if (subcommand === "status") {
+      const res = ledgerStatus(findProjectRoot());
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        if (data.files.length === 0) process.stdout.write("no uncommitted ledger files\n");
+        for (const [owner, files] of Object.entries(data.byOwner)) {
+          process.stdout.write(`${owner} (${files.length}):\n`);
+          for (const f of files) process.stdout.write(`  ${f}\n`);
+        }
+        if (data.unattributed.length) {
+          process.stdout.write(`unattributed (${data.unattributed.length}):\n`);
+          for (const f of data.unattributed) process.stdout.write(`  ${f}\n`);
+        }
+        if (data.pendingMerge.length) {
+          process.stdout.write(`pending merge (${data.pendingMerge.length}):\n`);
+          for (const f of data.pendingMerge)
+            process.stdout.write(`  ${f.path}  [${f.branches.join(", ")}]\n`);
+        }
+        if (data.generated.length)
+          process.stdout.write(`generated: ${data.generated.length} file(s)\n`);
+      });
+      return;
+    }
+    if (subcommand === "commit") {
+      const res = await commitLedger(findProjectRoot(), {
+        agent: ctx.opts.agent as string,
+        branch: ctx.opts.branch as string | undefined,
+        message: ctx.opts.message as string | undefined,
+        dryRun: ctx.opts.dryRun as boolean | undefined,
+      });
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        const verb = data.dryRun ? "would commit" : `committed ${data.commit?.slice(0, 7)} to`;
+        process.stdout.write(
+          `${verb} ${data.branch}: ${data.files.length} file(s), ${data.events} event(s)\n`,
+        );
+        for (const f of data.files) process.stdout.write(`  ${f}\n`);
+      });
+      return;
+    }
+    if (subcommand === "settle") {
+      const res = await settleLedger(findProjectRoot(), {
+        branch: ctx.opts.branch as string | undefined,
+        dryRun: ctx.opts.dryRun as boolean | undefined,
+      });
+      emitResult(res, ctx.json, () => {
+        const data = res.data;
+        if (!data) return;
+        const verb = data.dryRun ? "would settle" : "settled";
+        process.stdout.write(`${verb} ${data.settled.length} file(s)\n`);
+        for (const f of data.settled) process.stdout.write(`  ${f}\n`);
+        for (const f of data.skipped) process.stdout.write(`  skipped ${f.path}: ${f.reason}\n`);
+      });
+      return;
+    }
+    process.stdout.write(generateHelp(null, null));
+    return;
   }
 
   // mcp
