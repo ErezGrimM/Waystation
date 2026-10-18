@@ -1,7 +1,7 @@
 {
   "id": "task-ranking-offset-aware",
   "title": "Make task ranking offset-aware like byCreatedAtThenId",
-  "status": "todo",
+  "status": "done",
   "priority": 3,
   "scope": "scope-core",
   "path_hints": [
@@ -15,8 +15,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:53+03:00",
+  "closed_at": "2026-10-18T14:05:53+03:00",
   "description": "From the 2026-08-15 complete code audit: `byPriorityThenCreatedAtThenId` (src/core/tasks.ts:64-73) compares `created_at` as plain strings, while `byCreatedAtThenId` (src/core/time.ts:56-64) is offset-aware via `Date.parse`. On a shared ledger authored across machines with different timezone offsets (e.g. +02:00 vs +03:00), lexical comparison mis-orders records whose instants differ only by the offset. Align the ADR-0008 comparator with the offset-aware parsing used elsewhere, keeping the missing-`created_at`-sorts-earliest and `id` tiebreak semantics.",
   "acceptance": [
     "`byPriorityThenCreatedAtThenId` orders equal-priority tasks by real instant (offset-aware), matching `byCreatedAtThenId` semantics.",
@@ -25,5 +25,9 @@
     "Index-backed ordering (`readyFromIndex`) agrees with in-memory ordering for the same records.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #5 (low)."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #5 (low).\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

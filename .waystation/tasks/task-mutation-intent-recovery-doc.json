@@ -1,7 +1,7 @@
 {
   "id": "task-mutation-intent-recovery-doc",
   "title": "Document manual recovery of a corrupt mutation intent",
-  "status": "todo",
+  "status": "done",
   "priority": 4,
   "scope": "scope-core",
   "path_hints": [
@@ -14,8 +14,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:53+03:00",
+  "closed_at": "2026-10-18T14:05:53+03:00",
   "description": "From the 2026-08-15 complete code audit: when `mutation-intent.json` is malformed or unsafe, `recoverMutationIntentUnlocked` (src/core/store.ts:266-286) throws `mutation_intent_invalid` on every lock acquisition, bricking ALL writes until the file is manually removed. This fail-safe is correct but currently only discoverable from the error hint. Document the manual-repair procedure (validate flags the file; inspect the ledger backup; remove/replace the intent) in the docs referenced by the hint.",
   "acceptance": [
     "The `mutation_intent_invalid` hint points at a documented manual-repair procedure.",
@@ -23,5 +23,9 @@
     "No code behavior changes are required unless the documentation exposes a gap.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #17 (operational). Fail-safe design is sound; this is a documentation task."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #17 (operational). Fail-safe design is sound; this is a documentation task.\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

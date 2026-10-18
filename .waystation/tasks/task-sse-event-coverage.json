@@ -1,7 +1,7 @@
 {
   "id": "task-sse-event-coverage",
   "title": "Broadcast core mutations to the SSE event hub",
-  "status": "todo",
+  "status": "done",
   "priority": 3,
   "scope": "scope-dashboard",
   "path_hints": [
@@ -15,8 +15,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:54+03:00",
+  "closed_at": "2026-10-18T14:05:54+03:00",
   "description": "From the 2026-08-15 complete code audit: `emitMutationEvent` (src/core/events.ts:5) is only ever called by the dashboard's own `emit()` wrapper (src/dashboard/server.ts:70). Core mutations (`createTask`, `claimTask`, `postMessage`, ...) append to events.jsonl but never publish to the in-process hub, so the dashboard's SSE live stream (src/dashboard/server.ts:639) misses CLI/MCP-driven changes. Fix: publish a typed event from the core write path (`appendEventUnlocked` or the mutation entry points) so all surfaces' mutations appear live, or explicitly document the limitation if a hub emission from core is rejected.",
   "acceptance": [
     "A mutation performed outside the dashboard process surface (simulated via a direct core call) appears on the SSE /api/events stream.",
@@ -24,5 +24,9 @@
     "Existing dashboard-only live updates keep working.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #7 (low). Touches src/core/store.ts, also touched by task-lock-contended-wiring and task-sweep-tmp-coverage; coordinate."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #7 (low). Touches src/core/store.ts, also touched by task-lock-contended-wiring and task-sweep-tmp-coverage; coordinate.\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

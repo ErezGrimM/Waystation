@@ -8,7 +8,7 @@
 - `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 
 ## In progress
-- `task-integrate-finished-work-20261018` [p1] — Audit and integrate finished branches, reconcile remaining tasks
+_none_
 
 ## Review
 _none_
@@ -21,20 +21,7 @@ _none_
 _none_
 
 ## Backlog (todo)
-- `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
-- `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
-- `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
-- `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
-- `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
-- `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
-- `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
-- `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
-- `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
-- `task-remove-writeclaim-dead-code` [p4] — Remove the unused writeClaim helper
-- `task-repair-metric-consistency` [p4] — Align repair finalLines with physical line count
-- `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
-- `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
 - `task-w04a-additive-schema` [p1] — W04a: additive CommitEvidence schema
 - `task-w04b-reconcile-core` [p1] — W04b: reconciliation core operation
 - `task-w04c-lifecycle-guard` [p2] — W04c: reopened\-work guard and earlier\-completion reconstruction
@@ -93,15 +80,19 @@ _none_
 - `task-dashboard-commit-guard` [p2] — Guard dashboard git commit against blind git add \-A
 - `task-dashboard-frontend` [p2] — Implement the dashboard SPA \(Vite \+ React \+ TanStack Query\)
 - `task-dashboard-git-worktree-visibility` [p3] — Show git and worktree context in dashboard and MCP
+- `task-dashboard-lexical-sorts` [p4] — Make dashboard timestamp sorts offset\-aware
 - `task-dashboard-server` [p2] — Implement the dashboard API server \(Hono \+ SSE \+ CLI command\)
 - `task-error-envelope` [p2] — Adopt the structured error envelope \(CommandResult / Diagnostic\)
+- `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-event-history-validation` [p1] — Validate claim and finish event completeness
 - `task-events-jsonl-newline-defence` [p1] — Defend events\.jsonl appends against missing trailing newline
 - `task-gh-cli` [p2] — GitHub Issues CLI commands \(import/export\)
 - `task-gh-core` [p2] — GitHub Issues import/export core module \(API \+ field mapping\)
 - `task-gh-dashboard` [p3] — GitHub Issues import/export buttons on dashboard Issues page
+- `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-init` [p1] — Initialize git version control
 - `task-git-state-core` [p1] — Detect current git branch, root, worktree, and status in core
+- `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
 - `task-graph-brief` [p2] — Wire Graphify enrichment into brief, CLI, MCP, and dashboard
 - `task-graph-core` [p2] — Graphify context enrichment core module
 - `task-graph-fix-crash-and-duplicates` [p1] — Fix loadGraphData crash on malformed JSON and deduplicate impact hints
@@ -109,11 +100,15 @@ _none_
 - `task-handoff` [p2] — Implement handoff create/show
 - `task-handoff-id-collision` [p3] — Fix handoff id collision on same\-second creation
 - `task-index-all-records` [p3] — Extend the SQLite index to all record types
+- `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init` [p1] — Implement \`waystation init\`
+- `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
+- `task-integrate-finished-work-20261018` [p1] — Audit and integrate finished branches, reconcile remaining tasks
 - `task-lock-contended-wiring` [p2] — Wire lock contention to the lock\_contended code
 - `task-mcp-server` [p2] — Implement the MCP server \(thin wrappers over core\)
 - `task-mcp-smoke` [p1] — Smoke\-test @modelcontextprotocol/sdk on Bun
 - `task-migrate-ledger-json` [p1] — Migrate the hand\-written ledger from YAML to JSON
+- `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-operational-audit-corrections` [p2] — Complete the v0\.0\.3 operational audit correction program
 - `task-operational-audit-plan-document` [p1] — Write the operational audit correction implementation plan
 - `task-phase10-binary-distribution-notes` [p3] — Document binary distribution notes and artifact naming
@@ -134,10 +129,14 @@ _none_
 - `task-plan-hermes-poc-milestone` [p2] — Make the Hermes proof of concept the next milestone
 - `task-poc-native-load` [p2] — POC 1: load a minimal Waystation page in native Hermes
 - `task-prompt-render` [p2] — Implement prompt list/show/render
+- `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId
 - `task-readme` [p2] — Write README \(run instructions, layout, dogfood loop\)
 - `task-reconcile-started-wave` [p1] — Integrate and complete started implementation branches
+- `task-record-unknown-fields` [p3] — Decide and implement TaskRecord unknown\-field handling
 - `task-refresh-post-merge-backlog` [p2] — Refresh remaining Git/Hermes tasks after foundation merge
 - `task-release-0-8-bugfixes` [p2] — Bump version for the October bug fixes
+- `task-remove-writeclaim-dead-code` [p4] — Remove the unused writeClaim helper
+- `task-repair-metric-consistency` [p4] — Align repair finalLines with physical line count
 - `task-scaffold-cli` [p1] — Scaffold CLI project
 - `task-set-status-done-closes` [p2] — Fix setTaskStatus to close done tasks
 - `task-shared-ledger-main-worktree` [p2] — Resolve linked worktrees to the main worktree's ledger when the project declares it
@@ -147,6 +146,8 @@ _none_
 - `task-skeleton-read-commands` [p2] — Widen skeleton: \`task list\` and \`task show\`
 - `task-skeleton-task-next` [p1] — Walking skeleton: end\-to\-end \`waystation task next\`
 - `task-skeleton-validate` [p2] — Widen skeleton: full\-ledger validation
+- `task-sse-event-coverage` [p3] — Broadcast core mutations to the SSE event hub
+- `task-sweep-tmp-coverage` [p4] — Extend tmp sweep to the ledger root and derived dirs
 - `task-validate-messages` [p3] — Extend validate to cover message records
 - `task-w00-contract-freeze` [p1] — W00: freeze contracts, pins, schema names and task split
 - `task-w01a-lock-acquisition-split` [p1] — W01a: split ledger lock acquisition into mutation and read paths

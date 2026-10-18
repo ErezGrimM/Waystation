@@ -1,7 +1,7 @@
 {
   "id": "task-git-status-changed-count",
   "title": "Fix git status changed count double-counting",
-  "status": "todo",
+  "status": "done",
   "priority": 4,
   "scope": "scope-git",
   "path_hints": [
@@ -13,8 +13,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:53+03:00",
+  "closed_at": "2026-10-18T14:05:53+03:00",
   "description": "From the 2026-08-15 complete code audit: `statusSummary` (src/core/git.ts:48-53) counts a `MM`-style porcelain line (staged + unstaged modifications) in BOTH the staged and unstaged buckets, so `changed = staged.length + unstaged.length` double-counts such files. Fix the `changed` aggregate to count distinct files.",
   "acceptance": [
     "`changed` equals the number of distinct changed files (a single `MM` entry counts once).",
@@ -22,5 +22,9 @@
     "A unit test covers the `MM`/`AM` double-status porcelain case.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #12 (cosmetic)."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #12 (cosmetic).\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

@@ -1,7 +1,7 @@
 {
   "id": "task-record-unknown-fields",
   "title": "Decide and implement TaskRecord unknown-field handling",
-  "status": "todo",
+  "status": "done",
   "priority": 3,
   "scope": "scope-core",
   "path_hints": [
@@ -15,8 +15,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:53+03:00",
+  "closed_at": "2026-10-18T14:05:53+03:00",
   "description": "From the 2026-08-15 complete code audit: `TaskRecord` is a plain `z.object` with no `.passthrough()` (src/core/schema.ts:62), unlike `IssueRecord` (src/core/schema.ts:85-107). `loadTaskFiles` (src/core/records.ts:45) strips unknown fields at read, so any extra field on a hand-authored or future record is silently dropped the first time a mutation writes the task back. Decide and document the intended behavior (preserve via `.passthrough()`, or explicitly reject/strip with a validate warning) and implement it consistently, recording the decision in an ADR.",
   "acceptance": [
     "An ADR records the decision (preserve vs strip vs reject) for unknown TaskRecord fields and why it diverges from IssueRecord if it does.",
@@ -24,5 +24,9 @@
     "A test asserts the chosen behavior (e.g. an extra field survives an `updateTask` round-trip, or validate warns on it).",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #6 (low). Design decision: implementer should pick the option they can defend and record it."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #6 (low). Design decision: implementer should pick the option they can defend and record it.\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

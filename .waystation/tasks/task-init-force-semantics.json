@@ -1,7 +1,7 @@
 {
   "id": "task-init-force-semantics",
   "title": "Document and test init --force semantics",
-  "status": "todo",
+  "status": "done",
   "priority": 4,
   "scope": "scope-core",
   "path_hints": [
@@ -14,8 +14,8 @@
   ],
   "dependencies": [],
   "created_at": "2026-08-15T23:43:52+03:00",
-  "updated_at": "2026-08-15T23:43:52+03:00",
-  "closed_at": null,
+  "updated_at": "2026-10-18T14:05:53+03:00",
+  "closed_at": "2026-10-18T14:05:53+03:00",
   "description": "From the 2026-08-15 complete code audit: `waystation init --force` (src/core/init.ts:29-77) re-writes config.json but deliberately leaves existing records and events in place, which may surprise users expecting a wipe-and-reinit. Decide the intended contract, document it in the CLI help and README, and add a test that pins the behavior.",
   "acceptance": [
     "The documented `--force` contract (config reset vs full wipe) matches implementation.",
@@ -23,5 +23,9 @@
     "A test pins the chosen behavior on an already-populated ledger.",
     "All checks green: `bun test`, `bun run typecheck`, `bun run check`, `waystation validate`."
   ],
-  "notes": "Reported as audit finding #16 (cosmetic). If a full wipe is chosen, it must still go through the single write path."
+  "commits": [
+    "0527560",
+    "1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
+  ],
+  "notes": "Reported as audit finding #16 (cosmetic). If a full wipe is chosen, it must still go through the single write path.\n\n2026-10-18 reconciliation: implementation already landed in 0527560. Current source and existing acceptance regressions reviewed; 484 Bun tests, typecheck, Biome and ledger validation passed on the integrated release. See docs/audit-integration-2026-10-18.md. Release evidence: 1680cad0c1d1ff6d4fdf5ea80dae57a564b7e2b7"
 }

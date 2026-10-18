@@ -3,7 +3,7 @@
 # Active Work
 
 ## In progress
-- `task-integrate-finished-work-20261018` [p1] — Audit and integrate finished branches, reconcile remaining tasks
+_none_
 
 ## Ready
 - `task-ledger-settle-transactional` [p1] — Make ledger restoration coherent and crash\-recoverable
