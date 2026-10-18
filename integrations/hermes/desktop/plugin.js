@@ -1,34 +1,7 @@
 import { ROUTES_AREA, SIDEBAR_NAV_AREA } from "@hermes/plugin-sdk";
 import { jsx } from "react/jsx-runtime";
 import React from "react";
-import {
-  readTasks,
-  readClaims,
-  readMessages,
-  SubprocessError,
-} from "./waystation-data.ts";
-
 const POC_ROUTE = "/waystation-native-poc";
-
-// ─── Configurable ledger root ────────────────────────────────────────────────
-// Default root for normal use. Override via URL query parameter:
-//   /waystation-native-poc?root=C:/path/to/ledger
-// This allows the POC 3 demo to use an isolated ledger without touching production.
-
-const DEFAULT_ROOT = "C:/projects/Waystation";
-
-function resolveRoot() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const rootParam = params.get("root");
-    if (rootParam && rootParam.trim().length > 0) {
-      return rootParam.trim();
-    }
-  } catch {
-    // window.location not available (e.g., tests) — fall through to default
-  }
-  return DEFAULT_ROOT;
-}
 
 // ─── POC 1 static content ────────────────────────────────────────────────────
 
@@ -50,7 +23,7 @@ function PocStaticContent() {
         style: { margin: "0.5rem 0 0", color: "var(--ui-text-secondary)" },
       }),
       jsx("p", {
-        children: "No Waystation ledger, worker binding, or production monitor is connected.",
+        children: "This read-only proof of concept connects to one server-configured Waystation ledger.",
         style: { margin: "0.25rem 0 0", color: "var(--ui-text-secondary)" },
       }),
       jsx("code", {
@@ -63,33 +36,38 @@ function PocStaticContent() {
 
 // ─── Project Monitor ─────────────────────────────────────────────────────────
 
-function ProjectMonitor() {
+function ProjectMonitor({ rest }) {
   const [tasks, setTasks] = React.useState([]);
   const [claims, setClaims] = React.useState([]);
   const [selectedTask, setSelectedTask] = React.useState(null);
   const [messages, setMessages] = React.useState([]);
+  const [messagesError, setMessagesError] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [lastRead, setLastRead] = React.useState(null);
   const [stale, setStale] = React.useState(false);
-  const root = resolveRoot();
+  const [projectRoot, setProjectRoot] = React.useState(null);
 
   async function refresh() {
     setLoading(true);
     setError(null);
     setStale(false);
     try {
-      const [taskList, claimList] = await Promise.all([
-        readTasks(root),
-        readClaims(root),
-      ]);
-      setTasks(taskList);
-      setClaims(claimList);
+      const snapshot = await rest("/snapshot");
+      if (
+        !snapshot ||
+        typeof snapshot.projectRoot !== "string" ||
+        !Array.isArray(snapshot.tasks) ||
+        !Array.isArray(snapshot.claims)
+      ) {
+        throw new Error("Monitor backend returned an invalid snapshot");
+      }
+      setProjectRoot(snapshot.projectRoot);
+      setTasks(snapshot.tasks);
+      setClaims(snapshot.claims);
       setLastRead(new Date().toISOString());
     } catch (err) {
-      const message =
-        err instanceof SubprocessError ? err.message : String(err);
-      setError(message);
+      setError(err instanceof Error ? err.message : String(err));
       setStale(tasks.length > 0);
     } finally {
       setLoading(false);
@@ -99,12 +77,18 @@ function ProjectMonitor() {
   async function selectTask(task) {
     setSelectedTask(task);
     setMessages([]);
+    setMessagesError(null);
     if (!task) return;
     try {
-      const msgs = await readMessages(root, task.id);
+      const msgs = await rest(
+        `/tasks/${encodeURIComponent(task.id)}/messages`,
+      );
+      if (!Array.isArray(msgs)) {
+        throw new Error("Monitor backend returned an invalid message list");
+      }
       setMessages(msgs);
-    } catch {
-      setMessages([]);
+    } catch (err) {
+      setMessagesError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -152,7 +136,7 @@ function ProjectMonitor() {
         ],
       }),
       jsx("p", {
-        children: `Project: ${root}`,
+      children: `Project: ${projectRoot ?? "not connected"}`,
         style: {
           margin: "0 0 0.5rem",
           color: "var(--ui-text-secondary)",
@@ -324,7 +308,19 @@ function ProjectMonitor() {
               children: "Discussion",
               style: { margin: "0 0 0.5rem", fontSize: "0.9rem" },
             }),
-            messages.length === 0 &&
+            messagesError &&
+              jsx("div", {
+                style: {
+                  padding: "0.5rem 0.75rem",
+                  marginBottom: "0.75rem",
+                  borderRadius: "4px",
+                  background: "var(--ui-bg-error, #3a1111)",
+                  color: "var(--ui-text-error, #ff6666)",
+                  fontSize: "0.85rem",
+                },
+                children: [jsx("strong", { children: "Message read failed: " }), messagesError],
+              }),
+            messages.length === 0 && !messagesError &&
               jsx("p", {
                 children: "No messages on this thread.",
                 style: {
@@ -379,7 +375,7 @@ function ProjectMonitor() {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-function Page() {
+function Page({ rest }) {
   return jsx("main", {
     style: {
       display: "grid",
@@ -394,7 +390,7 @@ function Page() {
         style: { margin: 0, fontSize: "1.5rem" },
       }),
       jsx(PocStaticContent),
-      jsx(ProjectMonitor),
+      jsx(ProjectMonitor, { rest }),
     ],
   });
 }
@@ -402,7 +398,7 @@ function Page() {
 export default {
   id: "waystation-native-load-poc",
   name: "Waystation native-load POC",
-  description: "Bounded native Hermes plugin page proof; no ledger connection.",
+  description: "Read-only Waystation project Monitor for one configured project.",
   defaultEnabled: false,
   register(ctx) {
     ctx.register({
@@ -410,7 +406,7 @@ export default {
       area: ROUTES_AREA,
       title: "Waystation native-load POC",
       data: { path: POC_ROUTE },
-      render: Page,
+      render: () => jsx(Page, { rest: ctx.rest }),
     });
 
     ctx.register({
