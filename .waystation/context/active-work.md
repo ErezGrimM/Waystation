@@ -3,10 +3,12 @@
 # Active Work
 
 ## In progress
-_none_
+- `task-integrate-finished-work-20261018` [p1] — Audit and integrate finished branches, reconcile remaining tasks
 
 ## Ready
-_none_
+- `task-ledger-settle-transactional` [p1] — Make ledger restoration coherent and crash\-recoverable
+- `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
+- `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 
 ## Coordination warnings
 _none_

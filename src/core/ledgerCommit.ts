@@ -9,12 +9,15 @@
  * written to a branch ref: HEAD, the real index, and the working tree are
  * never changed, so other sessions are unaffected.
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { runGit } from "./gitProcess.ts";
 import { ledgerPaths } from "./paths.ts";
-import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
-import { withLedgerLock } from "./store.ts";
+import { CODES, type Code, type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
+import { TaskRecord } from "./schema.ts";
+import { withLedgerLock, withLedgerReadLock } from "./store.ts";
+import { validateLedger } from "./validate.ts";
 
 export type LedgerFileCategory = "owned" | "generated" | "unattributed";
 
@@ -84,15 +87,23 @@ export function ensureUnionMerge(root: string): boolean {
 
 class GitFailure extends Error {}
 
-function git(cwd: string, args: string[], env?: Record<string, string>): string {
-  const proc = Bun.spawnSync(["git", ...args], {
-    cwd,
-    env: { ...process.env, ...env, GIT_TERMINAL_PROMPT: "0" },
+function failureDiagnostic(error: unknown): Diagnostic {
+  const code = error instanceof Error && "code" in error ? error.code : undefined;
+  return diag(typeof code === "string" && code in CODES ? (code as Code) : "ledger_commit_failed", {
+    message: error instanceof Error ? error.message : String(error),
   });
-  if (proc.exitCode !== 0) {
-    throw new GitFailure(proc.stderr.toString().trim() || `git ${args.join(" ")} failed`);
+}
+
+function git(cwd: string, args: string[], env?: Record<string, string>): string {
+  const result = runGit({
+    args,
+    cwd,
+    env: { ...env, GIT_TERMINAL_PROMPT: "0" },
+  });
+  if (!result.ok || !result.data) {
+    throw new GitFailure(result.errors[0]?.message ?? "Git command failed");
   }
-  return proc.stdout.toString();
+  return Buffer.from(result.data.stdout).toString();
 }
 
 function tryGit(cwd: string, args: string[], env?: Record<string, string>): string | null {
@@ -170,6 +181,14 @@ function notARepo<T>(): CommandResult<T> {
 
 /** Uncommitted ledger files grouped by the actor that wrote them. */
 export function ledgerStatus(root: string): CommandResult<LedgerStatus> {
+  try {
+    return ledgerStatusUnlocked(root);
+  } catch (error) {
+    return toResult<LedgerStatus>(null, [failureDiagnostic(error)]);
+  }
+}
+
+function ledgerStatusUnlocked(root: string): CommandResult<LedgerStatus> {
   const ledger = ledgerPaths(root).ledger;
   const listed = tryGit(ledger, [
     "ls-files",
@@ -189,7 +208,8 @@ export function ledgerStatus(root: string): CommandResult<LedgerStatus> {
   const tracked = new Set(
     (tryGit(ledger, ["ls-files", "-z", "--", "."]) ?? "").split("\0").filter(Boolean),
   );
-  for (const path of new Set(listed.split("\0").filter(Boolean))) {
+  const staged = git(ledger, ["diff", "--cached", "--name-only", "--relative", "-z", "--", "."]);
+  for (const path of new Set([...listed.split("\0"), ...staged.split("\0")].filter(Boolean))) {
     if (SHARED_FILES.has(path)) continue;
     const present = existsSync(join(ledger, path));
     const state = !present ? "deleted" : tracked.has(path) ? "modified" : "untracked";
@@ -210,7 +230,7 @@ export function ledgerStatus(root: string): CommandResult<LedgerStatus> {
   }
   all.sort((a, b) => a.path.localeCompare(b.path));
   const files = all.filter((f) => f.onBranches.length === 0);
-  const byOwner: Record<string, string[]> = {};
+  const byOwner: Record<string, string[]> = Object.create(null);
   for (const f of files) {
     for (const actor of f.owners) {
       const list = byOwner[actor] ?? [];
@@ -239,15 +259,14 @@ function referencedRecords(ledger: string, owned: string[]): string[] {
   for (const path of owned) {
     if (!path.startsWith("tasks/") || !path.endsWith(".json")) continue;
     try {
-      const task = JSON.parse(readFileSync(join(ledger, path), "utf8")) as {
-        scope?: unknown;
-        prompts?: unknown;
-      };
+      const parsed = TaskRecord.safeParse(JSON.parse(readFileSync(join(ledger, path), "utf8")));
+      if (!parsed.success) throw new GitFailure(`Invalid task record: ${path}`);
+      const task = parsed.data;
       if (typeof task.scope === "string") refs.push(`scopes/${task.scope}.json`);
       if (Array.isArray(task.prompts))
         for (const p of task.prompts) if (typeof p === "string") refs.push(`prompts/${p}.json`);
-    } catch {
-      // An unreadable task is reported by validate; skip it here.
+    } catch (error) {
+      throw new GitFailure(`Cannot read task dependencies: ${String(error)}`);
     }
   }
   return refs;
@@ -259,6 +278,17 @@ function referencedRecords(ledger: string, owned: string[]): string[] {
  * working tree of any checkout.
  */
 export async function commitLedger(
+  root: string,
+  options: LedgerCommitOptions,
+): Promise<CommandResult<LedgerCommitResult>> {
+  try {
+    return await commitLedgerChecked(root, options);
+  } catch (error) {
+    return toResult<LedgerCommitResult>(null, [failureDiagnostic(error)]);
+  }
+}
+
+async function commitLedgerChecked(
   root: string,
   options: LedgerCommitOptions,
 ): Promise<CommandResult<LedgerCommitResult>> {
@@ -276,7 +306,8 @@ export async function commitLedger(
 
   // The exclusive lock serializes concurrent commits (and blocks mutations
   // while files are read); update-ref below also guards against a moved tip.
-  return withLedgerLock(root, () => {
+  const lock = options.dryRun ? withLedgerReadLock : withLedgerLock;
+  return lock(root, () => {
     const status = ledgerStatus(root);
     if (!status.ok || !status.data) return status as unknown as CommandResult<LedgerCommitResult>;
     // A file already identical on the target branch has nothing left to commit
@@ -301,16 +332,12 @@ export async function commitLedger(
     for (const path of paths) {
       const others = (dirty.get(path)?.owners ?? []).filter((a) => a !== agent);
       if (others.length > 0) {
-        warnings.push(
-          diag("ledger_dependency_foreign", {
-            message: `${path} was also written by ${others.join(", ")}; the commit holds its current content, including their changes. Merge ${others
-              .map((a) => `ledger/${a}`)
-              .join(
-                ", ",
-              )} first, then ${branch}: both branches changed this file, and a conflict there is resolved by keeping the later actor's version`,
+        return toResult<LedgerCommitResult>(null, [
+          diag("ledger_shared_history", {
+            message: `${path} was also written by ${others.join(", ")}; an actor-only commit could omit required lifecycle history`,
             details: { path, owners: others },
           }),
-        );
+        ]);
       }
     }
 
@@ -391,6 +418,18 @@ export async function commitLedger(
         );
       }
       const tree = git(root, ["write-tree"], env).trim();
+      // Validate the exact proposed ledger, not the still-shared working tree.
+      // checkout-index uses only our temporary index and a fresh temporary root.
+      const candidate = join(tmp, "candidate");
+      mkdirSync(candidate);
+      git(root, ["checkout-index", "--all", `--prefix=${candidate.replaceAll("\\", "/")}/`], env);
+      const candidateRoot = join(candidate, prefix, "..");
+      const validation = validateLedger(candidateRoot);
+      if (!validation.ok) {
+        return toResult<LedgerCommitResult>(null, [
+          diag("ledger_shared_history", { details: { errors: validation.errors } }),
+        ]);
+      }
       if (tree === git(root, ["rev-parse", `${base}^{tree}`]).trim()) {
         return toResult<LedgerCommitResult>(null, [
           diag("ledger_nothing_to_commit", {
@@ -421,9 +460,7 @@ export async function commitLedger(
       git(root, ["update-ref", `refs/heads/${branch}`, commit, branchTip ?? ""]);
       return toResult({ ...planned, commit }, warnings);
     } catch (error) {
-      return toResult<LedgerCommitResult>(null, [
-        diag("ledger_commit_failed", { message: (error as Error).message }),
-      ]);
+      return toResult<LedgerCommitResult>(null, [failureDiagnostic(error)]);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -443,76 +480,27 @@ export interface LedgerSettleResult {
 }
 
 /**
- * Drop working-tree copies of ledger files whose exact content already lives
- * on a `ledger/*` branch, so merging that branch is not blocked by "local
- * changes would be overwritten". Lossless by construction: a file is touched
- * only if its current bytes match the branch's blob, checked under the lock.
+ * Preview files already present on ledger branches. Restoring only those files
+ * can split canonical records from their event history, and is not crash-safe.
+ * Keep writes disabled until a journaled, coherent restoration is implemented.
  */
 export async function settleLedger(
   root: string,
   options: LedgerSettleOptions = {},
 ): Promise<CommandResult<LedgerSettleResult>> {
-  const ledger = ledgerPaths(root).ledger;
-  if (tryGit(ledger, ["rev-parse", "--git-dir"]) === null) {
-    return notARepo<LedgerSettleResult>();
+  if (!options.dryRun) {
+    return toResult<LedgerSettleResult>(null, [diag("ledger_settle_unsafe")]);
   }
-  return withLedgerLock(root, () => {
-    const status = ledgerStatus(root);
-    if (!status.ok || !status.data) return status as unknown as CommandResult<LedgerSettleResult>;
-    const targets = status.data.uncommitted.filter((f) =>
-      options.branch ? f.onBranches.includes(options.branch) : f.onBranches.length > 0,
-    );
-    const settled: string[] = [];
-    const skipped: Array<{ path: string; reason: string }> = [];
-    for (const f of targets) {
-      if (options.dryRun) {
-        settled.push(f.path);
-        continue;
-      }
-      try {
-        if (f.state === "untracked") {
-          rmSync(join(ledger, f.path), { force: true });
-        } else {
-          git(ledger, ["checkout", "HEAD", "--", f.path]);
-        }
-        settled.push(f.path);
-      } catch (error) {
-        skipped.push({ path: f.path, reason: (error as Error).message });
-      }
-    }
-    // events.jsonl is shared by every actor, so it is only restored once every
-    // uncommitted event line is already present on a ledger branch.
-    const prefix = git(ledger, ["rev-parse", "--show-prefix"]).trim();
-    const eventsFile = ledgerPaths(root).events;
-    if (existsSync(eventsFile)) {
-      const head = new Set(
-        (tryGit(ledger, ["show", `HEAD:${prefix}events.jsonl`]) ?? "").split("\n").filter(Boolean),
+  try {
+    return await withLedgerReadLock(root, () => {
+      const status = ledgerStatus(root);
+      if (!status.ok || !status.data) return toResult<LedgerSettleResult>(null, status.errors);
+      const targets = status.data.uncommitted.filter((f) =>
+        options.branch ? f.onBranches.includes(options.branch) : f.onBranches.length > 0,
       );
-      const pending = readFileSync(eventsFile, "utf8")
-        .split("\n")
-        .filter((line) => line.trim() && !head.has(line));
-      const refs = options.branch
-        ? [options.branch]
-        : (
-            tryGit(ledger, ["for-each-ref", "--format=%(refname:short)", "refs/heads/ledger/"]) ??
-            ""
-          )
-            .split("\n")
-            .filter(Boolean);
-      const onBranches = new Set<string>();
-      for (const ref of refs) {
-        const text = tryGit(ledger, ["show", `${ref}:${prefix}events.jsonl`]);
-        for (const line of (text ?? "").split("\n")) if (line) onBranches.add(line);
-      }
-      if (pending.length > 0 && pending.every((line) => onBranches.has(line))) {
-        try {
-          if (!options.dryRun) git(ledger, ["checkout", "HEAD", "--", "events.jsonl"]);
-          settled.push("events.jsonl");
-        } catch (error) {
-          skipped.push({ path: "events.jsonl", reason: (error as Error).message });
-        }
-      }
-    }
-    return toResult({ settled, skipped, dryRun: options.dryRun === true }, []);
-  });
+      return toResult({ settled: targets.map((f) => f.path), skipped: [], dryRun: true }, []);
+    });
+  } catch (error) {
+    return toResult<LedgerSettleResult>(null, [failureDiagnostic(error)]);
+  }
 }

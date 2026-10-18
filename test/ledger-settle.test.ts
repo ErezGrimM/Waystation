@@ -63,7 +63,7 @@ test("committed files move to pendingMerge instead of staying listed as dirty", 
   expect(status?.pendingMerge.map((f) => f.path)).toEqual(["tasks/task-alice.json"]);
 });
 
-test("settle lets the ledger branch merge cleanly, and only touches identical files", async () => {
+test("settle previews candidates but refuses destructive restoration without changing records", async () => {
   await createTask(root, task("task-alice"), "alice");
   expect((await commitLedger(root, { agent: "alice" })).ok).toBe(true);
   // Without settling, the merge would overwrite local changes.
@@ -73,13 +73,12 @@ test("settle lets the ledger branch merge cleanly, and only touches identical fi
   expect(dry.data?.settled).toContain("tasks/task-alice.json");
   expect(ledgerStatus(root).data?.pendingMerge).toHaveLength(1);
 
+  const before = git("status", "--porcelain");
+  const events = readFileSync(join(root, ".waystation/events.jsonl"), "utf8");
   const settled = await settleLedger(root);
-  expect(settled.data?.settled).toEqual(
-    expect.arrayContaining(["tasks/task-alice.json", "events.jsonl"]),
-  );
-  expect(git("status", "--porcelain")).toBe("");
-
-  git("merge", "--no-edit", "ledger/alice");
+  expect(settled.errors[0]?.code).toBe("ledger_settle_unsafe");
+  expect(git("status", "--porcelain")).toBe(before);
+  expect(readFileSync(join(root, ".waystation/events.jsonl"), "utf8")).toBe(events);
   expect(validateLedger(root).ok).toBe(true);
   expect(ledgerStatus(root).data?.files).toEqual([]);
 });
@@ -89,7 +88,7 @@ test("settle leaves a file alone once it differs from the branch", async () => {
   await commitLedger(root, { agent: "alice" });
   await setTaskStatus(root, "task-alice", "ready", "alice");
 
-  const settled = await settleLedger(root);
+  const settled = await settleLedger(root, { dryRun: true });
   expect(settled.data?.settled).not.toContain("tasks/task-alice.json");
   expect(ledgerStatus(root).data?.byOwner.alice).toEqual(["tasks/task-alice.json"]);
 });
@@ -103,13 +102,12 @@ test("a file written by two actors is attributed to both", async () => {
   expect(status?.byOwner.bob).toEqual(["tasks/task-shared.json"]);
 
   const bob = await commitLedger(root, { agent: "bob" });
-  expect(bob.ok).toBe(true);
-  expect(bob.data?.files).toEqual(["tasks/task-shared.json"]);
-  expect(bob.warnings.map((w) => w.code)).toContain("ledger_dependency_foreign");
+  expect(bob.ok).toBe(false);
+  expect(bob.errors[0]?.code).toBe("ledger_shared_history");
 
   const alice = await commitLedger(root, { agent: "alice" });
-  expect(alice.ok).toBe(true);
-  expect(alice.data?.files).toEqual(["tasks/task-shared.json"]);
+  expect(alice.ok).toBe(false);
+  expect(git("branch", "--list", "ledger/*")).toBe("");
 });
 
 test("concurrent commits to the same branch serialize instead of racing", async () => {
@@ -141,10 +139,38 @@ test("commit warns when events.jsonl is not set to merge=union", async () => {
   expect(result.warnings.map((w) => w.code)).toContain("ledger_union_merge_missing");
 });
 
-test("the co-writer warning says which branches to merge first", async () => {
+test("co-writer refusal identifies the shared file and actor", async () => {
   await createTask(root, task("task-shared"), "alice");
   await setTaskStatus(root, "task-shared", "ready", "bob");
   const bob = await commitLedger(root, { agent: "bob" });
-  const warning = bob.warnings.find((w) => w.code === "ledger_dependency_foreign");
-  expect(warning?.message).toContain("Merge ledger/alice first, then ledger/bob");
+  expect(bob.errors[0]?.message).toContain("tasks/task-shared.json");
+  expect(bob.errors[0]?.message).toContain("alice");
+});
+
+test("staged task changes remain visible and are included in an actor commit", async () => {
+  await createTask(root, task("task-staged"), "alice");
+  git("add", ".waystation/tasks/task-staged.json");
+  const stagedBefore = git("diff", "--cached");
+  expect(ledgerStatus(root).data?.byOwner.alice).toContain("tasks/task-staged.json");
+  const result = await commitLedger(root, { agent: "alice" });
+  expect(result.ok).toBe(true);
+  expect(git("show", "ledger/alice:.waystation/tasks/task-staged.json")).toContain("task-staged");
+  expect(git("diff", "--cached")).toBe(stagedBefore);
+});
+
+test("actor names matching Object prototype keys can own files", async () => {
+  await createTask(root, task("task-prototype"), "__proto__");
+  expect(Object.entries(ledgerStatus(root).data?.byOwner ?? {})).toContainEqual([
+    "__proto__",
+    ["tasks/task-prototype.json"],
+  ]);
+});
+
+test("candidate validation refuses a missing dependency without publishing a branch", async () => {
+  await createTask(root, task("task-dependency"), "bob");
+  await createTask(root, { ...task("task-dependent"), dependencies: ["task-dependency"] }, "alice");
+  const result = await commitLedger(root, { agent: "alice" });
+  expect(result.errors[0]?.code).toBe("ledger_shared_history");
+  expect(git("branch", "--list", "ledger/alice")).toBe("");
+  expect(validateLedger(root).ok).toBe(true);
 });

@@ -698,7 +698,7 @@ export const COMMAND_TREE: CommandSpec[] = [
         options: [{ name: "json", flag: "--json", description: "output JSON" }],
         arguments: [],
         notes: [
-          "Read-only. 'unattributed' files were not written through Waystation (hand edits); 'generated' files come from report/sync.",
+          "Read-only. 'unattributed' files include hand edits and older Waystation writes without file attribution; 'generated' files come from report/sync.",
         ],
         subcommands: [],
       },
@@ -724,14 +724,14 @@ export const COMMAND_TREE: CommandSpec[] = [
         arguments: [],
         notes: [
           "Includes the scope and prompt records the actor's tasks reference, and only that actor's events.",
-          "The files stay modified in the shared checkout until you run 'ledger settle'; 'ledger status' lists them as pending merge meanwhile.",
-          "A file written by several actors is committed by each of them with its current content (a warning names the co-writers).",
+          "Files stay modified in the shared checkout. Coordinate a complete ledger commit there before merging branches; automatic settle is disabled.",
+          "Files written by several actors are refused: coordinate their records and complete event history together. The proposed ledger is validated before publishing its branch.",
         ],
         subcommands: [],
       },
       {
         name: "settle",
-        description: "Drop working-tree copies of ledger files that a ledger branch already holds",
+        description: "Preview ledger files held on branches (automatic restoration is disabled)",
         options: [
           {
             name: "branch",
@@ -747,7 +747,7 @@ export const COMMAND_TREE: CommandSpec[] = [
         ],
         arguments: [],
         notes: [
-          "Run before merging a ledger branch. Only files byte-identical to the branch's version are touched, so nothing is lost.",
+          "Only --dry-run is supported until coherent, crash-recoverable restoration is implemented. Without it the command refuses without changing files.",
         ],
         subcommands: [],
       },

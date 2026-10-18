@@ -25,12 +25,17 @@ Cross-cutting principles that hold across every phase:
 
 ---
 
-## Current State (2026-10-05)
+## Current State (2026-10-18)
 
 **Runtime:** Bun 1.4.1 (pinned in `package.json`, canonical locally at
 `C:\bun\bin\bun.exe`). Bun 1.3.14 is retired as the test baseline. Node 22+ remains the supported fallback for the portable
 core/SQLite adapter. The ledger validates cleanly.
-**Version:** 0.8.0. Validation checks claim/finish event pairs and the ordered
+**Version:** 0.11.0. The October 16 ledger branch and Hermes backend bridge are
+integrated. Ledger status includes staged files; actor commits validate the proposed
+ledger and refuse shared-writer history that cannot safely be separated.
+Automatic ledger settling is disabled pending transactional restoration; preview
+remains available. See the [integration audit and remaining-work map](audit-integration-2026-10-18.md).
+Validation checks claim/finish event pairs and the ordered
 task-status chain against current records. Worktree agents can select one shared
 ledger; feature branches leave its history out of their merges. The CLI now
 rejects empty list options before they can swallow the next flag, the dashboard
@@ -40,7 +45,8 @@ failures.
 **Git/Hermes foundation:** W01, W02, W03 and W08a plus the direct task lookup
 optimization are integrated. This supplies persistence, safe Git reads, context,
 trailer parsing and a registry library. Public reconciliation, session bindings,
-and the native Hermes Monitor remain backlog. See
+and the production native Hermes Monitor remain backlog. The manual-refresh POC
+and its REST bridge exist, but installed-native verification remains blocked. See
 [reconciliation evidence](reconciliation-2026-09-27.md) and the
 [unified implementation plan](waystation-git-hermes-implementation-plan.md).
 
@@ -73,11 +79,13 @@ Migration/readiness behavior is codified (`waystation task audit`) and
 documented consistently across the spec, guide, and AGENTS.md.
 
 **Decisions on record:** Bun+TS stack; JSON records; dashboard-only LLM
-features; worktree messages are scoped to the current checkout/worktree for V1.
+features; Waystation opts into a shared main-worktree ledger (ADR-0010).
 
-**Next:** close the remaining operational-audit follow-ups
-(`task-audit-ranking-policy`, `task-operational-audit-corrections`). UX polish
-remains intentionally deferred to Phase 11.
+**Next:** safe ledger restoration, enforcement against feature-branch ledger
+commits, and detection of merged work whose task remains open. Thirteen stale
+maintenance tasks are reconciled against existing implementation and tests.
+The two native POC observations remain blocked; the POC value review gates all
+19 production Git/Hermes tasks. UX polish remains deferred to Phase 11.
 
 ---
 

@@ -50,7 +50,7 @@ export function buildServer(root?: string): McpServer {
 
 function buildServerAtRoot(root: string): McpServer {
   const server = new McpServer(
-    { name: "waystation", version: "0.10.3" },
+    { name: "waystation", version: "0.11.0" },
     { instructions: `Selected Waystation ledger root: ${root}` },
   );
 
@@ -244,7 +244,7 @@ function buildServerAtRoot(root: string): McpServer {
     "ledger_settle",
     {
       description:
-        "Drop working-tree copies of ledger files whose exact content a ledger/* branch already holds, so merging that branch is not blocked. Lossless: only byte-identical files are touched",
+        "Preview ledger files held on ledger branches with dry_run=true. Automatic restoration is disabled pending coherent, crash-recoverable restoration; writes are refused",
       inputSchema: {
         branch: z.string().optional().describe("only files held by this branch"),
         dry_run: z.boolean().optional().describe("list only; change nothing"),

@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-project-monitor-codex-integration-20261018-112556-q1bk",
+  "thread": "task-poc-project-monitor",
+  "from_agent": "codex-integration",
+  "to_agent": null,
+  "kind": "update",
+  "body": "Bridge implementation merged into main at 03e8ff7. Native verification remains blocked; integration is not acceptance evidence. Latest mapping: docs/audit-integration-2026-10-18.md",
+  "in_reply_to": null,
+  "created_at": "2026-10-18T11:25:56+03:00"
+}

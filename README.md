@@ -20,7 +20,7 @@ current follow-up queue.
   also works as a fallback (SQLite falls back to `node:sqlite`), but Bun is the
   target.
 
-> **This dev machine:** the pinned Bun 1.4.0 binary is canonical at
+> **This dev machine:** the pinned Bun 1.4.1 binary is canonical at
 > `C:\bun\bin\bun.exe` and is **not on PATH**. Use the full path, e.g.
 > `& C:\bun\bin\bun.exe test`. The recoverable 1.3.14 rollback binary remains
 > at `C:\bun\versions\1.3.14\bun.exe`. Examples below assume `bun` is on PATH.
@@ -228,6 +228,21 @@ links package bins.
 The `package.json` `bin` field points at the TypeScript source entrypoint for
 environments that launch bins through Bun. The committed/local Windows handoff
 artifact is `waystation.exe`, rebuilt with Bun's `--compile` command above.
+
+### Shared-ledger commit assistance
+
+`waystation ledger status` groups staged and unstaged ledger changes by writer.
+`ledger commit --agent <name>` writes an actor's changes and referenced scopes/prompts
+to a separate branch without moving the checkout or its index. It validates the
+proposed ledger before publishing the branch and refuses co-written files whose
+history cannot safely be separated. Coordinate a complete ledger commit from the
+main checkout for shared changes.
+
+`ledger settle --dry-run` previews files already present on ledger branches.
+Automatic restoration is disabled in 0.11.0 pending coherent, crash-recoverable
+restoration; calling it without `--dry-run` changes nothing and returns a diagnostic.
+The [October integration audit](docs/audit-integration-2026-10-18.md) records the
+merged work, verification and remaining tasks.
 
 ## Project layout
 

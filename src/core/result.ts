@@ -152,6 +152,18 @@ export const CODES = {
     hint: "Run from a git checkout, or pass --root to a ledger that is in one.",
     retryable: false,
   },
+  ledger_shared_history: {
+    severity: "error",
+    message: "An actor-only commit would not preserve a complete, valid ledger.",
+    hint: "Coordinate the writers and commit the related records and their complete event history together from the coordination checkout.",
+    retryable: false,
+  },
+  ledger_settle_unsafe: {
+    severity: "error",
+    message: "Automatic ledger settling is disabled pending transactional restoration.",
+    hint: "Use --dry-run to inspect candidates. Commit the complete shared ledger from the coordination checkout before merging; do not discard canonical files.",
+    retryable: false,
+  },
   ledger_nothing_to_commit: {
     severity: "error",
     message: "No uncommitted ledger files are attributed to this actor.",

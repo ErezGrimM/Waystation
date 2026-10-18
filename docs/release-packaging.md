@@ -40,13 +40,13 @@ git status --short
 Set the same version in all three locations:
 
 1. `package.json` — top-level `version`;
-2. `src/cli/index.ts` — Commander `.version(...)`;
+2. `src/cli/parser.ts` — `generateVersion()`;
 3. `src/mcp/server.ts` — `McpServer` constructor metadata.
 
 Verify that no location was missed:
 
 ```ps1
-Select-String -Path package.json,src\cli\index.ts,src\mcp\server.ts `
+Select-String -Path package.json,src\cli\parser.ts,src\mcp\server.ts `
   -SimpleMatch -Pattern $version
 ```
 
@@ -181,7 +181,7 @@ where you are not sure hidden state exists.
 Assumptions:
 
 - Windows PowerShell is the primary shell.
-- Bun 1.4.0 is canonical at `C:\bun\bin\bun.exe`; it may not be on `PATH`.
+- Bun 1.4.1 is canonical at `C:\bun\bin\bun.exe`; it may not be on `PATH`.
   Bun 1.3.14 remains recoverable at `C:\bun\versions\1.3.14\bun.exe`.
 - Canonical ledger state lives in `.waystation/*.json` and `events.jsonl`.
 - `waystation.exe`, `index.sqlite`, Graphify output, and local distribution

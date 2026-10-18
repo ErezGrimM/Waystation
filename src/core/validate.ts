@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { addEventIntegrityDiagnostics } from "./eventIntegrity.ts";
 import { expectedGeneratedArtifacts } from "./generate.ts";
+import { runGit } from "./gitProcess.ts";
 import { activeClaimOverlaps } from "./overlap.ts";
 import { ledgerPaths } from "./paths.ts";
 import { type CommandResult, type Diagnostic, diag, toResult } from "./result.ts";
@@ -36,15 +37,9 @@ function recordExists(dir: string, id: string): boolean {
  */
 function trackedLedgerFiles(ledger: string): Set<string> | null {
   try {
-    const proc = Bun.spawnSync(["git", "ls-files", "--", "tasks", "scopes"], { cwd: ledger });
-    if (proc.exitCode !== 0) return null;
-    return new Set(
-      proc.stdout
-        .toString()
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean),
-    );
+    const proc = runGit({ args: ["ls-files", "-z", "--", "tasks", "scopes"], cwd: ledger });
+    if (!proc.ok || !proc.data) return null;
+    return new Set(Buffer.from(proc.data.stdout).toString().split("\0").filter(Boolean));
   } catch {
     return null;
   }

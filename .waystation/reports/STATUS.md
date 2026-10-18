@@ -3,10 +3,12 @@
 # Waystation Status
 
 ## Ready to claim
-_none_
+- `task-ledger-settle-transactional` [p1] — Make ledger restoration coherent and crash\-recoverable
+- `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
+- `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 
 ## In progress
-_none_
+- `task-integrate-finished-work-20261018` [p1] — Audit and integrate finished branches, reconcile remaining tasks
 
 ## Review
 _none_
@@ -23,10 +25,8 @@ _none_
 - `task-error-mapping-hygiene` [p3] — Fix MCP and issue\-path error mapping gaps
 - `task-gh-import-force-flag` [p3] — Remove or implement the gh import \-\-force flag
 - `task-git-status-changed-count` [p4] — Fix git status changed count double\-counting
-- `task-guard-branch-ledger-commits` [p3] — Reject \.waystation/ changes committed on feature branches
 - `task-index-lock-discipline` [p3] — Bring index builds under the ledger lock
 - `task-init-force-semantics` [p4] — Document and test init \-\-force semantics
-- `task-merged-work-still-open` [p3] — Warn when an open task's commit is already merged into the coordination branch
 - `task-mutation-intent-recovery-doc` [p4] — Document manual recovery of a corrupt mutation intent
 - `task-poc-value-review` [p2] — POC decision: compare usefulness and choose stop, iterate or MVP
 - `task-ranking-offset-aware` [p3] — Make task ranking offset\-aware like byCreatedAtThenId

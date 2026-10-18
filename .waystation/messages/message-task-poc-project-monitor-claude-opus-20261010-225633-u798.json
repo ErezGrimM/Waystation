@@ -1,0 +1,10 @@
+{
+  "id": "message-task-poc-project-monitor-claude-opus-20261010-225633-u798",
+  "thread": "task-poc-project-monitor",
+  "from_agent": "claude-opus",
+  "to_agent": null,
+  "kind": "update",
+  "body": "2026-10-10 native check attempt. Owner ran 'hermes pm repair'; 'hermes --version' now exits 0 with the checkout unchanged (the earlier blocker was a misread: .git/hermes-update-recovery is the updater's published recovery closure, the interrupted-pull marker is .git/hermes-update-pull and is absent). PR #6 merged with main (a9163e3, pushed): bun test 464/0, typecheck, biome, and 4 Python bridge tests pass. Native run with a fresh temporary HERMES_HOME is NOT viable: the desktop app treats an empty HERMES_HOME as a first install and starts the full bootstrap installer (git, clone, venv, deps, products, gateway). It failed at the clone stage (path too long) after writing only inside the temp home; instance stopped, demo ledger hashes unchanged. This likely explains the earlier backend timeout too. Next step needs an isolated Hermes profile under the real install (HERMES_HOME=<root>/profiles/<name>), pending owner approval. Task stays blocked.",
+  "in_reply_to": null,
+  "created_at": "2026-10-10T22:56:33+03:00"
+}

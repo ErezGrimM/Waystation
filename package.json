@@ -1,6 +1,6 @@
 {
   "name": "waystation",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "packageManager": "bun@1.4.1",
   "description": "Local-first task, issue, prompt, and handoff ledger for coordinating humans and AI coding agents.",
   "type": "module",
@@ -15,8 +15,8 @@
     "test:parallel": "\"$npm_execpath\" test --parallel=4 --isolate",
     "verify:fast": "\"$npm_execpath\" run --parallel test:parallel typecheck check",
     "typecheck": "tsc --noEmit",
-    "check": "biome check .",
-    "format": "biome format --write ."
+    "check": "biome check src test integrations",
+    "format": "biome format --write src test integrations"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
